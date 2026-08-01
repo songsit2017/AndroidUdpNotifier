@@ -112,7 +112,7 @@ class UdpReceiverService : Service() {
             removeFloatingWindow()
 
             // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
-            val themeContext = android.view.ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_DarkActionBar)
+            val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_Light_DarkActionBar)
             val inflater = LayoutInflater.from(themeContext)
             
             floatingView = inflater.inflate(R.layout.floating_notification, null)
