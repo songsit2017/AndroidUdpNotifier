@@ -30,10 +30,22 @@ class NotificationSenderService : NotificationListenerService() {
         "com.whatsapp"
     )
 
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        AppLogger.log("✅ Service Connected to Android System! Ready to read notifications.")
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        AppLogger.log("❌ Service Disconnected from Android System.")
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
+        AppLogger.log("🔔 Detected notification from: $packageName")
 
         if (!TARGET_PACKAGES.contains(packageName)) {
+            AppLogger.log("   -> Ignored (not in target list)")
             return
         }
 
