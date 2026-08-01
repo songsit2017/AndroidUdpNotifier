@@ -49,3 +49,19 @@ jobs:
           receiver/build/outputs/apk/debug/receiver-debug.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Clean up old releases (Keep latest 2)
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # List all releases, extract the tag (field 1)
+        gh release list -L 100 | awk -F'\t' '{print $1}' > releases.txt
+        
+        # Start from the 3rd line (keeping the first 2) and delete them
+        tail -n +3 releases.txt | while read -r version; do
+          if [ -n "$version" ]; then
+            echo "Deleting old release: $version"
+            gh release delete "$version" --cleanup-tag -y || true
+          fi
+        done
