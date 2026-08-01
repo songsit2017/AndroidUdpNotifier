@@ -86,6 +86,7 @@ class NotificationSenderService : NotificationListenerService() {
 
         // Extract and compress Image
         val imageBase64 = extractAndCompressImage(notification, this)
+        val appIconBase64 = getAppIconBase64(packageName, this)
 
         // Extract Actions
         val actionsArray = org.json.JSONArray()
@@ -110,6 +111,7 @@ class NotificationSenderService : NotificationListenerService() {
             put("name", title)
             put("text", text)
             put("imageBase64", imageBase64 ?: JSONObject.NULL)
+            put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
             put("actions", actionsArray)
         }.toString()
 
@@ -155,6 +157,21 @@ class NotificationSenderService : NotificationListenerService() {
             Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         } catch (e: Exception) {
             e.printStackTrace()
+            null
+        }
+    }
+
+    private fun getAppIconBase64(packageName: String, context: Context): String? {
+        return try {
+            val drawable = context.packageManager.getApplicationIcon(packageName)
+            val bitmap = drawableToBitmap(drawable) ?: return null
+            // App icons are small and transparent, use 48x48 PNG
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 48, 48, true)
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            val bytes = outputStream.toByteArray()
+            Base64.encodeToString(bytes, Base64.NO_WRAP)
+        } catch (e: Exception) {
             null
         }
     }

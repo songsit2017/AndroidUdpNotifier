@@ -102,17 +102,18 @@ class UdpReceiverService : Service() {
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
             val base64Image = if (jsonObject.isNull("imageBase64")) null else jsonObject.getString("imageBase64")
+            val appIconBase64 = if (jsonObject.isNull("appIconBase64")) null else jsonObject.getString("appIconBase64")
             val actionsArray = jsonObject.optJSONArray("actions")
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, type, actionsArray, senderIp)
+                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, senderIp)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, type: String, actionsArray: org.json.JSONArray?, senderIp: String) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, senderIp: String) {
         try {
             removeFloatingWindow()
 
@@ -125,6 +126,7 @@ class UdpReceiverService : Service() {
             val nameText = floatingView?.findViewById<TextView>(R.id.nameText)
             val messageText = floatingView?.findViewById<TextView>(R.id.messageText)
             val profileImage = floatingView?.findViewById<ImageView>(R.id.profileImage)
+            val appIconBadge = floatingView?.findViewById<ImageView>(R.id.appIconBadge)
             val closeButton = floatingView?.findViewById<ImageButton>(R.id.closeButton)
             val actionsContainer = floatingView?.findViewById<LinearLayout>(R.id.actionsContainer)
 
@@ -138,6 +140,17 @@ class UdpReceiverService : Service() {
                     profileImage?.setImageBitmap(bitmap)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to decode base64 image", e)
+                }
+            }
+
+            if (!appIconBase64.isNullOrEmpty()) {
+                try {
+                    val imageBytes = Base64.decode(appIconBase64, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    appIconBadge?.setImageBitmap(bitmap)
+                    appIconBadge?.visibility = View.VISIBLE
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to decode app icon", e)
                 }
             }
 

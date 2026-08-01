@@ -14,28 +14,46 @@
         android:layout_height="wrap_content"
         android:padding="20dp">
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/imageWrapper"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+        <RelativeLayout
+            android:id="@+id/imageContainer"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
             android:layout_centerVertical="true"
-            android:layout_alignParentStart="true"
-            app:cardCornerRadius="32dp"
-            app:cardBackgroundColor="@color/float_image_bg"
-            app:cardElevation="0dp">
+            android:layout_alignParentStart="true">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/imageWrapper"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_centerInParent="true"
+                app:cardCornerRadius="32dp"
+                app:cardBackgroundColor="@color/float_image_bg"
+                app:cardElevation="0dp">
+
+                <ImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_gallery" />
+            </androidx.cardview.widget.CardView>
 
             <ImageView
-                android:id="@+id/profileImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@android:drawable/ic_menu_gallery" />
-        </androidx.cardview.widget.CardView>
+                android:id="@+id/appIconBadge"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginBottom="0dp"
+                android:layout_marginEnd="0dp"
+                android:elevation="4dp"
+                android:visibility="gone" />
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/imageWrapper"
+            android:layout_toEndOf="@id/imageContainer"
             android:layout_toStartOf="@id/closeButton"
             android:layout_centerVertical="true"
             android:layout_marginStart="16dp"
