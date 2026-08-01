@@ -13,6 +13,7 @@ import android.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.net.DatagramPacket
@@ -80,7 +81,7 @@ class NotificationSenderService : NotificationListenerService() {
             try {
                 actionSocket = DatagramSocket(8889)
                 val buffer = ByteArray(4096)
-                while (kotlinx.coroutines.isActive) {
+                while (isActive) {
                     val packet = DatagramPacket(buffer, buffer.size)
                     actionSocket.receive(packet)
                     val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
