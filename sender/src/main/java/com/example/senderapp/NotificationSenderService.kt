@@ -30,6 +30,8 @@ class NotificationSenderService : NotificationListenerService() {
     private val TARGET_PACKAGES = listOf(
         "jp.naver.line.android", 
         "com.facebook.orca",
+        "com.facebook.katana",
+        "com.facebook.lite",
         "org.telegram.messenger",
         "com.google.android.gm",
         "com.whatsapp"
@@ -72,7 +74,14 @@ class NotificationSenderService : NotificationListenerService() {
 
         // Extract title (Name) and text (Message)
         val title = extras.getString(Notification.EXTRA_TITLE)?.trim() ?: ""
-        val text = extras.getString(Notification.EXTRA_TEXT)?.trim() ?: ""
+        var text = extras.getString(Notification.EXTRA_TEXT)?.trim() ?: ""
+
+        if (packageName == "com.facebook.katana" || packageName == "com.facebook.lite") {
+            if (text.isNotEmpty()) {
+                text += "\n\n"
+            }
+            text += "⚠️ ขณะนี้กำลังขับขี่ยานพาหนะ เพื่อความปลอดภัยโปรดระมัดระวังในการใช้งาน"
+        }
 
         // 3. Ignore completely empty notifications
         if (title.isEmpty() && text.isEmpty()) {
