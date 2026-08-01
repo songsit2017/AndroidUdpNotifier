@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create GitHub Releases
 
     steps:
     - uses: actions/checkout@v4
@@ -28,14 +30,22 @@ jobs:
     - name: Build Debug APKs
       run: gradle assembleDebug
       
-    - name: Upload Sender APK
-      uses: actions/upload-artifact@v4
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
       with:
-        name: Sender-App-APK
-        path: sender/build/outputs/apk/**/*.apk
-        
-    - name: Upload Receiver APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Receiver-App-APK
-        path: receiver/build/outputs/apk/**/*.apk
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release v1.0.${{ github.run_number }}
+        body: |
+          🎉 **New Auto-Release for Android Udp Notifier**
+          
+          📝 **อัปเดตใหม่ (Commit Message):**
+          ${{ github.event.head_commit.message }}
+          
+          📌 **Build Number:** #${{ github.run_number }}
+          🤖 อัปโหลดไฟล์ APK ล่าสุดให้ดาวน์โหลดด้านล่างนี้เลยครับ
+        files: |
+          sender/build/outputs/apk/debug/sender-debug.apk
+          receiver/build/outputs/apk/debug/receiver-debug.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
