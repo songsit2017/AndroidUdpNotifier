@@ -24,7 +24,10 @@ class NotificationSenderService : NotificationListenerService() {
     // Target Packages
     private val TARGET_PACKAGES = listOf(
         "jp.naver.line.android", 
-        "com.facebook.orca"
+        "com.facebook.orca",
+        "org.telegram.messenger",
+        "com.google.android.gm",
+        "com.whatsapp"
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
