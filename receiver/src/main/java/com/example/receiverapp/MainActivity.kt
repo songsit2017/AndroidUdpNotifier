@@ -103,6 +103,10 @@ class MainActivity : AppCompatActivity() {
         val switchMedia = findViewById<Switch>(R.id.switchMedia)
         val switchBattery = findViewById<Switch>(R.id.switchBattery)
         val switchDND = findViewById<Switch>(R.id.switchDND)
+        val switchVIP = findViewById<Switch>(R.id.switchVIP)
+        val switchETA = findViewById<Switch>(R.id.switchETA)
+        val switchFatigue = findViewById<Switch>(R.id.switchFatigue)
+        val switchSpeed = findViewById<Switch>(R.id.switchSpeed)
         val btnFindPhone = findViewById<Button>(R.id.btnFindPhone)
 
         btnFindPhone.setOnClickListener {
@@ -138,6 +142,10 @@ class MainActivity : AppCompatActivity() {
         switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
         switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
         switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
+        switchVIP.isChecked = prefs.getBoolean("PREF_VIP_MODE", true)
+        switchETA.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
+        switchFatigue.isChecked = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
+        switchSpeed.isChecked = prefs.getBoolean("PREF_SPEED_WARNING", true)
 
         // Save on change
         val listener = { key: String, isChecked: Boolean ->
@@ -149,6 +157,10 @@ class MainActivity : AppCompatActivity() {
         switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
         switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
         switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
+        switchVIP.setOnCheckedChangeListener { _, c -> listener("PREF_VIP_MODE", c) }
+        switchETA.setOnCheckedChangeListener { _, c -> listener("PREF_SHARE_ETA", c) }
+        switchFatigue.setOnCheckedChangeListener { _, c -> listener("PREF_FATIGUE_ALERT", c) }
+        switchSpeed.setOnCheckedChangeListener { _, c -> listener("PREF_SPEED_WARNING", c) }
 
         val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
         val themes = arrayOf("Classic", "Honda Type-R", "BMW M", "Tesla")

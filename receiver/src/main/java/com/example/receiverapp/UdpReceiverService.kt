@@ -68,8 +68,11 @@ class UdpReceiverService : Service() {
             while(isActive) {
                 delay(60 * 1000)
                 if (System.currentTimeMillis() - serviceStartTime > 2 * 60 * 60 * 1000) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        showFatigueWarning()
+                    val isFatigueEnabled = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
+                    if (isFatigueEnabled) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            showFatigueWarning()
+                        }
                     }
                     serviceStartTime = System.currentTimeMillis()
                 }
@@ -79,7 +82,9 @@ class UdpReceiverService : Service() {
         // Speed monitoring
         try {
             locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            val isSpeedWarningEnabled = prefs.getBoolean("PREF_SPEED_WARNING", true)
+            
+            if (isSpeedWarningEnabled && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val speedKmh = location.speed * 3.6f
@@ -160,7 +165,8 @@ class UdpReceiverService : Service() {
             
             val textContentLower = text.lowercase()
             val titleContentLower = name.lowercase()
-            val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { textContentLower.contains(it) || titleContentLower.contains(it) }
+            val isVipModeEnabled = prefs.getBoolean("PREF_VIP_MODE", true)
+            val isVip = isVipModeEnabled && listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { textContentLower.contains(it) || titleContentLower.contains(it) }
 
             val isDndEnabled = prefs.getBoolean("PREF_DND", false)
             if (isDndEnabled && type != "clipboard" && type != "battery" && !isVip) {
@@ -335,7 +341,8 @@ class UdpReceiverService : Service() {
                 actionsContainer?.visibility = View.VISIBLE
                 
                 val isLocationRequest = listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน").any { text.contains(it) }
-                if (isLocationRequest) {
+                val isShareEtaEnabled = prefs.getBoolean("PREF_SHARE_ETA", true)
+                if (isLocationRequest && isShareEtaEnabled) {
                     val shareEtaBtn = Button(themeContext).apply {
                         this.text = "🚗 ส่งพิกัดบอก"
                         this.isAllCaps = false
