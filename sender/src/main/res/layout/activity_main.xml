@@ -26,4 +26,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ไปที่หน้าเปิดสิทธิ์การแจ้งเตือน" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp">
+        <TextView
+            android:id="@+id/tvLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Waiting for notifications..."
+            android:textSize="12sp"
+            android:fontFamily="monospace"/>
+    </ScrollView>
 </LinearLayout>

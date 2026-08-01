@@ -75,10 +75,15 @@ class UdpReceiverService : Service() {
 
                 while (isActive) {
                     val packet = DatagramPacket(buffer, buffer.size)
-                    socket?.receive(packet)
-
-                    val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                    parseAndDisplayData(jsonString)
+                    try {
+                        socket?.receive(packet)
+                        val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
+                        Log.d(TAG, "Received: $jsonString")
+                        AppLogger.log("Received data: ${jsonString.take(100)}...")
+                        parseAndDisplayData(jsonString)
+                    } catch (e: Exception) {
+                        if (isActive) Log.e(TAG, "Error receiving packet", e)
+                    }
                 }
             } catch (e: Exception) {
                 if (e !is CancellationException) Log.e(TAG, "UDP Listener Error", e)

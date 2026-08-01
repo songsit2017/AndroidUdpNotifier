@@ -7,15 +7,26 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     private val OVERLAY_PERMISSION_REQ_CODE = 1234
+    private lateinit var tvLog: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        tvLog = findViewById(R.id.tvLog)
+
+        AppLogger.listener = { message ->
+            val currentText = tvLog.text.toString()
+            val newText = "$message\n\n$currentText"
+            tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
+        }
 
         requestIgnoreBatteryOptimizations()
         checkOverlayPermissionAndStart()
@@ -57,5 +68,10 @@ class MainActivity : AppCompatActivity() {
     private fun startUdpService() {
         val serviceIntent = Intent(this, UdpReceiverService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AppLogger.listener = null
     }
 }

@@ -4,9 +4,37 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical">
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Receiver App is Running in the Background"
         android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/btnRequestOverlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Grant Overlay Permission"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnRequestBattery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Grant Battery Exemption" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="24dp">
+        <TextView
+            android:id="@+id/tvLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Waiting for UDP data on Port 8888..."
+            android:textSize="12sp"
+            android:fontFamily="monospace"/>
+    </ScrollView>
 </LinearLayout>

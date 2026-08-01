@@ -123,26 +123,53 @@ class NotificationSenderService : NotificationListenerService() {
         }
     }
 
+    private fun getBroadcastAddresses(): List<InetAddress> {
+        val broadcastList = mutableListOf<InetAddress>()
+        try {
+            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val networkInterface = interfaces.nextElement()
+                if (networkInterface.isLoopback || !networkInterface.isUp) continue
+
+                for (interfaceAddress in networkInterface.interfaceAddresses) {
+                    val broadcast = interfaceAddress.broadcast
+                    if (broadcast != null) {
+                        broadcastList.add(broadcast)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        if (broadcastList.isEmpty()) {
+            broadcastList.add(InetAddress.getByName("255.255.255.255"))
+        }
+        return broadcastList
+    }
+
     private fun sendUdpBroadcast(payload: String) {
-        // Run network operation in the background
+        AppLogger.log("Intercepted: $payload")
+        
         CoroutineScope(Dispatchers.IO).launch {
             var socket: DatagramSocket? = null
             try {
                 socket = DatagramSocket()
                 socket.broadcast = true
-
                 val payloadBytes = payload.toByteArray(Charsets.UTF_8)
-                
-                // Using standard broadcast IP address.
-                // Depending on the router, calculating the local subnet broadcast address (e.g. 192.168.1.255) is safer, 
-                // but 255.255.255.255 often works for simple LAN setups.
-                val address = InetAddress.getByName("255.255.255.255")
                 val port = 8888
                 
-                val packet = DatagramPacket(payloadBytes, payloadBytes.size, address, port)
-                socket.send(packet)
-                
-                println("Broadcast Sent: $payload")
+                val broadcastAddresses = getBroadcastAddresses()
+                for (address in broadcastAddresses) {
+                    try {
+                        val packet = DatagramPacket(payloadBytes, payloadBytes.size, address, port)
+                        socket.send(packet)
+                        println("Broadcast Sent to $address: $payload")
+                        AppLogger.log("Broadcast Sent to $address")
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        AppLogger.log("Broadcast failed to $address: ${e.message}")
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
