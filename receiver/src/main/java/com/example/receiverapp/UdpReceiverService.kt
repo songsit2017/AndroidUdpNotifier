@@ -53,6 +53,7 @@ class UdpReceiverService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         
         tts = TextToSpeech(this) { status ->
@@ -84,7 +85,7 @@ class UdpReceiverService : Service() {
             locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val isSpeedWarningEnabled = prefs.getBoolean("PREF_SPEED_WARNING", true)
             
-            if (isSpeedWarningEnabled && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (isSpeedWarningEnabled && ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val speedKmh = location.speed * 3.6f
