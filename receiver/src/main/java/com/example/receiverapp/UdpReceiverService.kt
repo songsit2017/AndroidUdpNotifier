@@ -16,9 +16,12 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.graphics.Color
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -80,7 +83,8 @@ class UdpReceiverService : Service() {
                         val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
                         Log.d(TAG, "Received: $jsonString")
                         AppLogger.log("Received data: ${jsonString.take(100)}...")
-                        parseAndDisplayData(jsonString)
+                        val senderIp = packet.address.hostAddress ?: ""
+                        parseAndDisplayData(jsonString, senderIp)
                     } catch (e: Exception) {
                         if (isActive) Log.e(TAG, "Error receiving packet", e)
                     }
@@ -91,23 +95,24 @@ class UdpReceiverService : Service() {
         }
     }
 
-    private fun parseAndDisplayData(jsonString: String) {
+    private fun parseAndDisplayData(jsonString: String, senderIp: String) {
         try {
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
             val base64Image = if (jsonObject.isNull("imageBase64")) null else jsonObject.getString("imageBase64")
+            val actionsArray = jsonObject.optJSONArray("actions")
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, type)
+                showFloatingWindow(name, text, base64Image, type, actionsArray, senderIp)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, type: String) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, type: String, actionsArray: org.json.JSONArray?, senderIp: String) {
         try {
             removeFloatingWindow()
 
@@ -117,25 +122,52 @@ class UdpReceiverService : Service() {
             
             floatingView = inflater.inflate(R.layout.floating_notification, null)
 
-        val nameText = floatingView?.findViewById<TextView>(R.id.nameText)
-        val messageText = floatingView?.findViewById<TextView>(R.id.messageText)
-        val profileImage = floatingView?.findViewById<ImageView>(R.id.profileImage)
-        val closeButton = floatingView?.findViewById<ImageButton>(R.id.closeButton)
+            val nameText = floatingView?.findViewById<TextView>(R.id.nameText)
+            val messageText = floatingView?.findViewById<TextView>(R.id.messageText)
+            val profileImage = floatingView?.findViewById<ImageView>(R.id.profileImage)
+            val closeButton = floatingView?.findViewById<ImageButton>(R.id.closeButton)
+            val actionsContainer = floatingView?.findViewById<LinearLayout>(R.id.actionsContainer)
 
-        nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
-        messageText?.text = text.ifEmpty { "Incoming $type" }
+            nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
+            messageText?.text = text.ifEmpty { "Incoming $type" }
 
-        if (!base64Image.isNullOrEmpty()) {
-            try {
-                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                profileImage?.setImageBitmap(bitmap)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to decode base64 image", e)
+            if (!base64Image.isNullOrEmpty()) {
+                try {
+                    val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    profileImage?.setImageBitmap(bitmap)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to decode base64 image", e)
+                }
             }
-        }
 
-        closeButton?.setOnClickListener { removeFloatingWindow() }
+            if (actionsArray != null && actionsArray.length() > 0) {
+                actionsContainer?.visibility = View.VISIBLE
+                for (i in 0 until actionsArray.length()) {
+                    val actionJson = actionsArray.getJSONObject(i)
+                    val actionId = actionJson.getString("id")
+                    val actionTitle = actionJson.getString("title")
+
+                    val btn = Button(themeContext).apply {
+                        this.text = actionTitle
+                        this.isAllCaps = false
+                        this.setOnClickListener {
+                            sendActionCommand(senderIp, actionId)
+                            if (actionTitle.contains("Reject", true) || actionTitle.contains("Decline", true) || actionTitle.contains("วาง", true)) {
+                                removeFloatingWindow()
+                            }
+                        }
+                    }
+                    val lp = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { marginEnd = 16 }
+                    
+                    actionsContainer?.addView(btn, lp)
+                }
+            }
+
+            closeButton?.setOnClickListener { removeFloatingWindow() }
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -156,9 +188,11 @@ class UdpReceiverService : Service() {
 
         try {
             windowManager?.addView(floatingView, params)
-            autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
-                delay(8000)
-                removeFloatingWindow()
+            if (type != "call") {
+                autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
+                    delay(8000)
+                    removeFloatingWindow()
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add floating view", e)
@@ -167,6 +201,25 @@ class UdpReceiverService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Fatal Error in showFloatingWindow: ", e)
             AppLogger.log("Crash avoided in showFloatingWindow: ${e.message}")
+        }
+    }
+    
+    private fun sendActionCommand(ip: String, actionId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val socket = DatagramSocket()
+                val json = JSONObject().apply {
+                    put("actionId", actionId)
+                }.toString()
+                val payload = json.toByteArray(Charsets.UTF_8)
+                val address = java.net.InetAddress.getByName(ip)
+                val packet = DatagramPacket(payload, payload.size, address, 8889)
+                socket.send(packet)
+                socket.close()
+                AppLogger.log("Sent action $actionId to $ip")
+            } catch (e: Exception) {
+                AppLogger.log("Failed to send action: ${e.message}")
+            }
         }
     }
 

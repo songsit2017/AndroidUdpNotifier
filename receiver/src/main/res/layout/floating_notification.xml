@@ -63,6 +63,15 @@
                 android:maxLines="2"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif" />
+                
+            <LinearLayout
+                android:id="@+id/actionsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:visibility="gone" />
         </LinearLayout>
 
         <ImageButton

@@ -18,8 +18,13 @@ import java.io.ByteArrayOutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.util.concurrent.ConcurrentHashMap
+import java.util.UUID
+import android.app.PendingIntent
 
 class NotificationSenderService : NotificationListenerService() {
+    private var listenJob: kotlinx.coroutines.Job? = null
+    private val pendingIntents = ConcurrentHashMap<String, PendingIntent>()
 
     // Target Packages
     private val TARGET_PACKAGES = listOf(
@@ -63,6 +68,22 @@ class NotificationSenderService : NotificationListenerService() {
         // Extract and compress Image
         val imageBase64 = extractAndCompressImage(notification, this)
 
+        // Extract Actions
+        val actionsArray = org.json.JSONArray()
+        notification.actions?.forEach { action ->
+            val actionTitle = action.title?.toString()
+            val intent = action.actionIntent
+            if (actionTitle != null && intent != null) {
+                val id = UUID.randomUUID().toString()
+                pendingIntents[id] = intent
+                val actionJson = JSONObject().apply {
+                    put("id", id)
+                    put("title", actionTitle)
+                }
+                actionsArray.put(actionJson)
+            }
+        }
+
         // Build JSON Payload
         val jsonPayload = JSONObject().apply {
             put("type", type)
@@ -70,6 +91,7 @@ class NotificationSenderService : NotificationListenerService() {
             put("name", title)
             put("text", text)
             put("imageBase64", imageBase64 ?: JSONObject.NULL)
+            put("actions", actionsArray)
         }.toString()
 
         // Send via UDP Broadcast
