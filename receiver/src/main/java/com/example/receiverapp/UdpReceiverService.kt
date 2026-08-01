@@ -337,11 +337,11 @@ class UdpReceiverService : Service() {
                 val isLocationRequest = listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน").any { text.contains(it) }
                 if (isLocationRequest) {
                     val shareEtaBtn = Button(themeContext).apply {
-                        text = "🚗 ส่งพิกัดบอก"
-                        isAllCaps = false
-                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF9800"))
-                        setTextColor(android.graphics.Color.WHITE)
-                        setOnClickListener {
+                        this.text = "🚗 ส่งพิกัดบอก"
+                        this.isAllCaps = false
+                        this.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF9800"))
+                        this.setTextColor(android.graphics.Color.WHITE)
+                        this.setOnClickListener {
                             sendActionCommand(senderIp, "share_eta", replyActionId)
                             removeFloatingWindow()
                         }
@@ -354,11 +354,11 @@ class UdpReceiverService : Service() {
                 }
 
                 val voiceBtn = Button(themeContext).apply {
-                    text = "🎙️ พูดเพื่อตอบ"
-                    isAllCaps = false
-                    backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
-                    setTextColor(android.graphics.Color.WHITE)
-                    setOnClickListener {
+                    this.text = "🎙️ พูดเพื่อตอบ"
+                    this.isAllCaps = false
+                    this.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                    this.setTextColor(android.graphics.Color.WHITE)
+                    this.setOnClickListener {
                         val intent = android.content.Intent(this@UdpReceiverService, VoiceReplyActivity::class.java)
                         intent.putExtra("actionId", replyActionId)
                         intent.putExtra("senderIp", senderIp)
