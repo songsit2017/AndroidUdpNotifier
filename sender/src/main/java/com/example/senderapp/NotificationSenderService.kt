@@ -90,6 +90,35 @@ class NotificationSenderService : NotificationListenerService() {
                     val actionId = json.optString("actionId")
                     val replyText = json.optString("text", "")
                     
+                    if (actionId == "share_eta") {
+                        var lat = ""
+                        var lon = ""
+                        try {
+                            val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+                            if (androidx.core.content.ContextCompat.checkSelfPermission(this@NotificationSenderService, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                                val lastLocation = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                                    ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                                if (lastLocation != null) {
+                                    lat = lastLocation.latitude.toString()
+                                    lon = lastLocation.longitude.toString()
+                                }
+                            }
+                        } catch (e: Exception) {}
+
+                        val action = pendingIntents[replyText]
+                        if (action != null && action.remoteInputKey != null) {
+                            val etaText = if (lat.isEmpty()) "📍 แชร์พิกัด: ไม่สามารถดึงพิกัดได้ (ยังไม่เปิดสิทธิ์)" else "📍 ตอนนี้อยู่พิกัด: https://maps.google.com/?q=$lat,$lon 🚗💨"
+                            val intent = Intent()
+                            val bundle = android.os.Bundle()
+                            bundle.putCharSequence(action.remoteInputKey, etaText)
+                            val remoteInput = android.app.RemoteInput.Builder(action.remoteInputKey).build()
+                            android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
+                            action.intent.send(this@NotificationSenderService, 0, intent)
+                            AppLogger.log("✅ Sent ETA Reply: $etaText")
+                        }
+                        continue
+                    }
+
                     if (actionId == "find_phone") {
                         AppLogger.log("🚨 Find Phone triggered!")
                         try {

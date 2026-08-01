@@ -29,6 +29,10 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import android.speech.tts.TextToSpeech
 import java.util.Locale
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
 
 class UdpReceiverService : Service() {
 
@@ -43,6 +47,9 @@ class UdpReceiverService : Service() {
     private var floatingView: View? = null
     private var autoDismissJob: Job? = null
     private var tts: TextToSpeech? = null
+    private var serviceStartTime = 0L
+    private var locationManager: LocationManager? = null
+    private var isSpeedWarningActive = false
 
     override fun onCreate() {
         super.onCreate()
@@ -52,6 +59,41 @@ class UdpReceiverService : Service() {
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale("th", "TH")
             }
+        }
+        
+        serviceStartTime = System.currentTimeMillis()
+        
+        // Fatigue monitoring
+        CoroutineScope(Dispatchers.IO).launch {
+            while(isActive) {
+                delay(60 * 1000)
+                if (System.currentTimeMillis() - serviceStartTime > 2 * 60 * 60 * 1000) {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showFatigueWarning()
+                    }
+                    serviceStartTime = System.currentTimeMillis()
+                }
+            }
+        }
+        
+        // Speed monitoring
+        try {
+            locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
+                    override fun onLocationChanged(location: Location) {
+                        val speedKmh = location.speed * 3.6f
+                        if (speedKmh > 120 && !isSpeedWarningActive) {
+                            showSpeedWarning()
+                        }
+                    }
+                    override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                    override fun onProviderEnabled(provider: String) {}
+                    override fun onProviderDisabled(provider: String) {}
+                })
+            }
+        } catch(e: Exception) {
+            e.printStackTrace()
         }
         
         startForegroundNotification()
@@ -113,10 +155,20 @@ class UdpReceiverService : Service() {
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
 
+            val name = jsonObject.optString("name", "Unknown Caller")
+            val text = jsonObject.optString("text", "")
+            
+            val textContentLower = text.lowercase()
+            val titleContentLower = name.lowercase()
+            val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { textContentLower.contains(it) || titleContentLower.contains(it) }
+
             val isDndEnabled = prefs.getBoolean("PREF_DND", false)
-            if (isDndEnabled && type != "clipboard" && type != "battery") {
+            if (isDndEnabled && type != "clipboard" && type != "battery" && !isVip) {
                 AppLogger.log("🔕 DND Mode is ON. Ignored incoming notification.")
                 return
+            }
+            if (isVip && type == "message" && isDndEnabled) {
+                AppLogger.log("🚨 VIP MESSAGE BYPASSED DND!")
             }
             
             if (type == "clipboard") {
@@ -168,8 +220,6 @@ class UdpReceiverService : Service() {
                 if (!isMediaEnabled) return
             }
 
-            val name = jsonObject.optString("name", "Unknown Caller")
-            val text = jsonObject.optString("text", "")
             val base64Image = if (jsonObject.isNull("imageBase64")) null else jsonObject.getString("imageBase64")
             val appIconBase64 = if (jsonObject.isNull("appIconBase64")) null else jsonObject.getString("appIconBase64")
             val actionsArray = jsonObject.optJSONArray("actions")
@@ -207,7 +257,28 @@ class UdpReceiverService : Service() {
             val actionsContainer = floatingView?.findViewById<LinearLayout>(R.id.actionsContainer)
 
             nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
+            
+            val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { text.lowercase().contains(it) || name.lowercase().contains(it) }
+            if (isVip) {
+                nameText?.text = "🚨 [VIP] ${nameText?.text}"
+                nameText?.setTextColor(android.graphics.Color.parseColor("#FF5252"))
+            }
+            
             messageText?.text = text.ifEmpty { "Incoming $type" }
+
+            val cardView = floatingView as? androidx.cardview.widget.CardView
+            val themePref = prefs.getString("PREF_THEME", "Classic") ?: "Classic"
+            when (themePref) {
+                "Honda Type-R" -> cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#DDCC0000"))
+                "BMW M" -> cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#DD0033A0"))
+                "Tesla" -> {
+                    cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#F5FFFFFF"))
+                    nameText?.setTextColor(if (isVip) android.graphics.Color.parseColor("#FF5252") else android.graphics.Color.BLACK)
+                    messageText?.setTextColor(android.graphics.Color.DKGRAY)
+                    closeButton?.setColorFilter(android.graphics.Color.BLACK)
+                }
+                else -> cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#E6222222"))
+            }
 
             if (!base64Image.isNullOrEmpty()) {
                 try {
@@ -263,6 +334,25 @@ class UdpReceiverService : Service() {
             if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
                 actionsContainer?.visibility = View.VISIBLE
                 
+                val isLocationRequest = listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน").any { text.contains(it) }
+                if (isLocationRequest) {
+                    val shareEtaBtn = Button(themeContext).apply {
+                        text = "🚗 ส่งพิกัดบอก"
+                        isAllCaps = false
+                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF9800"))
+                        setTextColor(android.graphics.Color.WHITE)
+                        setOnClickListener {
+                            sendActionCommand(senderIp, "share_eta", replyActionId)
+                            removeFloatingWindow()
+                        }
+                    }
+                    val lp = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { marginEnd = 16 }
+                    actionsContainer?.addView(shareEtaBtn, lp)
+                }
+
                 val voiceBtn = Button(themeContext).apply {
                     text = "🎙️ พูดเพื่อตอบ"
                     isAllCaps = false
@@ -355,6 +445,25 @@ class UdpReceiverService : Service() {
                 }
             }
 
+            if (type == "fatigue") {
+                actionsContainer?.visibility = View.VISIBLE
+                val btn = Button(themeContext).apply {
+                    text = "⛽ หาปั๊มน้ำมันใกล้ฉัน"
+                    isAllCaps = false
+                    setOnClickListener {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=ปั๊มน้ำมัน"))
+                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                        removeFloatingWindow()
+                    }
+                }
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = 16 }
+                actionsContainer?.addView(btn, lp)
+            }
+
             closeButton?.setOnClickListener { removeFloatingWindow() }
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -421,6 +530,34 @@ class UdpReceiverService : Service() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error removing view", e)
+        }
+    }
+
+    private fun showFatigueWarning() {
+        showFloatingWindow("☕ เตือนพักสายตา", "คุณขับรถต่อเนื่องมา 2 ชั่วโมงแล้ว แวะพักยืดเส้นยืดสายหน่อยไหมครับ?", null, null, "fatigue", null, null, "")
+    }
+
+    private fun showSpeedWarning() {
+        isSpeedWarningActive = true
+        CoroutineScope(Dispatchers.Main).launch {
+            val view = View(this@UdpReceiverService)
+            view.setBackgroundColor(Color.parseColor("#66FF0000"))
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT
+            )
+            try {
+                windowManager?.addView(view, params)
+                for(i in 1..6) {
+                    view.visibility = if(i%2==0) View.VISIBLE else View.INVISIBLE
+                    delay(300)
+                }
+                windowManager?.removeView(view)
+            } catch(e: Exception) {}
+            isSpeedWarningActive = false
         }
     }
 

@@ -10,6 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Switch
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.view.View
+import android.widget.AdapterView
 import android.content.Context
 import androidx.core.content.ContextCompat
 
@@ -30,9 +34,26 @@ class MainActivity : AppCompatActivity() {
             tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
         }
 
+        val btnRequestOverlay = findViewById<Button>(R.id.btnRequestOverlay)
+        btnRequestOverlay.setOnClickListener {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+            startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE)
+        }
+
+        val btnRequestBattery = findViewById<Button>(R.id.btnRequestBattery)
+        btnRequestBattery.setOnClickListener {
+            requestIgnoreBatteryOptimizations()
+        }
+
+        val btnRequestLocation = findViewById<Button>(R.id.btnRequestLocation)
+        btnRequestLocation.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+            }
+        }
+
         setupSettings()
 
-        requestIgnoreBatteryOptimizations()
         checkOverlayPermissionAndStart()
     }
 
@@ -127,6 +148,22 @@ class MainActivity : AppCompatActivity() {
         switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
         switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
         switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
+
+        val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
+        val themes = arrayOf("Classic", "Honda Type-R", "BMW M", "Tesla")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, themes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTheme.adapter = adapter
+
+        val currentTheme = prefs.getString("PREF_THEME", "Classic")
+        spinnerTheme.setSelection(themes.indexOf(currentTheme))
+
+        spinnerTheme.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                prefs.edit().putString("PREF_THEME", themes[position]).apply()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
     }
 
     override fun onDestroy() {
