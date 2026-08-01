@@ -9,6 +9,8 @@ import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Switch
+import android.content.Context
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +29,8 @@ class MainActivity : AppCompatActivity() {
             val newText = "$message\n\n$currentText"
             tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
         }
+
+        setupSettings()
 
         requestIgnoreBatteryOptimizations()
         checkOverlayPermissionAndStart()
@@ -68,6 +72,33 @@ class MainActivity : AppCompatActivity() {
     private fun startUdpService() {
         val serviceIntent = Intent(this, UdpReceiverService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
+    private fun setupSettings() {
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val switchQuickReply = findViewById<Switch>(R.id.switchQuickReply)
+        val switchTTS = findViewById<Switch>(R.id.switchTTS)
+        val switchMedia = findViewById<Switch>(R.id.switchMedia)
+        val switchBattery = findViewById<Switch>(R.id.switchBattery)
+        val switchDND = findViewById<Switch>(R.id.switchDND)
+
+        // Load saved or defaults
+        switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
+        switchTTS.isChecked = prefs.getBoolean("PREF_TTS", true)
+        switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
+        switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
+        switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
+
+        // Save on change
+        val listener = { key: String, isChecked: Boolean ->
+            prefs.edit().putBoolean(key, isChecked).apply()
+        }
+        
+        switchQuickReply.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
+        switchTTS.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
+        switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
+        switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
+        switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
     }
 
     override fun onDestroy() {

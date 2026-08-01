@@ -27,6 +27,8 @@ import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 
 class UdpReceiverService : Service() {
 
@@ -40,10 +42,18 @@ class UdpReceiverService : Service() {
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
     private var autoDismissJob: Job? = null
+    private var tts: TextToSpeech? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale("th", "TH")
+            }
+        }
+        
         startForegroundNotification()
         startUdpListener()
     }
@@ -97,25 +107,56 @@ class UdpReceiverService : Service() {
 
     private fun parseAndDisplayData(jsonString: String, senderIp: String) {
         try {
+            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            val isDndEnabled = prefs.getBoolean("PREF_DND", false)
+            if (isDndEnabled) {
+                AppLogger.log("🔕 DND Mode is ON. Ignored incoming notification.")
+                return
+            }
+
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
+            
+            if (type == "battery") {
+                val isBatteryEnabled = prefs.getBoolean("PREF_BATTERY", true)
+                if (isBatteryEnabled) {
+                    val level = jsonObject.optInt("level", 20)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, senderIp)
+                    }
+                }
+                return
+            }
+
+            if (type == "media") {
+                val isMediaEnabled = prefs.getBoolean("PREF_MEDIA", true)
+                if (!isMediaEnabled) return
+            }
+
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
             val base64Image = if (jsonObject.isNull("imageBase64")) null else jsonObject.getString("imageBase64")
             val appIconBase64 = if (jsonObject.isNull("appIconBase64")) null else jsonObject.getString("appIconBase64")
             val actionsArray = jsonObject.optJSONArray("actions")
+            val replyActionId = if (jsonObject.isNull("replyActionId")) null else jsonObject.getString("replyActionId")
+
+            val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+            if (isTtsEnabled && type == "message" && text.isNotEmpty()) {
+                tts?.speak("ข้อความจาก $name, $text", TextToSpeech.QUEUE_FLUSH, null, null)
+            }
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, senderIp)
+                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, senderIp: String) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String) {
         try {
             removeFloatingWindow()
+            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
 
             // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
             val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_Light_DarkActionBar)
@@ -180,6 +221,26 @@ class UdpReceiverService : Service() {
                 }
             }
 
+            if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
+                actionsContainer?.visibility = View.VISIBLE
+                val quickReplies = listOf("โอเค", "รับทราบ", "กำลังขับรถ")
+                for (replyText in quickReplies) {
+                    val btn = Button(themeContext).apply {
+                        text = replyText
+                        isAllCaps = false
+                        setOnClickListener {
+                            sendActionCommand(senderIp, replyActionId, replyText)
+                            removeFloatingWindow()
+                        }
+                    }
+                    val lp = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { marginEnd = 16 }
+                    actionsContainer?.addView(btn, lp)
+                }
+            }
+
             closeButton?.setOnClickListener { removeFloatingWindow() }
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -217,12 +278,13 @@ class UdpReceiverService : Service() {
         }
     }
     
-    private fun sendActionCommand(ip: String, actionId: String) {
+    private fun sendActionCommand(ip: String, actionId: String, text: String? = null) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val socket = DatagramSocket()
                 val json = JSONObject().apply {
                     put("actionId", actionId)
+                    if (text != null) put("text", text)
                 }.toString()
                 val payload = json.toByteArray(Charsets.UTF_8)
                 val address = java.net.InetAddress.getByName(ip)
@@ -252,6 +314,8 @@ class UdpReceiverService : Service() {
         super.onDestroy()
         listenJob?.cancel()
         socket?.close()
+        tts?.stop()
+        tts?.shutdown()
         CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() }
     }
 }

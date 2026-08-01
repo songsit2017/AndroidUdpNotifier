@@ -21,10 +21,17 @@ import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.UUID
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
 
 class NotificationSenderService : NotificationListenerService() {
     private var listenJob: kotlinx.coroutines.Job? = null
-    private val pendingIntents = ConcurrentHashMap<String, PendingIntent>()
+    private var actionListenJob: kotlinx.coroutines.Job? = null
+    data class PendingAction(val intent: PendingIntent, val remoteInputKey: String?)
+    private val pendingIntents = ConcurrentHashMap<String, PendingAction>()
+    private var batteryReceiver: BroadcastReceiver? = null
+    private var lastBatteryLevel = -1
 
     // Target Packages
     private val TARGET_PACKAGES = listOf(
@@ -40,11 +47,77 @@ class NotificationSenderService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         AppLogger.log("✅ Service Connected to Android System! Ready to read notifications.")
+
+        batteryReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
+                    val level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+                    if (level != -1 && level != lastBatteryLevel) {
+                        lastBatteryLevel = level
+                        if (level == 20 || level == 15 || level == 10 || level == 5) {
+                            val payload = JSONObject().apply {
+                                put("type", "battery")
+                                put("level", level)
+                            }.toString()
+                            sendUdpBroadcast(payload)
+                            AppLogger.log("🔋 Battery alert sent: $level%")
+                        }
+                    }
+                }
+            }
+        }
+        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        startActionCommandListener()
+    }
+
+    private fun startActionCommandListener() {
+        actionListenJob = CoroutineScope(Dispatchers.IO).launch {
+            var actionSocket: DatagramSocket? = null
+            try {
+                actionSocket = DatagramSocket(8889)
+                val buffer = ByteArray(4096)
+                while (kotlinx.coroutines.isActive) {
+                    val packet = DatagramPacket(buffer, buffer.size)
+                    actionSocket.receive(packet)
+                    val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
+                    AppLogger.log("Received action: $jsonString")
+                    
+                    val json = JSONObject(jsonString)
+                    val actionId = json.optString("actionId")
+                    val replyText = json.optString("text", "")
+                    
+                    val action = pendingIntents[actionId]
+                    if (action != null) {
+                        if (replyText.isNotEmpty() && action.remoteInputKey != null) {
+                            val intent = Intent()
+                            val bundle = android.os.Bundle()
+                            bundle.putCharSequence(action.remoteInputKey, replyText)
+                            val remoteInput = android.app.RemoteInput.Builder(action.remoteInputKey).build()
+                            android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
+                            action.intent.send(this@NotificationSenderService, 0, intent)
+                            AppLogger.log("✅ Sent Quick Reply: $replyText")
+                        } else {
+                            action.intent.send()
+                            AppLogger.log("✅ Executed action $actionId")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                actionSocket?.close()
+            }
+        }
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         AppLogger.log("❌ Service Disconnected from Android System.")
+        batteryReceiver?.let { 
+            unregisterReceiver(it)
+            batteryReceiver = null
+        }
+        actionListenJob?.cancel()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -91,7 +164,13 @@ class NotificationSenderService : NotificationListenerService() {
 
         // Determine if Call or Message. Most VoIP apps use CATEGORY_CALL for incoming calls.
         val isCall = notification.category == Notification.CATEGORY_CALL
-        val type = if (isCall) "call" else "message"
+        var type = if (isCall) "call" else "message"
+
+        // Check if it's a Media notification
+        val template = extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
+        if (template.contains("MediaStyle")) {
+            type = "media"
+        }
 
         // Extract and compress Image
         val imageBase64 = extractAndCompressImage(notification, this)
@@ -99,17 +178,28 @@ class NotificationSenderService : NotificationListenerService() {
 
         // Extract Actions
         val actionsArray = org.json.JSONArray()
+        var replyActionId: String? = null
+
         notification.actions?.forEach { action ->
             val actionTitle = action.title?.toString()
             val intent = action.actionIntent
+            val remoteInputs = action.remoteInputs
+
             if (actionTitle != null && intent != null) {
                 val id = UUID.randomUUID().toString()
-                pendingIntents[id] = intent
-                val actionJson = JSONObject().apply {
-                    put("id", id)
-                    put("title", actionTitle)
+                
+                if (remoteInputs != null && remoteInputs.isNotEmpty() && replyActionId == null) {
+                    val remoteInputKey = remoteInputs[0].resultKey
+                    pendingIntents[id] = PendingAction(intent, remoteInputKey)
+                    replyActionId = id
+                } else {
+                    pendingIntents[id] = PendingAction(intent, null)
+                    val actionJson = JSONObject().apply {
+                        put("id", id)
+                        put("title", actionTitle)
+                    }
+                    actionsArray.put(actionJson)
                 }
-                actionsArray.put(actionJson)
             }
         }
 
@@ -122,6 +212,9 @@ class NotificationSenderService : NotificationListenerService() {
             put("imageBase64", imageBase64 ?: JSONObject.NULL)
             put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
             put("actions", actionsArray)
+            if (replyActionId != null) {
+                put("replyActionId", replyActionId)
+            }
         }.toString()
 
         // Send via UDP Broadcast

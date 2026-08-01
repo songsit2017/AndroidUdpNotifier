@@ -24,6 +24,21 @@
         android:layout_height="wrap_content"
         android:text="Grant Battery Exemption" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#11000000"
+        android:layout_margin="16dp">
+        
+        <Switch android:id="@+id/switchQuickReply" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Quick Replies (ตอบกลับด่วน)" android:checked="true" android:padding="8dp"/>
+        <Switch android:id="@+id/switchTTS" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. Text-to-Speech (อ่านข้อความด้วยเสียง)" android:checked="true" android:padding="8dp"/>
+        <Switch android:id="@+id/switchMedia" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. Now Playing Overlay (โชว์เพลงที่กำลังเล่น)" android:checked="true" android:padding="8dp"/>
+        <Switch android:id="@+id/switchBattery" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4. Battery Alerts (แจ้งเตือนแบตใกล้หมด)" android:checked="true" android:padding="8dp"/>
+        <Switch android:id="@+id/switchDND" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="5. Do Not Disturb (โหมดห้ามรบกวน/ปิดแจ้งเตือน)" android:checked="false" android:padding="8dp"/>
+    </LinearLayout>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
