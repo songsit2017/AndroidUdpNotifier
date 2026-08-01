@@ -55,11 +55,30 @@ class NotificationSenderService : NotificationListenerService() {
         }
 
         val notification = sbn.notification
+
+        // 1. Ignore ongoing background services (like "Chat heads active")
+        if ((notification.flags and Notification.FLAG_ONGOING_EVENT) != 0) {
+            AppLogger.log("   -> Ignored (Ongoing background event)")
+            return
+        }
+
+        // 2. Ignore group summaries (prevents duplicate spam)
+        if ((notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) {
+            AppLogger.log("   -> Ignored (Group Summary)")
+            return
+        }
+
         val extras = notification.extras
 
         // Extract title (Name) and text (Message)
-        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = extras.getString(Notification.EXTRA_TEXT) ?: ""
+        val title = extras.getString(Notification.EXTRA_TITLE)?.trim() ?: ""
+        val text = extras.getString(Notification.EXTRA_TEXT)?.trim() ?: ""
+
+        // 3. Ignore completely empty notifications
+        if (title.isEmpty() && text.isEmpty()) {
+            AppLogger.log("   -> Ignored (Empty title and text)")
+            return
+        }
 
         // Determine if Call or Message. Most VoIP apps use CATEGORY_CALL for incoming calls.
         val isCall = notification.category == Notification.CATEGORY_CALL
