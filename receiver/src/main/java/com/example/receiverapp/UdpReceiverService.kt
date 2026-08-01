@@ -376,8 +376,8 @@ class UdpReceiverService : Service() {
                 val quickReplies = listOf("โอเค", "รับทราบ", "กำลังขับรถ")
                 for (replyText in quickReplies) {
                     val btn = Button(themeContext).apply {
-                        text = replyText
-                        isAllCaps = false
+                        this.text = replyText
+                        this.isAllCaps = false
                         setOnClickListener {
                             sendActionCommand(senderIp, replyActionId, replyText)
                             removeFloatingWindow()
@@ -428,8 +428,8 @@ class UdpReceiverService : Service() {
                 )
                 for ((icon, action, color) in mediaControls) {
                     val btn = Button(themeContext).apply {
-                        text = icon
-                        isAllCaps = false
+                        this.text = icon
+                        this.isAllCaps = false
                         backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(color))
                         setTextColor(android.graphics.Color.WHITE)
                         textSize = 20f
@@ -448,8 +448,8 @@ class UdpReceiverService : Service() {
             if (type == "fatigue") {
                 actionsContainer?.visibility = View.VISIBLE
                 val btn = Button(themeContext).apply {
-                    text = "⛽ หาปั๊มน้ำมันใกล้ฉัน"
-                    isAllCaps = false
+                    this.text = "⛽ หาปั๊มน้ำมันใกล้ฉัน"
+                    this.isAllCaps = false
                     setOnClickListener {
                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=ปั๊มน้ำมัน"))
                         intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
