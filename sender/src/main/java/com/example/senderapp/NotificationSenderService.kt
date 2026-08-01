@@ -86,6 +86,27 @@ class NotificationSenderService : NotificationListenerService() {
                     val actionId = json.optString("actionId")
                     val replyText = json.optString("text", "")
                     
+                    if (actionId == "find_phone") {
+                        AppLogger.log("🚨 Find Phone triggered!")
+                        try {
+                            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                            audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM), 0)
+                            
+                            val alarmUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                            val ringtone = android.media.RingtoneManager.getRingtone(this@NotificationSenderService, alarmUri)
+                            ringtone.play()
+                            
+                            // Stop after 10 seconds
+                            CoroutineScope(Dispatchers.Main).launch {
+                                kotlinx.coroutines.delay(10000)
+                                ringtone.stop()
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        continue
+                    }
+
                     val action = pendingIntents[actionId]
                     if (action != null) {
                         if (replyText.isNotEmpty() && action.remoteInputKey != null) {

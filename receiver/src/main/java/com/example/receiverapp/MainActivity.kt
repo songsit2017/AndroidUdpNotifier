@@ -81,6 +81,34 @@ class MainActivity : AppCompatActivity() {
         val switchMedia = findViewById<Switch>(R.id.switchMedia)
         val switchBattery = findViewById<Switch>(R.id.switchBattery)
         val switchDND = findViewById<Switch>(R.id.switchDND)
+        val btnFindPhone = findViewById<Button>(R.id.btnFindPhone)
+
+        btnFindPhone.setOnClickListener {
+            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            val ip = prefs.getString("LAST_SENDER_IP", null)
+            if (ip != null) {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    try {
+                        val socket = java.net.DatagramSocket()
+                        val json = org.json.JSONObject().apply {
+                            put("actionId", "find_phone")
+                        }.toString()
+                        val payload = json.toByteArray(Charsets.UTF_8)
+                        val address = java.net.InetAddress.getByName(ip)
+                        val packet = java.net.DatagramPacket(payload, payload.size, address, 8889)
+                        socket.send(packet)
+                        socket.close()
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            android.widget.Toast.makeText(this@MainActivity, "🚨 ส่งคำสั่งค้นหามือถือแล้ว!", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            } else {
+                android.widget.Toast.makeText(this, "ยังไม่เคยได้รับข้อมูลจากมือถือเลย", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
 
         // Load saved or defaults
         switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)

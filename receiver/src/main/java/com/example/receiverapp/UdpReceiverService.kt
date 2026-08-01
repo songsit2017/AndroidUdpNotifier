@@ -108,21 +108,36 @@ class UdpReceiverService : Service() {
     private fun parseAndDisplayData(jsonString: String, senderIp: String) {
         try {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-            val isDndEnabled = prefs.getBoolean("PREF_DND", false)
-            if (isDndEnabled) {
-                AppLogger.log("🔕 DND Mode is ON. Ignored incoming notification.")
-                return
-            }
+            prefs.edit().putString("LAST_SENDER_IP", senderIp).apply()
 
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
+
+            val isDndEnabled = prefs.getBoolean("PREF_DND", false)
+            if (isDndEnabled && type != "clipboard" && type != "battery") {
+                AppLogger.log("🔕 DND Mode is ON. Ignored incoming notification.")
+                return
+            }
+            
+            if (type == "clipboard") {
+                val textContent = jsonObject.optString("text", "")
+                if (textContent.isNotEmpty()) {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("Copied Text", textContent)
+                        clipboard.setPrimaryClip(clip)
+                        android.widget.Toast.makeText(this@UdpReceiverService, "📋 วางข้อความลงคลิปบอร์ดรถแล้ว", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+                return
+            }
             
             if (type == "battery") {
                 val isBatteryEnabled = prefs.getBoolean("PREF_BATTERY", true)
                 if (isBatteryEnabled) {
                     val level = jsonObject.optInt("level", 20)
                     CoroutineScope(Dispatchers.Main).launch {
-                        showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, senderIp)
+                        showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, null, senderIp)
                     }
                 }
                 return
@@ -207,7 +222,11 @@ class UdpReceiverService : Service() {
                         this.isAllCaps = false
                         this.setOnClickListener {
                             sendActionCommand(senderIp, actionId)
-                            if (actionTitle.contains("Reject", true) || actionTitle.contains("Decline", true) || actionTitle.contains("วาง", true)) {
+                            val isReject = actionTitle.contains("Reject", true) || actionTitle.contains("Decline", true) || actionTitle.contains("วาง", true) || actionTitle.contains("ปฏิเสธ", true)
+                            if (isReject) {
+                                if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
+                                    sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับไปนะครับ 🚗")
+                                }
                                 removeFloatingWindow()
                             }
                         }
@@ -239,6 +258,34 @@ class UdpReceiverService : Service() {
                     ).apply { marginEnd = 16 }
                     actionsContainer?.addView(btn, lp)
                 }
+            }
+
+            val isMapLink = text.contains("maps.google.com") || text.contains("goo.gl/maps") || text.contains("maps.app.goo.gl")
+            if (isMapLink) {
+                actionsContainer?.visibility = View.VISIBLE
+                val btn = Button(themeContext).apply {
+                    this.text = "📍 นำทางไปที่นี่"
+                    this.isAllCaps = false
+                    this.setOnClickListener {
+                        try {
+                            val urlRegex = "(?i)\\b((?:https?://|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))".toRegex()
+                            val match = urlRegex.find(text)
+                            if (match != null) {
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(match.value))
+                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
+                                removeFloatingWindow()
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to parse maps URL", e)
+                        }
+                    }
+                }
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = 16 }
+                actionsContainer?.addView(btn, lp)
             }
 
             closeButton?.setOnClickListener { removeFloatingWindow() }
