@@ -108,10 +108,14 @@ class UdpReceiverService : Service() {
     }
 
     private fun showFloatingWindow(name: String, text: String, base64Image: String?, type: String) {
-        removeFloatingWindow()
+        try {
+            removeFloatingWindow()
 
-        val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        floatingView = inflater.inflate(R.layout.floating_notification, null)
+            // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
+            val themeContext = android.view.ContextThemeWrapper(this, R.style.Theme_AppCompat_Light_DarkActionBar)
+            val inflater = LayoutInflater.from(themeContext)
+            
+            floatingView = inflater.inflate(R.layout.floating_notification, null)
 
         val nameText = floatingView?.findViewById<TextView>(R.id.nameText)
         val messageText = floatingView?.findViewById<TextView>(R.id.messageText)
@@ -158,6 +162,11 @@ class UdpReceiverService : Service() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add floating view", e)
+        }
+        
+        } catch (e: Exception) {
+            Log.e(TAG, "Fatal Error in showFloatingWindow: ", e)
+            AppLogger.log("Crash avoided in showFloatingWindow: ${e.message}")
         }
     }
 
