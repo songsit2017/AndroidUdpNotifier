@@ -27,8 +27,20 @@ jobs:
       with:
         gradle-version: '8.4'
         
-    - name: Build Debug APKs
-      run: gradle assembleDebug
+    - name: Generate and Commit Keystore
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      run: |
+        if [ ! -f "keystore.jks" ]; then
+          keytool -genkey -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias -dname "CN=AndroidUdpNotifier, OU=Developer, O=AndroidUdpNotifier, L=Unknown, S=Unknown, C=TH" -storepass password123 -keypass password123
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add keystore.jks
+          git commit -m "Auto-generate Release Keystore [skip ci]"
+          git push
+        fi
+        
+    - name: Build Release APKs
+      run: gradle assembleRelease
       
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -45,8 +57,8 @@ jobs:
           📌 **Build Number:** #${{ github.run_number }}
           🤖 อัปโหลดไฟล์ APK ล่าสุดให้ดาวน์โหลดด้านล่างนี้เลยครับ
         files: |
-          sender/build/outputs/apk/debug/sender-debug.apk
-          receiver/build/outputs/apk/debug/receiver-debug.apk
+          sender/build/outputs/apk/release/sender-release.apk
+          receiver/build/outputs/apk/release/receiver-release.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
