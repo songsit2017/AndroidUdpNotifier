@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="float_bg">#E6121212</color> 
+    <color name="float_text_primary">#FFFFFFFF</color> 
+    <color name="float_text_secondary">#B3FFFFFF</color> 
+    <color name="float_image_bg">#33FFFFFF</color> 
+    <color name="float_icon_tint">#B3FFFFFF</color> 
+</resources>
