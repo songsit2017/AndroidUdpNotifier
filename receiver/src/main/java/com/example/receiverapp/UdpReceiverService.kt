@@ -122,6 +122,26 @@ class UdpReceiverService : Service() {
             if (type == "clipboard") {
                 val textContent = jsonObject.optString("text", "")
                 if (textContent.isNotEmpty()) {
+                    val urlRegex = "(?i)\\b((?:https?://|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))".toRegex()
+                    val isMapLink = textContent.contains("maps.google.com") || textContent.contains("goo.gl/maps") || textContent.contains("maps.app.goo.gl")
+                    
+                    if (isMapLink) {
+                        val match = urlRegex.find(textContent)
+                        if (match != null) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                try {
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(match.value))
+                                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    startActivity(intent)
+                                    android.widget.Toast.makeText(this@UdpReceiverService, "📍 เปิดนำทางจากมือถือ", android.widget.Toast.LENGTH_LONG).show()
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to launch maps from clipboard", e)
+                                }
+                            }
+                            return
+                        }
+                    }
+
                     CoroutineScope(Dispatchers.Main).launch {
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                         val clip = android.content.ClipData.newPlainText("Copied Text", textContent)
@@ -242,6 +262,27 @@ class UdpReceiverService : Service() {
 
             if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
                 actionsContainer?.visibility = View.VISIBLE
+                
+                val voiceBtn = Button(themeContext).apply {
+                    text = "🎙️ พูดเพื่อตอบ"
+                    isAllCaps = false
+                    backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+                    setTextColor(android.graphics.Color.WHITE)
+                    setOnClickListener {
+                        val intent = android.content.Intent(this@UdpReceiverService, VoiceReplyActivity::class.java)
+                        intent.putExtra("actionId", replyActionId)
+                        intent.putExtra("senderIp", senderIp)
+                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                        removeFloatingWindow()
+                    }
+                }
+                val voiceLp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = 16 }
+                actionsContainer?.addView(voiceBtn, voiceLp)
+
                 val quickReplies = listOf("โอเค", "รับทราบ", "กำลังขับรถ")
                 for (replyText in quickReplies) {
                     val btn = Button(themeContext).apply {
@@ -286,6 +327,32 @@ class UdpReceiverService : Service() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply { marginEnd = 16 }
                 actionsContainer?.addView(btn, lp)
+            }
+
+            if (type == "media") {
+                actionsContainer?.visibility = View.VISIBLE
+                val mediaControls = listOf(
+                    Triple("⏪", "media_prev", "#2196F3"),
+                    Triple("⏯️", "media_play_pause", "#FF9800"),
+                    Triple("⏩", "media_next", "#2196F3")
+                )
+                for ((icon, action, color) in mediaControls) {
+                    val btn = Button(themeContext).apply {
+                        text = icon
+                        isAllCaps = false
+                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(color))
+                        setTextColor(android.graphics.Color.WHITE)
+                        textSize = 20f
+                        setOnClickListener {
+                            sendActionCommand(senderIp, action)
+                        }
+                    }
+                    val lp = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { marginEnd = 16 }
+                    actionsContainer?.addView(btn, lp)
+                }
             }
 
             closeButton?.setOnClickListener { removeFloatingWindow() }

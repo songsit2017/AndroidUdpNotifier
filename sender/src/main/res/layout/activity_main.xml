@@ -23,9 +23,25 @@
 
     <Button
         android:id="@+id/btnOpenSettings"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="ไปที่หน้าเปิดสิทธิ์การแจ้งเตือน" />
+
+    <Button
+        android:id="@+id/btnReqLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="เปิดสิทธิ์เข้าถึงพิกัด GPS" />
+
+    <Button
+        android:id="@+id/btnViewLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"
+        android:text="📍 ดูพิกัดรถล่าสุด" />
 
     <ScrollView
         android:layout_width="match_parent"

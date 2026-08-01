@@ -31,6 +31,7 @@ class NotificationSenderService : NotificationListenerService() {
     data class PendingAction(val intent: PendingIntent, val remoteInputKey: String?)
     private val pendingIntents = ConcurrentHashMap<String, PendingAction>()
     private var batteryReceiver: BroadcastReceiver? = null
+    private var connectionReceiver: ConnectionReceiver? = null
     private var lastBatteryLevel = -1
 
     // Target Packages
@@ -47,6 +48,10 @@ class NotificationSenderService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         AppLogger.log("✅ Service Connected to Android System! Ready to read notifications.")
+        startActionCommandListener()
+
+        connectionReceiver = ConnectionReceiver()
+        registerReceiver(connectionReceiver, IntentFilter(android.net.wifi.WifiManager.NETWORK_STATE_CHANGED_ACTION))
 
         batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -67,7 +72,6 @@ class NotificationSenderService : NotificationListenerService() {
             }
         }
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        startActionCommandListener()
     }
 
     private fun startActionCommandListener() {
@@ -107,6 +111,23 @@ class NotificationSenderService : NotificationListenerService() {
                         continue
                     }
 
+                    if (actionId == "media_prev" || actionId == "media_play_pause" || actionId == "media_next") {
+                        try {
+                            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                            val keyCode = when (actionId) {
+                                "media_prev" -> android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
+                                "media_next" -> android.view.KeyEvent.KEYCODE_MEDIA_NEXT
+                                else -> android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+                            }
+                            audioManager.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, keyCode))
+                            audioManager.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, keyCode))
+                            AppLogger.log("🎵 Sent media key $keyCode")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        continue
+                    }
+
                     val action = pendingIntents[actionId]
                     if (action != null) {
                         if (replyText.isNotEmpty() && action.remoteInputKey != null) {
@@ -137,6 +158,10 @@ class NotificationSenderService : NotificationListenerService() {
         batteryReceiver?.let { 
             unregisterReceiver(it)
             batteryReceiver = null
+        }
+        connectionReceiver?.let {
+            unregisterReceiver(it)
+            connectionReceiver = null
         }
         actionListenJob?.cancel()
     }
