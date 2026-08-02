@@ -28,6 +28,9 @@ object AutoUpdater {
     private const val ASSET_NAME = "receiver-release.apk"
 
     fun checkForUpdates(activity: Activity, showToastIfUpToDate: Boolean = false) {
+        if (showToastIfUpToDate) {
+            android.widget.Toast.makeText(activity, "Checking for updates...", android.widget.Toast.LENGTH_SHORT).show()
+        }
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val url = URL(GITHUB_API_URL)
