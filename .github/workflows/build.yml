@@ -40,7 +40,7 @@ jobs:
         fi
         
     - name: Build Release APKs
-      run: gradle assembleRelease
+      run: gradle assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }}
       
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1

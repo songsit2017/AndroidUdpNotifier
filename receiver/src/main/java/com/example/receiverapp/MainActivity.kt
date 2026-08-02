@@ -28,6 +28,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tvLog = findViewById(R.id.tvLog)
+        
+        val tvVersionInfo = findViewById<TextView>(R.id.tvVersionInfo)
+        tvVersionInfo.text = "Version ${BuildConfig.VERSION_NAME} | Created by Songsit"
+
+        val btnCheckUpdate = findViewById<Button>(R.id.btnCheckUpdate)
+        btnCheckUpdate.setOnClickListener {
+            AutoUpdater.checkForUpdates(this, showToastIfUpToDate = true)
+        }
+        
+        // Auto check on startup
+        AutoUpdater.checkForUpdates(this, showToastIfUpToDate = false)
 
         AppLogger.listener = { message ->
             val currentText = tvLog.text.toString()

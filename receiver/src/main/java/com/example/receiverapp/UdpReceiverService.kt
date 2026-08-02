@@ -282,12 +282,12 @@ class UdpReceiverService : Service() {
             when (themePref) {
                 "Classic" -> {
                     if (isNightMode) {
-                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#E6121212"))
+                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#FF000000")) // AMOLED Black
                         nameText?.setTextColor(android.graphics.Color.parseColor("#FFFFFFFF"))
                         messageText?.setTextColor(android.graphics.Color.parseColor("#B3FFFFFF"))
                         closeButton?.setColorFilter(android.graphics.Color.parseColor("#B3FFFFFF"))
                     } else {
-                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#E6FFFFFF"))
+                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#F5FFFFFF")) // Minimal White
                         nameText?.setTextColor(android.graphics.Color.parseColor("#FF000000"))
                         messageText?.setTextColor(android.graphics.Color.parseColor("#99000000"))
                         closeButton?.setColorFilter(android.graphics.Color.parseColor("#99000000"))
