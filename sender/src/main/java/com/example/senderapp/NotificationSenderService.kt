@@ -198,20 +198,21 @@ class NotificationSenderService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
-        AppLogger.log("🔔 Detected notification from: $packageName")
+        AppLogger.log("📩 Detected notification from: $packageName")
 
-        if (!TARGET_PACKAGES.contains(packageName)) {
-            AppLogger.log("   -> Ignored (not in target list)")
+        val notification = sbn.notification
+        val template = notification.extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
+        val isMediaStyle = template.contains("MediaStyle")
+        val isCall = notification.category == Notification.CATEGORY_CALL || 
+                     (packageName == "jp.naver.line.android" && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notification.category == null)
+
+        if (!TARGET_PACKAGES.contains(packageName) && !isMediaStyle && !isCall) {
+            AppLogger.log("   -> Ignored (not in target list and not media/call)")
             return
         }
 
-        val notification = sbn.notification
-
-        val isCall = notification.category == Notification.CATEGORY_CALL || 
-                     (packageName == "jp.naver.line.android" && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notification.category == null) // Fallback for LINE
-
-        // 1. Ignore ongoing background services (like "Chat heads active") UNLESS it is a Call
-        if (!isCall && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0) {
+        // 1. Ignore ongoing background services (like "Chat heads active") UNLESS it is a Call or Media
+        if (!isCall && !isMediaStyle && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0) {
             AppLogger.log("   -> Ignored (Ongoing background event)")
             return
         }
@@ -312,7 +313,19 @@ class NotificationSenderService : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        // Optional: Handle notification removal if needed
+        val packageName = sbn.packageName
+        val template = sbn.notification.extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
+        val isMediaStyle = template.contains("MediaStyle")
+        val isCall = sbn.notification.category == Notification.CATEGORY_CALL || 
+                     (packageName == "jp.naver.line.android" && (sbn.notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && sbn.notification.category == null)
+
+        if (TARGET_PACKAGES.contains(packageName) || isMediaStyle || isCall) {
+            val jsonPayload = JSONObject().apply {
+                put("type", "remove")
+                put("package", packageName)
+            }.toString()
+            sendUdpBroadcast(jsonPayload)
+        }
     }
 
     private fun extractAndCompressImage(notification: Notification, context: Context): String? {

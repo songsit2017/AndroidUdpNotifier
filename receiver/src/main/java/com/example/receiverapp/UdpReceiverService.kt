@@ -233,6 +233,13 @@ class UdpReceiverService : Service() {
             val actionsArray = jsonObject.optJSONArray("actions")
             val replyActionId = if (jsonObject.isNull("replyActionId")) null else jsonObject.getString("replyActionId")
 
+            if (type == "remove") {
+                CoroutineScope(Dispatchers.Main).launch {
+                    removeFloatingWindow()
+                }
+                return
+            }
+
             val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
             if (isTtsEnabled && type == "message" && text.isNotEmpty()) {
                 tts?.speak("ข้อความจาก $name, $text", TextToSpeech.QUEUE_FLUSH, null, null)
@@ -252,7 +259,7 @@ class UdpReceiverService : Service() {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
 
             // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
-            val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_Light_DarkActionBar)
+            val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)
             val inflater = LayoutInflater.from(themeContext)
             
             floatingView = inflater.inflate(R.layout.floating_notification, null)

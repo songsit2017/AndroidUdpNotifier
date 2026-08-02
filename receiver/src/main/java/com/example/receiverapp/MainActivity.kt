@@ -195,6 +195,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        updatePermissionButtons()
+    }
+
+    private fun updatePermissionButtons() {
+        val btnRequestOverlay = findViewById<Button>(R.id.btnRequestOverlay)
+        val btnRequestBattery = findViewById<Button>(R.id.btnRequestBattery)
+        val btnRequestLocation = findViewById<Button>(R.id.btnRequestLocation)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+            btnRequestOverlay.text = "1. OVERLAY PERMISSION ✅"
+        } else {
+            btnRequestOverlay.text = "1. GRANT OVERLAY PERMISSION"
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+            if (powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                btnRequestBattery.text = "2. BATTERY EXEMPTION ✅"
+            } else {
+                btnRequestBattery.text = "2. GRANT BATTERY EXEMPTION"
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            btnRequestLocation.text = "3. LOCATION PERMISSION ✅"
+        } else {
+            btnRequestLocation.text = "3. GRANT LOCATION PERMISSION"
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         AppLogger.listener = null
