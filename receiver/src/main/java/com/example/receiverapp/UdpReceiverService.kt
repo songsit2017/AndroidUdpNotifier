@@ -61,7 +61,8 @@ class UdpReceiverService : Service() {
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale("th", "TH")
                 val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
-                if (isTtsEnabled) {
+                val isGreetingEnabled = prefs.getBoolean("PREF_GREETING", true)
+                if (isTtsEnabled && isGreetingEnabled) {
                     tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, null)
                 }
             }

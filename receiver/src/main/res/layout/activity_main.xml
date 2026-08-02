@@ -34,7 +34,7 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="˹�Ҩ��ʴ��ź�ö¹��"
+                android:text="Ë¹éÒ¨ÍáÊ´§¼Åº¹Ã¶Â¹µì"
                 android:textAlignment="center"
                 android:textSize="14sp"
                 android:textColor="#8E8E93"
@@ -120,7 +120,7 @@
                         android:layout_height="wrap_content"
                         android:text="Quick Replies"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="�ʴ������ͺ��Ѻ��ǹ����ö" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§»ØèÁµÍº¡ÅÑº´èÇ¹º¹¨ÍÃ¶" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchTTS"
@@ -128,7 +128,15 @@
                         android:layout_height="wrap_content"
                         android:text="Text-to-Speech"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="��ҹ��ͤ���������Ѻ�͡���§�ѵ��ѵ�" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchGreeting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Startup Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="พูดทักทายเมื่อสตาร์ทรถ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchVIP"
@@ -136,7 +144,7 @@
                         android:layout_height="wrap_content"
                         android:text="VIP Mode"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="���ǧ��������ú�ǹ �ҡ�դ���� ��ǹ/�ء�Թ/�Ӥѭ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="·ÐÅÇ§âËÁ´ËéÒÁÃº¡Ç¹ ËÒ¡ÁÕ¤ÓÇèÒ ´èÇ¹/©Ø¡à©Ô¹/ÊÓ¤Ñ­" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchETA"
@@ -144,7 +152,7 @@
                         android:layout_height="wrap_content"
                         android:text="Share ETA"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="�ʴ������觾ԡѴ GPS ������դ��ѡ������˹�" android:textSize="12sp" android:textColor="#8E8E93" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§»ØèÁÊè§¾Ô¡Ñ´ GPS àÁ×èÍÁÕ¤¹·Ñ¡¶ÒÁµÓáË¹è§" android:textSize="12sp" android:textColor="#8E8E93" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -178,7 +186,7 @@
                         android:layout_height="wrap_content"
                         android:text="Fatigue Alert"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="��͹�ѡ��µ�����һ�������͢Ѻö�ú 2 �������" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="àµ×Í¹¾Ñ¡ÊÒÂµÒáÅÐËÒ»ÑêÁàÁ×èÍ¢ÑºÃ¶¤Ãº 2 ªÑèÇâÁ§" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchSpeed"
@@ -186,7 +194,7 @@
                         android:layout_height="wrap_content"
                         android:text="Speed Limit Warning"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="�о�Ժ��ᴧ��͹����͢Ѻ�����Թ 120 ��./��." android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="¡Ð¾ÃÔº¨Íá´§àµ×Í¹àÁ×èÍ¢ÑºàÃçÇà¡Ô¹ 120 ¡Á./ªÁ." android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchDND"
@@ -194,7 +202,7 @@
                         android:layout_height="wrap_content"
                         android:text="Do Not Disturb"
                         android:checked="false" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="��������ú�ǹ (�Դ����͹�ء���ҧ¡��� VIP)" android:textSize="12sp" android:textColor="#8E8E93" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="âËÁ´ËéÒÁÃº¡Ç¹ (»Ô´á¨é§àµ×Í¹·Ø¡ÍÂèÒ§Â¡àÇé¹ VIP)" android:textSize="12sp" android:textColor="#8E8E93" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -228,7 +236,7 @@
                         android:layout_height="wrap_content"
                         android:text="Now Playing Overlay"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="�ʴ��ŧ�����ѧ�����л����Ǻ���" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§à¾Å§·Õè¡ÓÅÑ§àÅè¹áÅÐ»ØèÁ¤Çº¤ØÁ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchBattery"
@@ -236,7 +244,7 @@
                         android:layout_height="wrap_content"
                         android:text="Battery Alerts"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="����͹�����ẵ��Ͷ�͵�ӡ��� 20%" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="á¨é§àµ×Í¹àÁ×èÍáºµÁ×Í¶×ÍµèÓ¡ÇèÒ 20%" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -259,7 +267,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 app:cornerRadius="12dp"
-                android:text="?? �������Ͷ�� (�����§��ͧ)" />
+                android:text="?? µÒÁËÒÁ×Í¶×Í (Êè§àÊÕÂ§ÃéÍ§)" />
 
         </LinearLayout>
     </ScrollView>

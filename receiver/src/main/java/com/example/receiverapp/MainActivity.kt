@@ -116,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val switchQuickReply = findViewById<Switch>(R.id.switchQuickReply)
         val switchTTS = findViewById<Switch>(R.id.switchTTS)
+        val switchGreeting = findViewById<Switch>(R.id.switchGreeting)
         val switchMedia = findViewById<Switch>(R.id.switchMedia)
         val switchBattery = findViewById<Switch>(R.id.switchBattery)
         val switchDND = findViewById<Switch>(R.id.switchDND)
@@ -155,6 +156,7 @@ class MainActivity : AppCompatActivity() {
         // Load saved or defaults
         switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
         switchTTS.isChecked = prefs.getBoolean("PREF_TTS", true)
+        switchGreeting.isChecked = prefs.getBoolean("PREF_GREETING", true)
         switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
         switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
         switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
@@ -170,6 +172,7 @@ class MainActivity : AppCompatActivity() {
         
         switchQuickReply.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
         switchTTS.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
+        switchGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_GREETING", c) }
         switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
         switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
         switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
