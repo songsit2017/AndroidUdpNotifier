@@ -394,10 +394,17 @@ class NotificationSenderService : NotificationListenerService() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        if (broadcastList.isEmpty()) {
+        
+        // ALWAYS add the global broadcast and default Android Hotspot broadcasts
+        try {
             broadcastList.add(InetAddress.getByName("255.255.255.255"))
-        }
-        return broadcastList
+            broadcastList.add(InetAddress.getByName("192.168.43.255"))
+            broadcastList.add(InetAddress.getByName("192.168.137.255"))
+            broadcastList.add(InetAddress.getByName("192.168.216.255")) // Common in newer Androids
+        } catch (e: Exception) {}
+        
+        // Remove duplicates
+        return broadcastList.distinct()
     }
 
     private fun sendUdpBroadcast(payload: String) {
