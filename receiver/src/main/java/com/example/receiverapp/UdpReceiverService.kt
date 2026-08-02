@@ -275,7 +275,24 @@ class UdpReceiverService : Service() {
 
             val cardView = floatingView as? androidx.cardview.widget.CardView
             val themePref = prefs.getString("PREF_THEME", "Classic") ?: "Classic"
+            
+            // Check global night mode explicitly
+            val isNightMode = (android.content.res.Resources.getSystem().configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            
             when (themePref) {
+                "Classic" -> {
+                    if (isNightMode) {
+                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#E6121212"))
+                        nameText?.setTextColor(android.graphics.Color.parseColor("#FFFFFFFF"))
+                        messageText?.setTextColor(android.graphics.Color.parseColor("#B3FFFFFF"))
+                        closeButton?.setColorFilter(android.graphics.Color.parseColor("#B3FFFFFF"))
+                    } else {
+                        cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#E6FFFFFF"))
+                        nameText?.setTextColor(android.graphics.Color.parseColor("#FF000000"))
+                        messageText?.setTextColor(android.graphics.Color.parseColor("#99000000"))
+                        closeButton?.setColorFilter(android.graphics.Color.parseColor("#99000000"))
+                    }
+                }
                 "Honda Type-R" -> cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#DDCC0000"))
                 "BMW M" -> cardView?.setCardBackgroundColor(android.graphics.Color.parseColor("#DD0033A0"))
                 "Tesla" -> {
