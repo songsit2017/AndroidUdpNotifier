@@ -338,13 +338,42 @@ class NotificationSenderService : NotificationListenerService() {
             bitmap = drawableToBitmap(drawable)
         } 
         
-        // Fallback for older intents or alternative data structures
+        // Fallback for EXTRA_LARGE_ICON
         if (bitmap == null) {
             val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_LARGE_ICON)
             if (parcelable is Bitmap) {
                 bitmap = parcelable
             } else if (parcelable is Icon) {
                 val drawable = parcelable.loadDrawable(context)
+                bitmap = drawableToBitmap(drawable)
+            }
+        }
+
+        // Fallback for EXTRA_PICTURE
+        if (bitmap == null) {
+            val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_PICTURE)
+            if (parcelable is Bitmap) {
+                bitmap = parcelable
+            } else if (parcelable is Icon) {
+                val drawable = parcelable.loadDrawable(context)
+                bitmap = drawableToBitmap(drawable)
+            }
+        }
+
+        // Fallback for Person objects (Android P+)
+        if (bitmap == null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            val person = notification.extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
+            if (person?.icon != null) {
+                val drawable = person.icon!!.loadDrawable(context)
+                bitmap = drawableToBitmap(drawable)
+            }
+        }
+        
+        // Fallback for Call Person (Android S+)
+        if (bitmap == null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val person = notification.extras.getParcelable<android.app.Person>("android.callPerson")
+            if (person?.icon != null) {
+                val drawable = person.icon!!.loadDrawable(context)
                 bitmap = drawableToBitmap(drawable)
             }
         }
