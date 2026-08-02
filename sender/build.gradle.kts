@@ -7,6 +7,10 @@ android {
     namespace = "com.example.senderapp"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.senderapp"
         minSdk = 24

@@ -7,6 +7,10 @@ android {
     namespace = "com.example.receiverapp"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.receiverapp"
         minSdk = 24
