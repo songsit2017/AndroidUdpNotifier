@@ -34,6 +34,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioManager
+import android.media.RingtoneManager
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.content.ContextCompat
 
@@ -101,12 +102,44 @@ class UdpReceiverService : Service() {
                                         lon = loc.longitude
                                     }
                                 }
-                                val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m")
+                                val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code")
                                 val conn = requestUrl.openConnection() as java.net.HttpURLConnection
                                 val response = conn.inputStream.bufferedReader().readText()
                                 val json = JSONObject(response)
-                                val temp = json.getJSONObject("current").getDouble("temperature_2m").toInt()
-                                val msg = "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
+                                val currentObj = json.getJSONObject("current")
+                                val temp = currentObj.getDouble("temperature_2m").toInt()
+                                val weatherCode = currentObj.optInt("weather_code", 0)
+                                
+                                var weatherDesc = ""
+                                var isBadWeather = false
+                                if (weatherCode in 51..67 || weatherCode in 80..82) {
+                                    weatherDesc = "มีแนวโน้มฝนตก"
+                                    isBadWeather = true
+                                } else if (weatherCode in 95..99) {
+                                    weatherDesc = "มีพายุฝนฟ้าคะนอง"
+                                    isBadWeather = true
+                                } else if (weatherCode == 45 || weatherCode == 48) {
+                                    weatherDesc = "มีหมอกลงหนา"
+                                    isBadWeather = true
+                                }
+                                
+                                val msg = if (isBadWeather) {
+                                    "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา $weatherDesc ขับขี่ระมัดระวังด้วยนะครับ"
+                                } else {
+                                    "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
+                                }
+                                
+                                if (isBadWeather) {
+                                    try {
+                                        val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                        val r = RingtoneManager.getRingtone(applicationContext, notification)
+                                        r.play()
+                                        delay(1500)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                                
                                 tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "GREETING")
                             } catch (e: Exception) {
                                 if (isGreetingEnabled) tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
