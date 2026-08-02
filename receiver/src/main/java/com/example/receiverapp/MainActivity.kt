@@ -48,12 +48,12 @@ class MainActivity : AppCompatActivity() {
 
         val btnRequestLocation = findViewById<Button>(R.id.btnRequestLocation)
         btnRequestLocation.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 android.widget.Toast.makeText(this, "Location permission already granted!", android.widget.Toast.LENGTH_SHORT).show()
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-                    android.widget.Toast.makeText(this, "Requesting Location... (If nothing happens, please allow it in App Settings)", android.widget.Toast.LONG).show()
+                    android.widget.Toast.makeText(this, "Requesting Location... (If nothing happens, please allow it in App Settings)", android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }
