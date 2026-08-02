@@ -16,6 +16,12 @@ class ConnectionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
+        
+        if (action == android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED) {
+            AppLogger.log("Bluetooth Disconnected. Saving parking location...")
+            saveCurrentLocation(context)
+        }
+        
         if (action == WifiManager.NETWORK_STATE_CHANGED_ACTION) {
             val info = intent.getParcelableExtra<NetworkInfo>(WifiManager.EXTRA_NETWORK_INFO)
             val isConnected = info?.isConnected == true

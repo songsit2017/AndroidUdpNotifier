@@ -52,7 +52,10 @@ class NotificationSenderService : NotificationListenerService() {
         startActionCommandListener()
 
         connectionReceiver = ConnectionReceiver()
-        registerReceiver(connectionReceiver, IntentFilter(android.net.wifi.WifiManager.NETWORK_STATE_CHANGED_ACTION))
+        val filter = IntentFilter()
+        filter.addAction(android.net.wifi.WifiManager.NETWORK_STATE_CHANGED_ACTION)
+        filter.addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
+        registerReceiver(connectionReceiver, filter)
 
         batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
