@@ -55,6 +55,11 @@ class UdpReceiverService : Service() {
     private var locationManager: LocationManager? = null
     private var isSpeedWarningActive = false
     private var currentSpeedKmh = 0f
+    
+    private var lastWeatherCheckLocation: Location? = null
+    private var lastWeatherCheckTime = 0L
+    private var wasBadWeather = false
+    private var isFetchingWeather = false
 
     override fun onCreate() {
         super.onCreate()
@@ -90,61 +95,7 @@ class UdpReceiverService : Service() {
                 
                 if (isTtsEnabled) {
                     if (isWeatherGreetingEnabled) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                var lat = 13.75
-                                var lon = 100.5167
-                                if (ContextCompat.checkSelfPermission(this@UdpReceiverService, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                                    val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                                    val loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                                    if (loc != null) {
-                                        lat = loc.latitude
-                                        lon = loc.longitude
-                                    }
-                                }
-                                val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code")
-                                val conn = requestUrl.openConnection() as java.net.HttpURLConnection
-                                val response = conn.inputStream.bufferedReader().readText()
-                                val json = JSONObject(response)
-                                val currentObj = json.getJSONObject("current")
-                                val temp = currentObj.getDouble("temperature_2m").toInt()
-                                val weatherCode = currentObj.optInt("weather_code", 0)
-                                
-                                var weatherDesc = ""
-                                var isBadWeather = false
-                                if (weatherCode in 51..67 || weatherCode in 80..82) {
-                                    weatherDesc = "มีแนวโน้มฝนตก"
-                                    isBadWeather = true
-                                } else if (weatherCode in 95..99) {
-                                    weatherDesc = "มีพายุฝนฟ้าคะนอง"
-                                    isBadWeather = true
-                                } else if (weatherCode == 45 || weatherCode == 48) {
-                                    weatherDesc = "มีหมอกลงหนา"
-                                    isBadWeather = true
-                                }
-                                
-                                val msg = if (isBadWeather) {
-                                    "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา $weatherDesc ขับขี่ระมัดระวังด้วยนะครับ"
-                                } else {
-                                    "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
-                                }
-                                
-                                if (isBadWeather) {
-                                    try {
-                                        val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                                        val r = RingtoneManager.getRingtone(applicationContext, notification)
-                                        r.play()
-                                        delay(1500)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
-                                }
-                                
-                                tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "GREETING")
-                            } catch (e: Exception) {
-                                if (isGreetingEnabled) tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
-                            }
-                        }
+                        checkWeather(null, true)
                     } else if (isGreetingEnabled) {
                         tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
                     }
@@ -170,18 +121,26 @@ class UdpReceiverService : Service() {
             }
         }
         
-        // Speed monitoring
+        // Speed and Weather monitoring
         try {
             locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val isSpeedWarningEnabled = prefs.getBoolean("PREF_SPEED_WARNING", true)
             
-            if (isSpeedWarningEnabled && ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val speedKmh = location.speed * 3.6f
                         currentSpeedKmh = speedKmh
-                        if (speedKmh > 120 && !isSpeedWarningActive) {
+                        if (isSpeedWarningEnabled && speedKmh > 120 && !isSpeedWarningActive) {
                             showSpeedWarning()
+                        }
+                        
+                        // Real-time weather check
+                        val timeSinceLastCheck = System.currentTimeMillis() - lastWeatherCheckTime
+                        val dist = if (lastWeatherCheckLocation != null) location.distanceTo(lastWeatherCheckLocation!!) else Float.MAX_VALUE
+                        
+                        if (dist > 30000f || timeSinceLastCheck > 3600000L) {
+                            checkWeather(location, false)
                         }
                         
                         val geoLat = prefs.getString("GEO_REMINDER_LAT", null)
@@ -214,6 +173,96 @@ class UdpReceiverService : Service() {
         
         startForegroundNotification()
         startUdpListener()
+    }
+
+    private fun checkWeather(location: Location?, isStartup: Boolean) {
+        if (isFetchingWeather) return
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+        val isGreetingEnabled = prefs.getBoolean("PREF_GREETING", true)
+        val isWeatherGreetingEnabled = prefs.getBoolean("PREF_WEATHER_GREETING", true)
+        
+        if (!isWeatherGreetingEnabled && !isStartup) return
+        
+        isFetchingWeather = true
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                var lat = 13.75
+                var lon = 100.5167
+                var currentLocation = location
+                if (currentLocation == null && ContextCompat.checkSelfPermission(this@UdpReceiverService, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    currentLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                }
+                
+                if (currentLocation != null) {
+                    lat = currentLocation.latitude
+                    lon = currentLocation.longitude
+                    lastWeatherCheckLocation = currentLocation
+                }
+                lastWeatherCheckTime = System.currentTimeMillis()
+
+                val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code")
+                val conn = requestUrl.openConnection() as java.net.HttpURLConnection
+                val response = conn.inputStream.bufferedReader().readText()
+                val json = JSONObject(response)
+                val currentObj = json.getJSONObject("current")
+                val temp = currentObj.getDouble("temperature_2m").toInt()
+                val weatherCode = currentObj.optInt("weather_code", 0)
+                
+                var weatherDesc = ""
+                var isBadWeather = false
+                if (weatherCode in 51..67 || weatherCode in 80..82) {
+                    weatherDesc = "มีแนวโน้มฝนตก"
+                    isBadWeather = true
+                } else if (weatherCode in 95..99) {
+                    weatherDesc = "มีพายุฝนฟ้าคะนอง"
+                    isBadWeather = true
+                } else if (weatherCode == 45 || weatherCode == 48) {
+                    weatherDesc = "มีหมอกลงหนา"
+                    isBadWeather = true
+                }
+                
+                if (isStartup) {
+                    if (isTtsEnabled && isGreetingEnabled) {
+                        val msg = if (isBadWeather) {
+                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา $weatherDesc ขับขี่ระมัดระวังด้วยนะครับ"
+                        } else {
+                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
+                        }
+                        
+                        if (isBadWeather) {
+                            try {
+                                val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                val r = RingtoneManager.getRingtone(applicationContext, notification)
+                                r.play()
+                                delay(1500)
+                            } catch (e: Exception) {}
+                        }
+                        tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                    }
+                } else {
+                    if (isBadWeather && !wasBadWeather && isTtsEnabled) {
+                        val msg = "แจ้งเตือนสภาพอากาศข้างหน้า: $weatherDesc อุณหภูมิ $temp องศา ขับขี่ระมัดระวังด้วยนะครับ"
+                        try {
+                            val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                            val r = RingtoneManager.getRingtone(applicationContext, notification)
+                            r.play()
+                            delay(1500)
+                        } catch (e: Exception) {}
+                        tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "WEATHER_ALERT")
+                    }
+                }
+                wasBadWeather = isBadWeather
+                
+            } catch (e: Exception) {
+                if (isStartup && isTtsEnabled && isGreetingEnabled) {
+                    tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                }
+            } finally {
+                isFetchingWeather = false
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
