@@ -241,6 +241,18 @@ class NotificationSenderService : NotificationListenerService() {
             return
         }
 
+        // 4. Ignore Messenger Chat Head active notifications
+        if (packageName == "com.facebook.orca") {
+            val lowerText = text.lowercase()
+            val lowerTitle = title.lowercase()
+            if (lowerText.contains("chat head") || lowerText.contains("chathead") || 
+                lowerTitle.contains("chat head") || lowerTitle.contains("chathead") ||
+                lowerText.contains("เริ่มการสนทนา") || lowerTitle.contains("เริ่มการสนทนา")) {
+                AppLogger.log("   -> Ignored (Messenger Chat Head background notification)")
+                return
+            }
+        }
+
         // Determine if Call or Message.
         var type = if (isCall) "call" else "message"
 
