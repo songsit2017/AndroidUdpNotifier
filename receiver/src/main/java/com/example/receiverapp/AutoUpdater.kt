@@ -67,6 +67,12 @@ object AutoUpdater {
                             android.widget.Toast.makeText(activity, "App is up to date ($currentVersion)", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
+                } else {
+                    if (showToastIfUpToDate) {
+                        withContext(Dispatchers.Main) {
+                            android.widget.Toast.makeText(activity, "Failed to check update: HTTP ${connection.responseCode}", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to check for updates", e)

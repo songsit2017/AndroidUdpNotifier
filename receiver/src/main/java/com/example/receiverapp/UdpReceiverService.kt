@@ -262,6 +262,7 @@ class UdpReceiverService : Service() {
             val appIconBadge = floatingView?.findViewById<ImageView>(R.id.appIconBadge)
             val closeButton = floatingView?.findViewById<ImageButton>(R.id.closeButton)
             val actionsContainer = floatingView?.findViewById<LinearLayout>(R.id.actionsContainer)
+            val actionsScrollView = floatingView?.findViewById<HorizontalScrollView>(R.id.actionsScrollView)
 
             nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
             
@@ -327,6 +328,7 @@ class UdpReceiverService : Service() {
 
             if (actionsArray != null && actionsArray.length() > 0) {
                 actionsContainer?.visibility = View.VISIBLE
+                actionsScrollView?.visibility = View.VISIBLE
                 for (i in 0 until actionsArray.length()) {
                     val actionJson = actionsArray.getJSONObject(i)
                     val actionId = actionJson.getString("id")
@@ -357,6 +359,7 @@ class UdpReceiverService : Service() {
 
             if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
                 actionsContainer?.visibility = View.VISIBLE
+                actionsScrollView?.visibility = View.VISIBLE
                 
                 val isLocationRequest = listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน").any { text.contains(it) }
                 val isShareEtaEnabled = prefs.getBoolean("PREF_SHARE_ETA", true)
@@ -419,6 +422,7 @@ class UdpReceiverService : Service() {
             val isMapLink = text.contains("maps.google.com") || text.contains("goo.gl/maps") || text.contains("maps.app.goo.gl")
             if (isMapLink) {
                 actionsContainer?.visibility = View.VISIBLE
+                actionsScrollView?.visibility = View.VISIBLE
                 val btn = Button(themeContext).apply {
                     this.text = "📍 นำทางไปที่นี่"
                     this.isAllCaps = false
@@ -446,6 +450,7 @@ class UdpReceiverService : Service() {
 
             if (type == "media") {
                 actionsContainer?.visibility = View.VISIBLE
+                actionsScrollView?.visibility = View.VISIBLE
                 val mediaControls = listOf(
                     Triple("⏪", "media_prev", "#2196F3"),
                     Triple("⏯️", "media_play_pause", "#FF9800"),
@@ -472,6 +477,7 @@ class UdpReceiverService : Service() {
 
             if (type == "fatigue") {
                 actionsContainer?.visibility = View.VISIBLE
+                actionsScrollView?.visibility = View.VISIBLE
                 val btn = Button(themeContext).apply {
                     this.text = "⛽ หาปั๊มน้ำมันใกล้ฉัน"
                     this.isAllCaps = false
