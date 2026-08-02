@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Ë¹éÒ¨ÍáÊ´§¼Åº¹Ã¶Â¹µì"
+                android:text="หน้าจอแสดงผลบนรถยนต์"
                 android:textAlignment="center"
                 android:textSize="14sp"
                 android:textColor="#8E8E93"
@@ -120,7 +120,7 @@
                         android:layout_height="wrap_content"
                         android:text="Quick Replies"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§»ØèÁµÍº¡ÅÑº´èÇ¹º¹¨ÍÃ¶" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มตอบกลับด่วนบนจอรถ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchTTS"
@@ -139,12 +139,36 @@
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="พูดทักทายเมื่อสตาร์ทรถ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchWeatherGreeting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Weather &amp; PM 2.5 Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="รายงานสภาพอากาศตอนสตาร์ทรถ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAudioDucking"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Smart Audio Ducking"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="หรี่เสียงเพลงอัตโนมัติขณะระบบพูด" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAutoReply"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Auto-Reply While Driving"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ส่งข้อความตอบกลับอัตโนมัติเมื่อขับรถอยู่" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchVIP"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="VIP Mode"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="·ÐÅÇ§âËÁ´ËéÒÁÃº¡Ç¹ ËÒ¡ÁÕ¤ÓÇèÒ ´èÇ¹/©Ø¡à©Ô¹/ÊÓ¤Ñ­" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ทะลวงโหมดห้ามรบกวน หากมีคำว่า ด่วน/ฉุกเฉิน/สำคัญ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchETA"
@@ -152,7 +176,7 @@
                         android:layout_height="wrap_content"
                         android:text="Share ETA"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§»ØèÁÊè§¾Ô¡Ñ´ GPS àÁ×èÍÁÕ¤¹·Ñ¡¶ÒÁµÓáË¹è§" android:textSize="12sp" android:textColor="#8E8E93" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มส่งพิกัด GPS เมื่อมีคนทักถามตำแหน่ง" android:textSize="12sp" android:textColor="#8E8E93" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -186,7 +210,7 @@
                         android:layout_height="wrap_content"
                         android:text="Fatigue Alert"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="àµ×Í¹¾Ñ¡ÊÒÂµÒáÅÐËÒ»ÑêÁàÁ×èÍ¢ÑºÃ¶¤Ãº 2 ªÑèÇâÁ§" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เตือนพักสายตาและหาปั๊มเมื่อขับรถครบ 2 ชั่วโมง" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchSpeed"
@@ -194,7 +218,7 @@
                         android:layout_height="wrap_content"
                         android:text="Speed Limit Warning"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="¡Ð¾ÃÔº¨Íá´§àµ×Í¹àÁ×èÍ¢ÑºàÃçÇà¡Ô¹ 120 ¡Á./ªÁ." android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="กะพริบจอแดงเตือนเมื่อขับเร็วเกิน 120 กม./ชม." android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchDND"
@@ -202,7 +226,7 @@
                         android:layout_height="wrap_content"
                         android:text="Do Not Disturb"
                         android:checked="false" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="âËÁ´ËéÒÁÃº¡Ç¹ (»Ô´á¨é§àµ×Í¹·Ø¡ÍÂèÒ§Â¡àÇé¹ VIP)" android:textSize="12sp" android:textColor="#8E8E93" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="โหมดห้ามรบกวน (ปิดแจ้งเตือนทุกอย่างยกเว้น VIP)" android:textSize="12sp" android:textColor="#8E8E93" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -210,7 +234,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -236,7 +260,7 @@
                         android:layout_height="wrap_content"
                         android:text="Now Playing Overlay"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="áÊ´§à¾Å§·Õè¡ÓÅÑ§àÅè¹áÅÐ»ØèÁ¤Çº¤ØÁ" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงเพลงที่กำลังเล่นและปุ่มควบคุม" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchBattery"
@@ -244,7 +268,7 @@
                         android:layout_height="wrap_content"
                         android:text="Battery Alerts"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="á¨é§àµ×Í¹àÁ×èÍáºµÁ×Í¶×ÍµèÓ¡ÇèÒ 20%" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แจ้งเตือนเมื่อแบตมือถือต่ำกว่า 20%" android:textSize="12sp" android:textColor="#8E8E93" android:layout_marginBottom="8dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -255,8 +279,29 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Theme:" android:textSize="16sp" android:textColor="#1C1C1E"/>
                         <Spinner android:id="@+id/spinnerTheme" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Popup Position:" android:textSize="16sp" android:textColor="#1C1C1E"/>
+                        <Spinner android:id="@+id/spinnerPopupPosition" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddGeoReminder"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FF9500"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                app:cornerRadius="12dp"
+                android:text="📍 ตั้งเตือนพิกัดปัจจุบัน (Geo-Reminder)" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFindPhone"
@@ -267,7 +312,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 app:cornerRadius="12dp"
-                android:text="?? µÒÁËÒÁ×Í¶×Í (Êè§àÊÕÂ§ÃéÍ§)" />
+                android:text="🔍 ตามหามือถือ (ส่งเสียงร้อง)" />
 
         </LinearLayout>
     </ScrollView>

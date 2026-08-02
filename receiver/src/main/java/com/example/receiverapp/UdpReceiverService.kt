@@ -33,6 +33,8 @@ import java.util.Locale
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.media.AudioManager
+import android.speech.tts.UtteranceProgressListener
 import androidx.core.content.ContextCompat
 
 class UdpReceiverService : Service() {
@@ -51,6 +53,7 @@ class UdpReceiverService : Service() {
     private var serviceStartTime = 0L
     private var locationManager: LocationManager? = null
     private var isSpeedWarningActive = false
+    private var currentSpeedKmh = 0f
 
     override fun onCreate() {
         super.onCreate()
@@ -60,10 +63,58 @@ class UdpReceiverService : Service() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale("th", "TH")
+                
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        if (prefs.getBoolean("PREF_AUDIO_DUCKING", true)) {
+                            audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                        }
+                    }
+                    override fun onDone(utteranceId: String?) {
+                        if (prefs.getBoolean("PREF_AUDIO_DUCKING", true)) {
+                            audioManager.abandonAudioFocus(null)
+                        }
+                    }
+                    override fun onError(utteranceId: String?) {
+                        if (prefs.getBoolean("PREF_AUDIO_DUCKING", true)) {
+                            audioManager.abandonAudioFocus(null)
+                        }
+                    }
+                })
+
                 val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
                 val isGreetingEnabled = prefs.getBoolean("PREF_GREETING", true)
-                if (isTtsEnabled && isGreetingEnabled) {
-                    tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, null)
+                val isWeatherGreetingEnabled = prefs.getBoolean("PREF_WEATHER_GREETING", true)
+                
+                if (isTtsEnabled) {
+                    if (isWeatherGreetingEnabled) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                var lat = 13.75
+                                var lon = 100.5167
+                                if (ContextCompat.checkSelfPermission(this@UdpReceiverService, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                                    val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                                    val loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                                    if (loc != null) {
+                                        lat = loc.latitude
+                                        lon = loc.longitude
+                                    }
+                                }
+                                val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m")
+                                val conn = requestUrl.openConnection() as java.net.HttpURLConnection
+                                val response = conn.inputStream.bufferedReader().readText()
+                                val json = JSONObject(response)
+                                val temp = json.getJSONObject("current").getDouble("temperature_2m").toInt()
+                                val msg = "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
+                                tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                            } catch (e: Exception) {
+                                if (isGreetingEnabled) tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                            }
+                        }
+                    } else if (isGreetingEnabled) {
+                        tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                    }
                 }
             }
         }
@@ -95,8 +146,28 @@ class UdpReceiverService : Service() {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val speedKmh = location.speed * 3.6f
+                        currentSpeedKmh = speedKmh
                         if (speedKmh > 120 && !isSpeedWarningActive) {
                             showSpeedWarning()
+                        }
+                        
+                        val geoLat = prefs.getString("GEO_REMINDER_LAT", null)
+                        val geoLon = prefs.getString("GEO_REMINDER_LON", null)
+                        val geoMsg = prefs.getString("GEO_REMINDER_MSG", "")
+                        val triggered = prefs.getBoolean("GEO_REMINDER_TRIGGERED", true)
+                        
+                        if (geoLat != null && geoLon != null && geoMsg!!.isNotEmpty() && !triggered) {
+                            val target = Location("").apply {
+                                latitude = geoLat.toDouble()
+                                longitude = geoLon.toDouble()
+                            }
+                            if (location.distanceTo(target) < 500) {
+                                prefs.edit().putBoolean("GEO_REMINDER_TRIGGERED", true).apply()
+                                val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+                                if (isTtsEnabled) {
+                                    tts?.speak("แจ้งเตือนสถานที่: $geoMsg", TextToSpeech.QUEUE_FLUSH, null, "GEO")
+                                }
+                            }
                         }
                     }
                     override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
@@ -369,6 +440,13 @@ class UdpReceiverService : Service() {
                     actionsContainer?.addView(btn, lp)
                 }
             }
+            if (replyActionId != null) {
+                val isAutoReplyEnabled = prefs.getBoolean("PREF_AUTO_REPLY", true)
+                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message") {
+                    sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗")
+                    AppLogger.log("Auto-replied to message while driving")
+                }
+            }
 
             if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
                 actionsContainer?.visibility = View.VISIBLE
@@ -524,8 +602,14 @@ class UdpReceiverService : Service() {
             PixelFormat.TRANSLUCENT
         )
 
-        params.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        params.y = 40
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
+        params.gravity = when (pos) {
+            "Center" -> Gravity.CENTER
+            "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        }
+        params.y = if (pos == "Center") 0 else 40
 
         try {
             windowManager?.addView(floatingView, params)

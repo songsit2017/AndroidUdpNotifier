@@ -117,6 +117,9 @@ class MainActivity : AppCompatActivity() {
         val switchQuickReply = findViewById<Switch>(R.id.switchQuickReply)
         val switchTTS = findViewById<Switch>(R.id.switchTTS)
         val switchGreeting = findViewById<Switch>(R.id.switchGreeting)
+        val switchWeatherGreeting = findViewById<Switch>(R.id.switchWeatherGreeting)
+        val switchAudioDucking = findViewById<Switch>(R.id.switchAudioDucking)
+        val switchAutoReply = findViewById<Switch>(R.id.switchAutoReply)
         val switchMedia = findViewById<Switch>(R.id.switchMedia)
         val switchBattery = findViewById<Switch>(R.id.switchBattery)
         val switchDND = findViewById<Switch>(R.id.switchDND)
@@ -125,6 +128,11 @@ class MainActivity : AppCompatActivity() {
         val switchFatigue = findViewById<Switch>(R.id.switchFatigue)
         val switchSpeed = findViewById<Switch>(R.id.switchSpeed)
         val btnFindPhone = findViewById<Button>(R.id.btnFindPhone)
+        val btnAddGeoReminder = findViewById<Button>(R.id.btnAddGeoReminder)
+
+        btnAddGeoReminder.setOnClickListener {
+            showAddGeoReminderDialog()
+        }
 
         btnFindPhone.setOnClickListener {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
@@ -157,6 +165,9 @@ class MainActivity : AppCompatActivity() {
         switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
         switchTTS.isChecked = prefs.getBoolean("PREF_TTS", true)
         switchGreeting.isChecked = prefs.getBoolean("PREF_GREETING", true)
+        switchWeatherGreeting.isChecked = prefs.getBoolean("PREF_WEATHER_GREETING", true)
+        switchAudioDucking.isChecked = prefs.getBoolean("PREF_AUDIO_DUCKING", true)
+        switchAutoReply.isChecked = prefs.getBoolean("PREF_AUTO_REPLY", true)
         switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
         switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
         switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
@@ -173,6 +184,9 @@ class MainActivity : AppCompatActivity() {
         switchQuickReply.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
         switchTTS.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
         switchGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_GREETING", c) }
+        switchWeatherGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_WEATHER_GREETING", c) }
+        switchAudioDucking.setOnCheckedChangeListener { _, c -> listener("PREF_AUDIO_DUCKING", c) }
+        switchAutoReply.setOnCheckedChangeListener { _, c -> listener("PREF_AUTO_REPLY", c) }
         switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
         switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
         switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
@@ -196,6 +210,62 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
+        
+        val spinnerPopupPosition = findViewById<Spinner>(R.id.spinnerPopupPosition)
+        val positions = arrayOf("Top", "Center", "Bottom")
+        val posAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, positions)
+        posAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerPopupPosition.adapter = posAdapter
+        
+        val currentPosition = prefs.getString("PREF_POPUP_GRAVITY", "Top")
+        spinnerPopupPosition.setSelection(positions.indexOf(currentPosition))
+        
+        spinnerPopupPosition.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                prefs.edit().putString("PREF_POPUP_GRAVITY", positions[position]).apply()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+    }
+
+    private fun showAddGeoReminderDialog() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            android.widget.Toast.makeText(this, "กรุณาเปิดสิทธิ์ GPS ก่อนใช้งาน (GRANT LOCATION PERMISSION)", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val lastLocation = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+            ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+            
+        if (lastLocation == null) {
+            android.widget.Toast.makeText(this, "ไม่สามารถหาพิกัด GPS ปัจจุบันได้", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val input = android.widget.EditText(this).apply {
+            hint = "เช่น แวะซื้อนมที่โลตัส"
+            setPadding(40, 40, 40, 40)
+        }
+        
+        android.app.AlertDialog.Builder(this)
+            .setTitle("บันทึกพิกัดแจ้งเตือน")
+            .setMessage("พิกัดปัจจุบัน: ${String.format("%.4f, %.4f", lastLocation.latitude, lastLocation.longitude)}\nพิมพ์ข้อความที่ต้องการให้ระบบพูดเตือนเมื่อขับรถมาถึงจุดนี้ในครั้งถัดไป:")
+            .setView(input)
+            .setPositiveButton("บันทึก") { _, _ ->
+                val msg = input.text.toString()
+                if (msg.isNotEmpty()) {
+                    val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                    prefs.edit().putString("GEO_REMINDER_LAT", lastLocation.latitude.toString())
+                                .putString("GEO_REMINDER_LON", lastLocation.longitude.toString())
+                                .putString("GEO_REMINDER_MSG", msg)
+                                .putBoolean("GEO_REMINDER_TRIGGERED", false)
+                                .apply()
+                    android.widget.Toast.makeText(this, "บันทึกเรียบร้อย", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("ยกเลิก", null)
+            .show()
     }
 
     override fun onResume() {
