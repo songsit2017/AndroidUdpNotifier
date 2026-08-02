@@ -51,6 +51,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val btnReqBattery = findViewById<Button>(R.id.btnReqBattery)
+        btnReqBattery.setOnClickListener {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val powerManager = getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+                if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = android.net.Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } else {
+                    android.widget.Toast.makeText(this, "ปิดโหมดประหยัดพลังงานแล้ว!", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         AppLogger.listener = { message ->
             val currentText = tvLog.text.toString()
             val newText = "$message\n\n$currentText"

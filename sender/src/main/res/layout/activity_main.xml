@@ -43,6 +43,13 @@
         android:textColor="#FFFFFF"
         android:text="📍 ดูพิกัดรถล่าสุด" />
 
+    <Button
+        android:id="@+id/btnReqBattery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="ปิดโหมดประหยัดพลังงาน (สำคัญ)" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
