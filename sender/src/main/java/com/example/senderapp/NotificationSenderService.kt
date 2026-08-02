@@ -207,8 +207,11 @@ class NotificationSenderService : NotificationListenerService() {
 
         val notification = sbn.notification
 
-        // 1. Ignore ongoing background services (like "Chat heads active")
-        if ((notification.flags and Notification.FLAG_ONGOING_EVENT) != 0) {
+        val isCall = notification.category == Notification.CATEGORY_CALL || 
+                     (packageName == "jp.naver.line.android" && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notification.category == null) // Fallback for LINE
+
+        // 1. Ignore ongoing background services (like "Chat heads active") UNLESS it is a Call
+        if (!isCall && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0) {
             AppLogger.log("   -> Ignored (Ongoing background event)")
             return
         }
@@ -238,8 +241,7 @@ class NotificationSenderService : NotificationListenerService() {
             return
         }
 
-        // Determine if Call or Message. Most VoIP apps use CATEGORY_CALL for incoming calls.
-        val isCall = notification.category == Notification.CATEGORY_CALL
+        // Determine if Call or Message.
         var type = if (isCall) "call" else "message"
 
         // Check if it's a Media notification
