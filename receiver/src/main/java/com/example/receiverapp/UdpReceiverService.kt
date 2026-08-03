@@ -56,6 +56,10 @@ class UdpReceiverService : Service() {
     private var floatingView: View? = null
     private var autoDismissJob: Job? = null
     private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var pendingConnectionAnnouncement = false
+    private var connectionAnnounced = false
+    private var lastHeartbeatAt = 0L
     private var serviceStartTime = 0L
     private var locationManager: LocationManager? = null
     private var isSpeedWarningActive = false
@@ -80,6 +84,7 @@ class UdpReceiverService : Service() {
         try {
             tts = TextToSpeech(this) { status ->
                 if (status == TextToSpeech.SUCCESS) {
+                ttsReady = true
                 tts?.language = Locale("th", "TH")
                 
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -101,17 +106,7 @@ class UdpReceiverService : Service() {
                     }
                 })
 
-                val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
-                val isGreetingEnabled = prefs.getBoolean("PREF_GREETING", true)
-                val isWeatherGreetingEnabled = prefs.getBoolean("PREF_WEATHER_GREETING", true)
-                
-                if (isTtsEnabled) {
-                    if (isWeatherGreetingEnabled) {
-                        checkWeather(null, true)
-                    } else if (isGreetingEnabled) {
-                        tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
-                    }
-                }
+                announceConnectionIfReady()
                 }
             }
         } catch (e: Exception) {
@@ -361,7 +356,17 @@ class UdpReceiverService : Service() {
 
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
-            if (type == "heartbeat") return
+            if (type == "heartbeat") {
+                val now = System.currentTimeMillis()
+                val isNewConnection = !connectionAnnounced || now - lastHeartbeatAt > 150_000L
+                lastHeartbeatAt = now
+                connectionAnnounced = true
+                if (isNewConnection) {
+                    pendingConnectionAnnouncement = true
+                    announceConnectionIfReady()
+                }
+                return
+            }
 
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
@@ -775,6 +780,25 @@ class UdpReceiverService : Service() {
             } catch (e: Exception) {
                 AppLogger.log("Failed to send action: ${e.message}")
             }
+        }
+    }
+
+    private fun announceConnectionIfReady() {
+        if (!pendingConnectionAnnouncement || !ttsReady) return
+        pendingConnectionAnnouncement = false
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("PREF_TTS", true) || !prefs.getBoolean("PREF_GREETING", true)) return
+
+        AppLogger.log("Sender connected; announcing connection")
+        if (prefs.getBoolean("PREF_WEATHER_GREETING", true)) {
+            checkWeather(null, true)
+        } else {
+            tts?.speak(
+                "ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ",
+                TextToSpeech.QUEUE_FLUSH,
+                null,
+                "GREETING"
+            )
         }
     }
 
