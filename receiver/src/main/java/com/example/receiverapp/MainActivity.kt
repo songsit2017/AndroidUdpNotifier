@@ -401,4 +401,22 @@ class MainActivity : AppCompatActivity() {
         statusHandler.removeCallbacks(statusUpdater)
         AppLogger.listener = null
     }
+    private fun startWatchdog() {
+        val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = android.content.Intent(this, WatchdogReceiver::class.java)
+        
+        val pendingIntent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            android.app.PendingIntent.getBroadcast(this, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE)
+        } else {
+            android.app.PendingIntent.getBroadcast(this, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+        
+        val interval = 5L * 60L * 1000L
+        alarmManager.setRepeating(
+            android.app.AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + interval,
+            interval,
+            pendingIntent
+        )
+    }
 }
