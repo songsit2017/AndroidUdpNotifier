@@ -376,6 +376,10 @@ class UdpReceiverService : Service() {
                     val level = jsonObject.optInt("level", 20)
                     CoroutineScope(Dispatchers.Main).launch {
                         showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, null, senderIp)
+                        val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+                        if (isTtsEnabled) {
+                            tts?.speak("แจ้งเตือน แบตเตอรี่มือถือเหลือ $level เปอร์เซ็นต์ โปรดเสียบชาร์จด้วยครับ", TextToSpeech.QUEUE_ADD, null, "BATTERY")
+                        }
                     }
                 }
                 return

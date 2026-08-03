@@ -9,6 +9,13 @@ import android.location.LocationManager
 import android.net.NetworkInfo
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 
 class ConnectionReceiver : BroadcastReceiver() {
     
@@ -30,6 +37,30 @@ class ConnectionReceiver : BroadcastReceiver() {
                 // WiFi Disconnected! Probably turned off the car.
                 AppLogger.log("WiFi Disconnected. Saving parking location...")
                 saveCurrentLocation(context)
+            } else if (!wasConnected && isConnected) {
+                // WiFi Connected!
+                AppLogger.log("WiFi Connected. Checking battery...")
+                val bm = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+                val level = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                if (level in 1..20) {
+                    val payload = JSONObject().apply {
+                        put("type", "battery")
+                        put("level", level)
+                    }.toString()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val socket = DatagramSocket()
+                            socket.broadcast = true
+                            val data = payload.toByteArray(Charsets.UTF_8)
+                            val packet = DatagramPacket(data, data.size, InetAddress.getByName("255.255.255.255"), 8888)
+                            socket.send(packet)
+                            socket.close()
+                            AppLogger.log("🔋 Low battery alert sent on connect: $level%")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
             }
             
             wasConnected = isConnected
