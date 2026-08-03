@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธซเธเนเธฒเธเธญเนเธชเธ”เธเธเธฅเธเธเธฃเธ–เธขเธเธ•เน"
+                android:text="หน้าจอแสดงผลบนรถยนต์"
                 android:textAlignment="center"
                 android:textSize="24sp"
                 android:textColor="@color/app_text_secondary"
@@ -47,14 +47,14 @@
                 android:layout_marginBottom="8dp"
                 app:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
-                android:text="เนเธชเธ”เธ QR เธชเธณเธซเธฃเธฑเธเธเธฑเธเธเธนเน" />
+                android:text="แสดง QR สำหรับจับคู่" />
 
             <TextView
                 android:id="@+id/tvConnectionStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="เธชเธ–เธฒเธเธฐ: เธฃเธญเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ"
+                android:text="สถานะ: รอการเชื่อมต่อ"
                 android:textAlignment="center"
                 android:textColor="@color/app_text_secondary" />
 
@@ -139,7 +139,7 @@
                         android:layout_height="wrap_content"
                         android:text="Quick Replies"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเธเธธเนเธกเธ•เธญเธเธเธฅเธฑเธเธ”เนเธงเธเธเธเธเธญเธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มตอบกลับด่วนบนจอรถ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -149,7 +149,7 @@
                         android:layout_height="wrap_content"
                         android:text="Text-to-Speech"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธญเนเธฒเธเธเนเธญเธเธงเธฒเธกเธ—เธตเนเนเธ”เนเธฃเธฑเธเธญเธญเธเน€เธชเธตเธขเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธด" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -159,7 +159,7 @@
                         android:layout_height="wrap_content"
                         android:text="Startup Greeting"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเธนเธ”เธ—เธฑเธเธ—เธฒเธขเน€เธกเธทเนเธญเธชเธ•เธฒเธฃเนเธ—เธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="พูดทักทายเมื่อสตาร์ทรถ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -169,7 +169,7 @@
                         android:layout_height="wrap_content"
                         android:text="Weather &amp; PM 2.5 Greeting"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธฃเธฒเธขเธเธฒเธเธชเธ เธฒเธเธญเธฒเธเธฒเธจเธ•เธญเธเธชเธ•เธฒเธฃเนเธ—เธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="รายงานสภาพอากาศตอนสตาร์ทรถ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -179,7 +179,7 @@
                         android:layout_height="wrap_content"
                         android:text="Smart Audio Ducking"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธซเธฃเธตเนเน€เธชเธตเธขเธเน€เธเธฅเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธดเธเธ“เธฐเธฃเธฐเธเธเธเธนเธ”" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="หรี่เสียงเพลงอัตโนมัติขณะระบบพูด" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -189,7 +189,7 @@
                         android:layout_height="wrap_content"
                         android:text="Auto-Reply While Driving"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธชเนเธเธเนเธญเธเธงเธฒเธกเธ•เธญเธเธเธฅเธฑเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธดเน€เธกเธทเนเธญเธเธฑเธเธฃเธ–เธญเธขเธนเน" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ส่งข้อความตอบกลับอัตโนมัติเมื่อขับรถอยู่" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -199,7 +199,7 @@
                         android:layout_height="wrap_content"
                         android:text="VIP Mode"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธ—เธฐเธฅเธงเธเนเธซเธกเธ”เธซเนเธฒเธกเธฃเธเธเธงเธ เธซเธฒเธเธกเธตเธเธณเธงเนเธฒ เธ”เนเธงเธ/เธเธธเธเน€เธเธดเธ/เธชเธณเธเธฑเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ทะลวงโหมดห้ามรบกวน หากมีคำว่า ด่วน/ฉุกเฉิน/สำคัญ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -209,7 +209,7 @@
                         android:layout_height="wrap_content"
                         android:text="Share ETA"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเธเธธเนเธกเธชเนเธเธเธดเธเธฑเธ” GPS เน€เธกเธทเนเธญเธกเธตเธเธเธ—เธฑเธเธ–เธฒเธกเธ•เธณเนเธซเธเนเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มส่งพิกัด GPS เมื่อมีคนทักถามตำแหน่ง" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
 </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -245,7 +245,7 @@
                         android:layout_height="wrap_content"
                         android:text="Fatigue Alert"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เน€เธ•เธทเธญเธเธเธฑเธเธชเธฒเธขเธ•เธฒเนเธฅเธฐเธซเธฒเธเธฑเนเธกเน€เธกเธทเนเธญเธเธฑเธเธฃเธ–เธเธฃเธ 2 เธเธฑเนเธงเนเธกเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เตือนพักสายตาและหาปั๊มเมื่อขับรถครบ 2 ชั่วโมง" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -255,7 +255,7 @@
                         android:layout_height="wrap_content"
                         android:text="Speed Limit Warning"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเธฐเธเธฃเธดเธเธเธญเนเธ”เธเน€เธ•เธทเธญเธเน€เธกเธทเนเธญเธเธฑเธเน€เธฃเนเธงเน€เธเธดเธ 120 เธเธก./เธเธก." android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="กะพริบจอแดงเตือนเมื่อขับเร็วเกิน 120 กม./ชม." android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -263,9 +263,9 @@
                         android:id="@+id/switchPrivacy"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Privacy Mode (เธกเธตเธเธนเนเนเธ”เธขเธชเธฒเธฃ)"
+                        android:text="Privacy Mode (มีผู้โดยสาร)"
                         android:checked="false" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเนเธญเธเธเนเธญเธเธงเธฒเธกเนเธฅเธฐเธญเนเธฒเธเนเธเนเธเธทเนเธญเธเธเธชเนเธ เน€เธเธทเนเธญเธเธงเธฒเธกเน€เธเนเธเธชเนเธงเธเธ•เธฑเธง" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ซ่อนข้อความและอ่านแค่ชื่อคนส่ง เพื่อความเป็นส่วนตัว" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -275,7 +275,7 @@
                         android:layout_height="wrap_content"
                         android:text="Do Not Disturb"
                         android:checked="false" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธซเธกเธ”เธซเนเธฒเธกเธฃเธเธเธงเธ (เธเธดเธ”เนเธเนเธเน€เธ•เธทเธญเธเธ—เธธเธเธญเธขเนเธฒเธเธขเธเน€เธงเนเธ VIP)" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="โหมดห้ามรบกวน (ปิดแจ้งเตือนทุกอย่างยกเว้น VIP)" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
 </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -311,7 +311,7 @@
                         android:layout_height="wrap_content"
                         android:text="Now Playing Overlay"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเน€เธเธฅเธเธ—เธตเนเธเธณเธฅเธฑเธเน€เธฅเนเธเนเธฅเธฐเธเธธเนเธกเธเธงเธเธเธธเธก" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงเพลงที่กำลังเล่นและปุ่มควบคุม" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
@@ -321,7 +321,7 @@
                         android:layout_height="wrap_content"
                         android:text="Battery Alerts"
                         android:checked="true" />
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธเนเธเน€เธ•เธทเธญเธเน€เธกเธทเนเธญเนเธเธ•เธกเธทเธญเธ–เธทเธญเธ•เนเธณเธเธงเนเธฒ 20%" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แจ้งเตือนเมื่อแบตมือถือต่ำกว่า 20%" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 </LinearLayout>
 
                     <LinearLayout
@@ -355,7 +355,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="24sp"
                 app:cornerRadius="12dp"
-                android:text="๐“ เธ•เธฑเนเธเน€เธ•เธทเธญเธเธเธดเธเธฑเธ”เธเธฑเธเธเธธเธเธฑเธ (Geo-Reminder)" />
+                android:text="📍 ตั้งเตือนพิกัดปัจจุบัน (Geo-Reminder)" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFindPhone"
@@ -366,7 +366,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="24sp"
                 app:cornerRadius="12dp"
-                android:text="๐” เธ•เธฒเธกเธซเธฒเธกเธทเธญเธ–เธทเธญ (เธชเนเธเน€เธชเธตเธขเธเธฃเนเธญเธ)" />
+                android:text="🔍 ตามหามือถือ (ส่งเสียงร้อง)" />
 
 
     <com.google.android.material.card.MaterialCardView
@@ -393,14 +393,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="8dp"
-                android:text="เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ..."
+                android:text="กำลังตรวจสอบการเชื่อมต่อ..."
                 android:textColor="@color/app_text_secondary" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTestSystem"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธ—เธ”เธชเธญเธ Popup เนเธฅเธฐเน€เธชเธตเธขเธ"
+                android:text="ทดสอบ Popup และเสียง"
                 android:textColor="@color/app_accent"
                 app:strokeColor="@color/app_accent" />
             <com.google.android.material.button.MaterialButton
@@ -408,7 +408,7 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธชเนเธเธญเธญเธ Diagnostic Log"
+                android:text="ส่งออก Diagnostic Log"
                 android:textColor="@color/app_accent" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -458,4 +458,3 @@
     </ScrollView>
 
 </LinearLayout>
-

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header -->
+<!-- Header -->
             <TextView
                 android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
@@ -31,7 +31,7 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธซเธเนเธฒเธเธญเนเธชเธ”เธเธเธฅเธเธเธฃเธ–เธขเธเธ•เน"
+                android:text="หน้าจอแสดงผลบนรถยนต์"
                 android:textAlignment="center"
                 android:textSize="14sp"
                 android:textColor="@color/app_text_secondary"
@@ -44,22 +44,20 @@
                 android:layout_marginBottom="8dp"
                 app:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
-                android:text="เนเธชเธ”เธ QR เธชเธณเธซเธฃเธฑเธเธเธฑเธเธเธนเน" />
+                android:text="แสดง QR สำหรับจับคู่" />
 
             <TextView
                 android:id="@+id/tvConnectionStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="เธชเธ–เธฒเธเธฐ: เธฃเธญเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ"
+                android:text="สถานะ: รอการเชื่อมต่อ"
                 android:textAlignment="center"
                 android:textColor="@color/app_text_secondary" />
 
             
-
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
-
-        <com.google.android.material.card.MaterialCardView
+<com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
@@ -83,14 +81,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="8dp"
-                android:text="เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ..."
+                android:text="กำลังตรวจสอบการเชื่อมต่อ..."
                 android:textColor="@color/app_text_secondary" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTestSystem"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธ—เธ”เธชเธญเธ Popup เนเธฅเธฐเน€เธชเธตเธขเธ"
+                android:text="ทดสอบ Popup และเสียง"
                 android:textColor="@color/app_accent"
                 app:strokeColor="@color/app_accent" />
             <com.google.android.material.button.MaterialButton
@@ -98,7 +96,7 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เธชเนเธเธญเธญเธ Diagnostic Log"
+                android:text="ส่งออก Diagnostic Log"
                 android:textColor="@color/app_accent" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -118,7 +116,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Permissions Card -->
+<!-- Permissions Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -169,7 +167,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             
-            <!-- Features Card -->
+<!-- Features Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -187,40 +185,80 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Permissions"
+                        android:text="General Features"
                         android:textStyle="bold"
                         android:textColor="@color/app_accent"
                         android:textSize="16sp"
                         android:layout_marginBottom="12dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestOverlay"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchQuickReply"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. GRANT OVERLAY PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:text="Quick Replies"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มตอบกลับด่วนบนจอรถ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestBattery"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchTTS"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="2. GRANT BATTERY EXEMPTION"
-                        app:cornerRadius="8dp" />
+                        android:text="Text-to-Speech"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestLocation"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchGreeting"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="3. GRANT LOCATION PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:text="Startup Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="พูดทักทายเมื่อสตาร์ทรถ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchWeatherGreeting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Weather &amp; PM 2.5 Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="รายงานสภาพอากาศตอนสตาร์ทรถ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAudioDucking"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Smart Audio Ducking"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="หรี่เสียงเพลงอัตโนมัติขณะระบบพูด" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAutoReply"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Auto-Reply While Driving"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ส่งข้อความตอบกลับอัตโนมัติเมื่อขับรถอยู่" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchVIP"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="VIP Mode"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ทะลวงโหมดห้ามรบกวน หากมีคำว่า ด่วน/ฉุกเฉิน/สำคัญ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchETA"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Share ETA"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มส่งพิกัด GPS เมื่อมีคนทักถามตำแหน่ง" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             
-            <!-- Advanced Features -->
+<!-- Safety Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -238,40 +276,48 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Permissions"
+                        android:text="Safety &amp; Health"
                         android:textStyle="bold"
-                        android:textColor="@color/app_accent"
+                        android:textColor="#FF3B30"
                         android:textSize="16sp"
                         android:layout_marginBottom="12dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestOverlay"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchFatigue"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. GRANT OVERLAY PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:text="Fatigue Alert"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เตือนพักสายตาและหาปั๊มเมื่อขับรถครบ 2 ชั่วโมง" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestBattery"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchSpeed"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="2. GRANT BATTERY EXEMPTION"
-                        app:cornerRadius="8dp" />
+                        android:text="Speed Limit Warning"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="กะพริบจอแดงเตือนเมื่อขับเร็วเกิน 120 กม./ชม." android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestLocation"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchPrivacy"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="3. GRANT LOCATION PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:text="Privacy Mode (มีผู้โดยสาร)"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ซ่อนข้อความและอ่านแค่ชื่อคนส่ง เพื่อความเป็นส่วนตัว" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchDND"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Do Not Disturb"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="โหมดห้ามรบกวน (ปิดแจ้งเตือนทุกอย่างยกเว้น VIP)" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             
-            
+<!-- Media Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -289,43 +335,78 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Permissions"
+                        android:text="Media &amp; System"
                         android:textStyle="bold"
-                        android:textColor="@color/app_accent"
+                        android:textColor="#34C759"
                         android:textSize="16sp"
                         android:layout_marginBottom="12dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestOverlay"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchMedia"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. GRANT OVERLAY PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:text="Now Playing Overlay"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงเพลงที่กำลังเล่นและปุ่มควบคุม" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestBattery"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchBattery"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="2. GRANT BATTERY EXEMPTION"
-                        app:cornerRadius="8dp" />
+                        android:text="Battery Alerts"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แจ้งเตือนเมื่อแบตมือถือต่ำกว่า 20%" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRequestLocation"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="3. GRANT LOCATION PERMISSION"
-                        app:cornerRadius="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Theme:" android:textSize="16sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerTheme" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Popup Position:" android:textSize="16sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerPopupPosition" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddGeoReminder"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FF9500"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                app:cornerRadius="12dp"
+                android:text="📍 ตั้งเตือนพิกัดปัจจุบัน (Geo-Reminder)" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFindPhone"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FF3B30"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                app:cornerRadius="12dp"
+                android:text="🔍 ตามหามือถือ (ส่งเสียงร้อง)" />
+
+
+    
 
             <Space android:layout_width="match_parent" android:layout_height="16dp" />
-
-            <com.google.android.material.card.MaterialCardView
+<com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:layout_marginHorizontal="16dp"
@@ -347,27 +428,29 @@
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.card.MaterialCardView
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCheckUpdate"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginHorizontal="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="@color/app_surface_muted">
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="12dp">
-            <TextView
-                android:id="@+id/tvLog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Waiting for UDP data..."
-                android:textSize="12sp"
-                android:textColor="@color/app_text_secondary"
-                android:fontFamily="monospace"/>
-        </ScrollView>
-    </com.google.android.material.card.MaterialCardView>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/app_accent"
+        android:text="Check for Updates" />
+
+    <TextView
+        android:id="@+id/tvVersionInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Version 1.0.0 | Created by Songsit2017 x PUPU"
+        android:textAlignment="center"
+        android:textSize="12sp"
+        android:textColor="@color/app_text_secondary" />
+
+        </LinearLayout>
+    </ScrollView>
+
 
         </LinearLayout>
     </ScrollView>
