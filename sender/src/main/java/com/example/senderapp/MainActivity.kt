@@ -127,6 +127,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        AutoUpdater.resumePendingInstall(this)
         updatePermissionButtons()
     }
 

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,8 @@ object AutoUpdater {
     private const val GITHUB_API_URL = "https://api.github.com/repos/songsit2017/AndroidUdpNotifier/releases/latest"
     private const val ASSET_NAME = "sender-release.apk"
     private const val MAX_APK_BYTES = 100L * 1024L * 1024L
+    private const val UPDATE_PREFS = "AutoUpdaterPrefs"
+    private const val PENDING_APK = "pending_apk"
 
     fun checkForUpdates(activity: Activity, showToastIfUpToDate: Boolean = false) {
         if (showToastIfUpToDate) {
@@ -184,6 +187,23 @@ object AutoUpdater {
                 android.widget.Toast.makeText(context, "Update rejected: invalid app signature", android.widget.Toast.LENGTH_LONG).show()
                 return
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !context.packageManager.canRequestPackageInstalls()) {
+                context.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+                    .edit().putString(PENDING_APK, file.absolutePath).apply()
+                AlertDialog.Builder(context)
+                    .setTitle("Allow app updates")
+                    .setMessage("Please allow Sender App to install unknown apps. After enabling it, return here and installation will continue automatically.")
+                    .setPositiveButton("Open settings") { _, _ ->
+                        context.startActivity(Intent(
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:${context.packageName}")
+                        ))
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+                return
+            }
             val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
             } else {
@@ -199,6 +219,16 @@ object AutoUpdater {
             Log.e(TAG, "Install failed", e)
             android.widget.Toast.makeText(context, "Failed to start installation", android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun resumePendingInstall(activity: Activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !activity.packageManager.canRequestPackageInstalls()) return
+        val prefs = activity.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+        val path = prefs.getString(PENDING_APK, null) ?: return
+        prefs.edit().remove(PENDING_APK).apply()
+        val file = File(path)
+        if (file.isFile) installApk(activity, file)
     }
 
     private fun isTrustedUpdate(context: Context, file: File): Boolean {
