@@ -1,0 +1,461 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/app_background">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Header -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="UdpReceiver"
+                android:textAlignment="center"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="@color/app_text_primary"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="เธซเธเนเธฒเธเธญเนเธชเธ”เธเธเธฅเธเธเธฃเธ–เธขเธเธ•เน"
+                android:textAlignment="center"
+                android:textSize="24sp"
+                android:textColor="@color/app_text_secondary"
+                android:layout_marginBottom="24dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShowPairingQr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"
+                android:text="เนเธชเธ”เธ QR เธชเธณเธซเธฃเธฑเธเธเธฑเธเธเธนเน" />
+
+            <TextView
+                android:id="@+id/tvConnectionStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="เธชเธ–เธฒเธเธฐ: เธฃเธญเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ"
+                android:textAlignment="center"
+                android:textColor="@color/app_text_secondary" />
+
+            <!-- Permissions Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Permissions"
+                        android:textStyle="bold"
+                        android:textColor="@color/app_accent"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRequestOverlay"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="1. GRANT OVERLAY PERMISSION"
+                        app:cornerRadius="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRequestBattery"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="2. GRANT BATTERY EXEMPTION"
+                        app:cornerRadius="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRequestLocation"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="3. GRANT LOCATION PERMISSION"
+                        app:cornerRadius="8dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Features Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="General Features"
+                        android:textStyle="bold"
+                        android:textColor="@color/app_accent"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchQuickReply"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Quick Replies"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเธเธธเนเธกเธ•เธญเธเธเธฅเธฑเธเธ”เนเธงเธเธเธเธเธญเธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchTTS"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Text-to-Speech"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธญเนเธฒเธเธเนเธญเธเธงเธฒเธกเธ—เธตเนเนเธ”เนเธฃเธฑเธเธญเธญเธเน€เธชเธตเธขเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธด" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchGreeting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Startup Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเธนเธ”เธ—เธฑเธเธ—เธฒเธขเน€เธกเธทเนเธญเธชเธ•เธฒเธฃเนเธ—เธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchWeatherGreeting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Weather &amp; PM 2.5 Greeting"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธฃเธฒเธขเธเธฒเธเธชเธ เธฒเธเธญเธฒเธเธฒเธจเธ•เธญเธเธชเธ•เธฒเธฃเนเธ—เธฃเธ–" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAudioDucking"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Smart Audio Ducking"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธซเธฃเธตเนเน€เธชเธตเธขเธเน€เธเธฅเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธดเธเธ“เธฐเธฃเธฐเธเธเธเธนเธ”" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchAutoReply"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Auto-Reply While Driving"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธชเนเธเธเนเธญเธเธงเธฒเธกเธ•เธญเธเธเธฅเธฑเธเธญเธฑเธ•เนเธเธกเธฑเธ•เธดเน€เธกเธทเนเธญเธเธฑเธเธฃเธ–เธญเธขเธนเน" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchVIP"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="VIP Mode"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธ—เธฐเธฅเธงเธเนเธซเธกเธ”เธซเนเธฒเธกเธฃเธเธเธงเธ เธซเธฒเธเธกเธตเธเธณเธงเนเธฒ เธ”เนเธงเธ/เธเธธเธเน€เธเธดเธ/เธชเธณเธเธฑเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchETA"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Share ETA"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเธเธธเนเธกเธชเนเธเธเธดเธเธฑเธ” GPS เน€เธกเธทเนเธญเธกเธตเธเธเธ—เธฑเธเธ–เธฒเธกเธ•เธณเนเธซเธเนเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
+</LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Safety Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Safety &amp; Health"
+                        android:textStyle="bold"
+                        android:textColor="#FF3B30"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchFatigue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Fatigue Alert"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เน€เธ•เธทเธญเธเธเธฑเธเธชเธฒเธขเธ•เธฒเนเธฅเธฐเธซเธฒเธเธฑเนเธกเน€เธกเธทเนเธญเธเธฑเธเธฃเธ–เธเธฃเธ 2 เธเธฑเนเธงเนเธกเธ" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Speed Limit Warning"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเธฐเธเธฃเธดเธเธเธญเนเธ”เธเน€เธ•เธทเธญเธเน€เธกเธทเนเธญเธเธฑเธเน€เธฃเนเธงเน€เธเธดเธ 120 เธเธก./เธเธก." android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchPrivacy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Privacy Mode (เธกเธตเธเธนเนเนเธ”เธขเธชเธฒเธฃ)"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เธเนเธญเธเธเนเธญเธเธงเธฒเธกเนเธฅเธฐเธญเนเธฒเธเนเธเนเธเธทเนเธญเธเธเธชเนเธ เน€เธเธทเนเธญเธเธงเธฒเธกเน€เธเนเธเธชเนเธงเธเธ•เธฑเธง" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchDND"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Do Not Disturb"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธซเธกเธ”เธซเนเธฒเธกเธฃเธเธเธงเธ (เธเธดเธ”เนเธเนเธเน€เธ•เธทเธญเธเธ—เธธเธเธญเธขเนเธฒเธเธขเธเน€เธงเนเธ VIP)" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
+</LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Media Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Media &amp; System"
+                        android:textStyle="bold"
+                        android:textColor="#34C759"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchMedia"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Now Playing Overlay"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธชเธ”เธเน€เธเธฅเธเธ—เธตเนเธเธณเธฅเธฑเธเน€เธฅเนเธเนเธฅเธฐเธเธธเนเธกเธเธงเธเธเธธเธก" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchBattery"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Battery Alerts"
+                        android:checked="true" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="เนเธเนเธเน€เธ•เธทเธญเธเน€เธกเธทเนเธญเนเธเธ•เธกเธทเธญเธ–เธทเธญเธ•เนเธณเธเธงเนเธฒ 20%" android:textSize="20sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+</LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Theme:" android:textSize="20sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerTheme" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Popup Position:" android:textSize="20sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerPopupPosition" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddGeoReminder"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FF9500"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                app:cornerRadius="12dp"
+                android:text="๐“ เธ•เธฑเนเธเน€เธ•เธทเธญเธเธเธดเธเธฑเธ”เธเธฑเธเธเธธเธเธฑเธ (Geo-Reminder)" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFindPhone"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FF3B30"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                app:cornerRadius="12dp"
+                android:text="๐” เธ•เธฒเธกเธซเธฒเธกเธทเธญเธ–เธทเธญ (เธชเนเธเน€เธชเธตเธขเธเธฃเนเธญเธ)" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="@color/app_surface">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Connection Health"
+                android:textStyle="bold"
+                android:textColor="@color/app_accent"
+                android:textSize="24sp" />
+            <TextView
+                android:id="@+id/tvDiagnosticsHealth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="8dp"
+                android:text="เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธเธฒเธฃเน€เธเธทเนเธญเธกเธ•เนเธญ..."
+                android:textColor="@color/app_text_secondary" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestSystem"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="เธ—เธ”เธชเธญเธ Popup เนเธฅเธฐเน€เธชเธตเธขเธ"
+                android:textColor="@color/app_accent"
+                app:strokeColor="@color/app_accent" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportDiagnostics"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="เธชเนเธเธญเธญเธ Diagnostic Log"
+                android:textColor="@color/app_accent" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginHorizontal="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/app_surface_muted">
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="12dp">
+            <TextView
+                android:id="@+id/tvLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Waiting for UDP data..."
+                android:textSize="20sp"
+                android:textColor="@color/app_text_secondary"
+                android:fontFamily="monospace"/>
+        </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCheckUpdate"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/app_accent"
+        android:text="Check for Updates" />
+
+    <TextView
+        android:id="@+id/tvVersionInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Version 1.0.0 | Created by Songsit2017 x PUPU"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:textColor="@color/app_text_secondary" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
+
