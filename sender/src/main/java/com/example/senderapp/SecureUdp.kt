@@ -1,4 +1,4 @@
-package com.example.senderapp
+﻿package com.example.senderapp
 
 import android.content.Context
 import android.util.Base64
@@ -111,14 +111,14 @@ object SecureUdp {
         }
     }
 
-    private fun readCode(context: Context): String? = try {
+    private fun readCode(context: Context): String? { return try {
         val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(PAIRING_CODE, null) ?: return null
         val bytes = Base64.decode(stored, Base64.NO_WRAP)
         if (bytes.size <= 12) return null
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, storageKey(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
         String(cipher.doFinal(bytes.copyOfRange(12, bytes.size)), Charsets.UTF_8)
-    } catch (_: Exception) { null }
+    } catch (_: Exception) { null } }
 
     private fun storageKey(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }

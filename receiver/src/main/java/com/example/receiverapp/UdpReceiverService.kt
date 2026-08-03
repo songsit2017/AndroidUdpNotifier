@@ -1,4 +1,4 @@
-package com.example.receiverapp
+﻿package com.example.receiverapp
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -692,7 +692,6 @@ class UdpReceiverService : Service() {
             PixelFormat.TRANSLUCENT
         )
 
-        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
         params.gravity = when (pos) {
             "Center" -> Gravity.CENTER
