@@ -31,6 +31,13 @@ class MainActivity : AppCompatActivity() {
             val age = System.currentTimeMillis() - lastSeen
             findViewById<TextView>(R.id.tvConnectionStatus)?.text =
                 if (lastSeen > 0 && age < 20_000) "สถานะ: เชื่อมต่อโทรศัพท์แล้ว ✓" else "สถานะ: รอการเชื่อมต่อ"
+            val ip = prefs.getString("LAST_SENDER_IP", null)
+            val ageSeconds = if (lastSeen == 0L) null else age / 1000
+            findViewById<TextView>(R.id.tvDiagnosticsHealth)?.text = when {
+                ageSeconds != null && ageSeconds < 20 -> "● เชื่อมต่อปกติ • รับข้อมูล ${ageSeconds} วินาทีที่แล้ว • ${ip ?: "ไม่ทราบ IP"}"
+                ageSeconds != null -> "● ขาดการเชื่อมต่อ • พบ Sender ล่าสุด ${ageSeconds} วินาทีที่แล้ว"
+                else -> "● Receiver พร้อม • ยังไม่เคยพบ Sender"
+            }
             statusHandler.postDelayed(this, 2_000)
         }
     }
@@ -52,6 +59,18 @@ class MainActivity : AppCompatActivity() {
         
         // Auto check on startup
         AutoUpdater.checkForUpdates(this, showToastIfUpToDate = false)
+
+        findViewById<Button>(R.id.btnTestSystem).setOnClickListener {
+            try {
+                ContextCompat.startForegroundService(this, Intent(this, UdpReceiverService::class.java).apply {
+                    action = UdpReceiverService.ACTION_DIAGNOSTIC_TEST
+                })
+            } catch (e: Exception) {
+                AppLogger.log("Diagnostic popup failed: ${e.javaClass.simpleName}")
+                android.widget.Toast.makeText(this, "ทดสอบ Popup ไม่สำเร็จ กรุณาตรวจสิทธิ์ Overlay", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+        findViewById<Button>(R.id.btnExportDiagnostics).setOnClickListener { Diagnostics.export(this) }
 
         AppLogger.listener = { message ->
             val currentText = tvLog.text.toString()

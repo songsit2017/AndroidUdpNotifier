@@ -8,6 +8,7 @@ object AppLogger {
     private val handler = Handler(Looper.getMainLooper())
 
     fun log(message: String) {
+        Diagnostics.log(message)
         handler.post {
             listener?.invoke(message)
         }

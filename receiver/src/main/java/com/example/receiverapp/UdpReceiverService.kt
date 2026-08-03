@@ -41,6 +41,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 class UdpReceiverService : Service() {
 
+    companion object {
+        const val ACTION_DIAGNOSTIC_TEST = "com.example.receiverapp.DIAGNOSTIC_TEST"
+    }
+
     private val TAG = "UdpReceiver"
     private val CHANNEL_ID = "UdpReceiverChannel"
     private val PORT = 8888
@@ -277,6 +281,19 @@ class UdpReceiverService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_DIAGNOSTIC_TEST) {
+            AppLogger.log("Running local popup diagnostic")
+            CoroutineScope(Dispatchers.Main).launch {
+                showFloatingWindow(
+                    "System Test",
+                    "Popup, Overlay และ Receiver Service ทำงานปกติ",
+                    null, null, "message", null, null, "127.0.0.1"
+                )
+                if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)) {
+                    tts?.speak("ทดสอบระบบ Receiver ทำงานปกติ", TextToSpeech.QUEUE_FLUSH, null, "DIAGNOSTIC_TEST")
+                }
+            }
+        }
         return START_STICKY
     }
 

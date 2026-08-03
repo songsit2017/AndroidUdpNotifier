@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvLog: TextView
@@ -19,6 +20,15 @@ class MainActivity : AppCompatActivity() {
                 !SecureUdp.hasPairingCode(this@MainActivity) -> "สถานะ: ยังไม่ได้จับคู่"
                 lastSeen > 0 && age < 20_000 -> "สถานะ: เชื่อมต่อแล้ว ✓"
                 else -> "สถานะ: จับคู่แล้ว แต่ยังไม่พบจอรถ"
+            }
+            val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+            val ip = prefs.getString("LAST_RECEIVER_IP", null)
+            val ageSeconds = if (lastSeen == 0L) null else age / 1000
+            findViewById<TextView>(R.id.tvDiagnosticsHealth)?.text = when {
+                !SecureUdp.hasPairingCode(this@MainActivity) -> "ยังไม่ได้จับคู่ • สแกน QR จากจอรถก่อน"
+                ageSeconds != null && ageSeconds < 20 -> "● เชื่อมต่อปกติ • ตอบกลับ ${ageSeconds} วินาทีที่แล้ว • ${ip ?: "กำลังค้นหา IP"}"
+                ageSeconds != null -> "● ขาดการเชื่อมต่อ • พบล่าสุด ${ageSeconds} วินาทีที่แล้ว"
+                else -> "● จับคู่แล้ว • กำลังรอสัญญาณจากจอรถ"
             }
             statusHandler.postDelayed(this, 2_000)
         }
@@ -50,6 +60,9 @@ class MainActivity : AppCompatActivity() {
         
         // Auto check on startup
         AutoUpdater.checkForUpdates(this, showToastIfUpToDate = false)
+
+        findViewById<Button>(R.id.btnTestSystem).setOnClickListener { sendDiagnosticTest() }
+        findViewById<Button>(R.id.btnExportDiagnostics).setOnClickListener { Diagnostics.export(this) }
 
         val btnOpenSettings = findViewById<Button>(R.id.btnOpenSettings)
         btnOpenSettings.setOnClickListener {
@@ -123,6 +136,36 @@ class MainActivity : AppCompatActivity() {
         bind(R.id.switchSendImages, "SEND_IMAGES")
         bind(R.id.switchBatteryAlert, "BATTERY_ALERT")
         bind(R.id.switchAutoPark, "AUTO_PARK")
+    }
+
+    private fun sendDiagnosticTest() {
+        if (!SecureUdp.hasPairingCode(this)) {
+            android.widget.Toast.makeText(this, "กรุณาจับคู่กับจอรถก่อน", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        val destination = prefs.getString("LAST_RECEIVER_IP", null) ?: "255.255.255.255"
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                val json = org.json.JSONObject().apply {
+                    put("type", "message")
+                    put("name", "System Test")
+                    put("text", "การเชื่อมต่อ Sender และ Receiver ทำงานปกติ")
+                    put("_messageId", java.util.UUID.randomUUID().toString())
+                }.toString()
+                val encrypted = SecureUdp.encode(this@MainActivity, json) ?: error("Pairing key unavailable")
+                java.net.DatagramSocket().use { socket ->
+                    socket.broadcast = true
+                    val bytes = encrypted.toByteArray(Charsets.UTF_8)
+                    socket.send(java.net.DatagramPacket(bytes, bytes.size, java.net.InetAddress.getByName(destination), 8888))
+                }
+                AppLogger.log("Diagnostic test sent")
+                runOnUiThread { android.widget.Toast.makeText(this, "ส่งการทดสอบแล้ว", android.widget.Toast.LENGTH_SHORT).show() }
+            } catch (e: Exception) {
+                AppLogger.log("Diagnostic test failed: ${e.javaClass.simpleName}")
+                runOnUiThread { android.widget.Toast.makeText(this, "ส่งการทดสอบไม่สำเร็จ", android.widget.Toast.LENGTH_LONG).show() }
+            }
+        }
     }
 
     override fun onResume() {

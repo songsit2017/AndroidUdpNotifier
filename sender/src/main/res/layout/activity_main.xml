@@ -171,6 +171,49 @@
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="@color/app_surface">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Connection Health"
+                android:textStyle="bold"
+                android:textColor="@color/app_accent"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvDiagnosticsHealth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="8dp"
+                android:text="กำลังตรวจสอบการเชื่อมต่อ..."
+                android:textColor="@color/app_text_secondary" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestSystem"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ทดสอบส่งการแจ้งเตือน"
+                android:textColor="@color/app_accent"
+                app:strokeColor="@color/app_accent" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportDiagnostics"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ส่งออก Diagnostic Log"
+                android:textColor="@color/app_accent" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
         android:layout_height="140dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
