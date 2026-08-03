@@ -39,7 +39,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:text="สแกน QR เพื่อจับคู่" />
+        android:text="สแกน QR เพื่อจับคู่"
+        android:textColor="@color/app_accent"
+        app:strokeColor="@color/app_accent" />
 
     <TextView
         android:id="@+id/tvConnectionStatus"
