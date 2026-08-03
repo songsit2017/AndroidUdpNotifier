@@ -73,7 +73,8 @@ class NotificationSenderService : NotificationListenerService() {
                     val level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
                     if (level != -1 && level != lastBatteryLevel) {
                         lastBatteryLevel = level
-                        if (level == 20 || level == 15 || level == 10 || level == 5) {
+                        val enabled = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE).getBoolean("BATTERY_ALERT", true)
+                        if (enabled && (level == 20 || level == 15 || level == 10 || level == 5)) {
                             val payload = JSONObject().apply {
                                 put("type", "battery")
                                 put("level", level)
@@ -221,6 +222,8 @@ class NotificationSenderService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        val senderPrefs = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE)
+        if (!senderPrefs.getBoolean("FORWARD_NOTIFICATIONS", true)) return
         val expiry = System.currentTimeMillis() - actionTtlMs
         pendingIntents.entries.removeIf { it.value.createdAt < expiry }
         val packageName = sbn.packageName
@@ -289,8 +292,9 @@ class NotificationSenderService : NotificationListenerService() {
         }
 
         // Extract and compress Image
-        val imageBase64 = extractAndCompressImage(notification, this)
-        val appIconBase64 = getAppIconBase64(packageName, this)
+        val includeImages = senderPrefs.getBoolean("SEND_IMAGES", true)
+        val imageBase64 = if (includeImages) extractAndCompressImage(notification, this) else null
+        val appIconBase64 = if (includeImages) getAppIconBase64(packageName, this) else null
 
         // Extract Actions
         val actionsArray = org.json.JSONArray()

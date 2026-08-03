@@ -26,7 +26,7 @@ class ConnectionReceiver : BroadcastReceiver() {
         
         if (action == android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED) {
             AppLogger.log("Bluetooth Disconnected. Saving parking location...")
-            saveCurrentLocation(context)
+            if (isAutoParkEnabled(context)) saveCurrentLocation(context)
         }
         
         if (action == WifiManager.NETWORK_STATE_CHANGED_ACTION) {
@@ -36,13 +36,14 @@ class ConnectionReceiver : BroadcastReceiver() {
             if (wasConnected && !isConnected) {
                 // WiFi Disconnected! Probably turned off the car.
                 AppLogger.log("WiFi Disconnected. Saving parking location...")
-                saveCurrentLocation(context)
+                if (isAutoParkEnabled(context)) saveCurrentLocation(context)
             } else if (!wasConnected && isConnected) {
                 // WiFi Connected!
                 AppLogger.log("WiFi Connected. Checking battery...")
                 val bm = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
                 val level = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                if (level in 1..20) {
+                val batteryAlert = context.getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE).getBoolean("BATTERY_ALERT", true)
+                if (batteryAlert && level in 1..20) {
                     val payload = JSONObject().apply {
                         put("type", "battery")
                         put("level", level)
@@ -67,6 +68,9 @@ class ConnectionReceiver : BroadcastReceiver() {
             wasConnected = isConnected
         }
     }
+
+    private fun isAutoParkEnabled(context: Context): Boolean =
+        context.getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE).getBoolean("AUTO_PARK", true)
 
     private fun saveCurrentLocation(context: Context) {
         try {

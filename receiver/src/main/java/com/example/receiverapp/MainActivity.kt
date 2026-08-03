@@ -351,30 +351,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePermissionButtons() {
-        val btnRequestOverlay = findViewById<Button>(R.id.btnRequestOverlay)
-        val btnRequestBattery = findViewById<Button>(R.id.btnRequestBattery)
-        val btnRequestLocation = findViewById<Button>(R.id.btnRequestLocation)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
-            btnRequestOverlay.text = "1. OVERLAY PERMISSION ✅"
-        } else {
-            btnRequestOverlay.text = "1. GRANT OVERLAY PERMISSION"
+        val green = android.graphics.Color.parseColor("#16833B")
+        val blue = android.graphics.Color.parseColor("#007AFF")
+        fun style(id: Int, granted: Boolean, grantedText: String, normalText: String) {
+            val button = findViewById<com.google.android.material.button.MaterialButton>(id)
+            button.text = if (granted) "✓ $grantedText" else normalText
+            val color = if (granted) green else blue
+            button.setTextColor(color)
+            button.strokeColor = android.content.res.ColorStateList.valueOf(color)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-            if (powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                btnRequestBattery.text = "2. BATTERY EXEMPTION ✅"
-            } else {
-                btnRequestBattery.text = "2. GRANT BATTERY EXEMPTION"
-            }
-        }
+        val overlayGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+        style(R.id.btnRequestOverlay, overlayGranted, "อนุญาต Overlay แล้ว", "1. อนุญาต Overlay")
 
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            btnRequestLocation.text = "3. LOCATION PERMISSION ✅"
-        } else {
-            btnRequestLocation.text = "3. GRANT LOCATION PERMISSION"
-        }
+        val batteryGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            (getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
+        style(R.id.btnRequestBattery, batteryGranted, "ปิดการจำกัดแบตเตอรี่แล้ว", "2. ปิดการจำกัดแบตเตอรี่")
+
+        val locationGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        style(R.id.btnRequestLocation, locationGranted, "อนุญาต Location แล้ว", "3. อนุญาต Location")
     }
 
     override fun onDestroy() {

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F5F5F7">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="#F5F5F7"
     android:padding="24dp">
@@ -43,6 +49,62 @@
         android:text="สถานะ: ยังไม่เชื่อมต่อ"
         android:textAlignment="center"
         android:textColor="#8E8E93" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:text="ฟังก์ชัน Sender"
+                android:textColor="#5856D6"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchForwardNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="ส่งการแจ้งเตือน" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:text="ส่งข้อความ สายเรียกเข้า และเพลงไปยังจอรถ" android:textColor="#8E8E93" android:textSize="12sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchSendImages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="ส่งรูปและไอคอน" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:text="แนบรูปผู้ส่งและไอคอนแอปไปกับการแจ้งเตือน" android:textColor="#8E8E93" android:textSize="12sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchBatteryAlert"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="แจ้งเตือนแบตเตอรี่ต่ำ" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:text="แจ้งจอรถเมื่อแบตโทรศัพท์เหลือ 20% หรือต่ำกว่า" android:textColor="#8E8E93" android:textSize="12sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAutoPark"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="บันทึกตำแหน่งจอดอัตโนมัติ" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="บันทึก GPS เมื่อ Wi-Fi หรือ Bluetooth รถถูกตัด" android:textColor="#8E8E93" android:textSize="12sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Settings Card -->
     <com.google.android.material.card.MaterialCardView
@@ -107,8 +169,7 @@
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="140dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
         app:cardBackgroundColor="#E5E5EA">
@@ -148,3 +209,4 @@
         android:textColor="#AEAEB2" />
 
 </LinearLayout>
+</ScrollView>

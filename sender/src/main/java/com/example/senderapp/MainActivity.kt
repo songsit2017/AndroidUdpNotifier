@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupPairingControls()
+        setupFeatureSwitches()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -58,17 +59,19 @@ class MainActivity : AppCompatActivity() {
 
         val btnReqLocation = findViewById<Button>(R.id.btnReqLocation)
         btnReqLocation.setOnClickListener {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                requestPermissions(arrayOf(
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                    android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ), 1)
-            } else {
+            val fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (!fineGranted) {
                 requestPermissions(arrayOf(
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
                 ), 1)
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q &&
+                androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION), 2)
+            } else {
+                android.widget.Toast.makeText(this, "อนุญาต GPS ครบแล้ว", android.widget.Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -109,6 +112,54 @@ class MainActivity : AppCompatActivity() {
         statusHandler.post(statusUpdater)
     }
 
+    private fun setupFeatureSwitches() {
+        val prefs = getSharedPreferences("SenderPrefs", MODE_PRIVATE)
+        fun bind(id: Int, key: String, defaultValue: Boolean = true) {
+            val control = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(id)
+            control.isChecked = prefs.getBoolean(key, defaultValue)
+            control.setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean(key, checked).apply() }
+        }
+        bind(R.id.switchForwardNotifications, "FORWARD_NOTIFICATIONS")
+        bind(R.id.switchSendImages, "SEND_IMAGES")
+        bind(R.id.switchBatteryAlert, "BATTERY_ALERT")
+        bind(R.id.switchAutoPark, "AUTO_PARK")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updatePermissionButtons()
+    }
+
+    private fun updatePermissionButtons() {
+        val green = android.graphics.Color.parseColor("#16833B")
+        val blue = android.graphics.Color.parseColor("#007AFF")
+        fun style(button: com.google.android.material.button.MaterialButton, granted: Boolean, grantedText: String, normalText: String) {
+            button.text = if (granted) "✓ $grantedText" else normalText
+            val color = if (granted) green else blue
+            button.setTextColor(color)
+            button.strokeColor = android.content.res.ColorStateList.valueOf(color)
+        }
+
+        val listeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners").orEmpty()
+        style(findViewById(R.id.btnOpenSettings), listeners.contains(packageName),
+            "อนุญาตอ่านการแจ้งเตือนแล้ว", "1. อนุญาตอ่านการแจ้งเตือน")
+
+        val fineLocationGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val backgroundLocationGranted = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q ||
+            androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val locationGranted = fineLocationGranted && backgroundLocationGranted
+        style(findViewById(R.id.btnReqLocation), locationGranted,
+            "อนุญาตเข้าถึง GPS แล้ว", "2. อนุญาตเข้าถึง GPS เบื้องหลัง")
+
+        val batteryGranted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            (getSystemService(POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(packageName)
+        } else true
+        style(findViewById(R.id.btnReqBattery), batteryGranted,
+            "ปิดการจำกัดแบตเตอรี่แล้ว", "3. ปิดการจำกัดแบตเตอรี่")
+    }
+
     private fun setupPairingControls() {
         val button = findViewById<Button>(R.id.btnScanPairingQr)
         button.setOnClickListener {
@@ -116,7 +167,8 @@ class MainActivity : AppCompatActivity() {
                 setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
                 setPrompt("สแกน QR ที่แสดงบนจอรถ")
                 setBeepEnabled(false)
-                setOrientationLocked(false)
+                setOrientationLocked(true)
+                setCaptureActivity(PortraitCaptureActivity::class.java)
             })
         }
         button.setOnLongClickListener {
