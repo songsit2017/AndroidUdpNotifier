@@ -132,10 +132,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun updatePermissionButtons() {
         val green = android.graphics.Color.parseColor("#16833B")
-        val blue = android.graphics.Color.parseColor("#007AFF")
+        val red = android.graphics.Color.parseColor("#D32F2F")
         fun style(button: com.google.android.material.button.MaterialButton, granted: Boolean, grantedText: String, normalText: String) {
-            button.text = if (granted) "✓ $grantedText" else normalText
-            val color = if (granted) green else blue
+            button.text = if (granted) "✓ $grantedText" else "✕ $normalText"
+            val color = if (granted) green else red
             button.setTextColor(color)
             button.strokeColor = android.content.res.ColorStateList.valueOf(color)
         }
