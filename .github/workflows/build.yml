@@ -39,9 +39,13 @@ jobs:
       env:
         ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
         ANDROID_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-        ANDROID_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
         ANDROID_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      run: gradle assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }}
+      run: |
+        # Extract the exact alias dynamically from the keystore to avoid any mismatch errors
+        ACTUAL_ALIAS=$(keytool -list -v -keystore "${{ runner.temp }}/release.jks" -storepass "${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" | grep "Alias name:" | head -n 1 | cut -d ':' -f 2 | xargs)
+        echo "Found Alias: $ACTUAL_ALIAS"
+        export ANDROID_KEY_ALIAS="$ACTUAL_ALIAS"
+        gradle assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }}
       
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
