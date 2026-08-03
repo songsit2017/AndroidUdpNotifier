@@ -9,7 +9,7 @@ import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Switch
+import android.widget.CompoundButton
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.view.View
@@ -190,19 +190,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSettings() {
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-        val switchQuickReply = findViewById<Switch>(R.id.switchQuickReply)
-        val switchTTS = findViewById<Switch>(R.id.switchTTS)
-        val switchGreeting = findViewById<Switch>(R.id.switchGreeting)
-        val switchWeatherGreeting = findViewById<Switch>(R.id.switchWeatherGreeting)
-        val switchAudioDucking = findViewById<Switch>(R.id.switchAudioDucking)
-        val switchAutoReply = findViewById<Switch>(R.id.switchAutoReply)
-        val switchMedia = findViewById<Switch>(R.id.switchMedia)
-        val switchBattery = findViewById<Switch>(R.id.switchBattery)
-        val switchDND = findViewById<Switch>(R.id.switchDND)
-        val switchVIP = findViewById<Switch>(R.id.switchVIP)
-        val switchETA = findViewById<Switch>(R.id.switchETA)
-        val switchFatigue = findViewById<Switch>(R.id.switchFatigue)
-        val switchSpeed = findViewById<Switch>(R.id.switchSpeed)
+        val switchQuickReply = findViewById<CompoundButton>(R.id.switchQuickReply)
+        val switchTTS = findViewById<CompoundButton>(R.id.switchTTS)
+        val switchGreeting = findViewById<CompoundButton>(R.id.switchGreeting)
+        val switchWeatherGreeting = findViewById<CompoundButton>(R.id.switchWeatherGreeting)
+        val switchAudioDucking = findViewById<CompoundButton>(R.id.switchAudioDucking)
+        val switchAutoReply = findViewById<CompoundButton>(R.id.switchAutoReply)
+        val switchMedia = findViewById<CompoundButton>(R.id.switchMedia)
+        val switchBattery = findViewById<CompoundButton>(R.id.switchBattery)
+        val switchDND = findViewById<CompoundButton>(R.id.switchDND)
+        val switchVIP = findViewById<CompoundButton>(R.id.switchVIP)
+        val switchETA = findViewById<CompoundButton>(R.id.switchETA)
+        val switchFatigue = findViewById<CompoundButton>(R.id.switchFatigue)
+        val switchSpeed = findViewById<CompoundButton>(R.id.switchSpeed)
         val btnFindPhone = findViewById<Button>(R.id.btnFindPhone)
         val btnAddGeoReminder = findViewById<Button>(R.id.btnAddGeoReminder)
 
