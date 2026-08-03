@@ -60,5 +60,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/secure_filepaths" />
         </provider>
+        <receiver android:name=".WatchdogReceiver" android:exported="false" />
     </application>
 </manifest>

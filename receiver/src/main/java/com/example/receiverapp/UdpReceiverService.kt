@@ -451,8 +451,13 @@ class UdpReceiverService : Service() {
             }
 
             val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+            val isPrivacyMode = prefs.getBoolean("PREF_PRIVACY_MODE", false)
             if (isTtsEnabled && type == "message" && text.isNotEmpty()) {
-                tts?.speak("ข้อความจาก $name, $text", TextToSpeech.QUEUE_FLUSH, null, null)
+                if (isPrivacyMode && !isVip) {
+                    tts?.speak("มีข้อความใหม่จาก $name", TextToSpeech.QUEUE_FLUSH, null, null)
+                } else {
+                    tts?.speak("ข้อความจาก $name, $text", TextToSpeech.QUEUE_FLUSH, null, null)
+                }
             }
 
             CoroutineScope(Dispatchers.Main).launch {
@@ -490,7 +495,12 @@ class UdpReceiverService : Service() {
                 nameText?.setTextColor(android.graphics.Color.parseColor("#FF5252"))
             }
             
-            messageText?.text = text.ifEmpty { "Incoming $type" }
+            val isPrivacyMode = prefs.getBoolean("PREF_PRIVACY_MODE", false)
+            if (isPrivacyMode && !isVip && type == "message") {
+                messageText?.text = "แตะเพื่ออ่านข้อความ"
+            } else {
+                messageText?.text = text.ifEmpty { "Incoming $type" }
+            }
 
             val cardView = floatingView as? androidx.cardview.widget.CardView
             val themePref = prefs.getString("PREF_THEME", "Classic") ?: "Classic"
@@ -560,7 +570,7 @@ class UdpReceiverService : Service() {
                             val isReject = actionTitle.contains("Reject", true) || actionTitle.contains("Decline", true) || actionTitle.contains("วาง", true) || actionTitle.contains("ปฏิเสธ", true)
                             if (isReject) {
                                 if (replyActionId != null && prefs.getBoolean("PREF_QUICK_REPLY", true)) {
-                                    sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับไปนะครับ 🚗")
+                                    sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับนะคะ 🚗")
                                 }
                                 removeFloatingWindow()
                             }
@@ -626,7 +636,7 @@ class UdpReceiverService : Service() {
                 ).apply { marginEnd = 16 }
                 actionsContainer?.addView(voiceBtn, voiceLp)
 
-                val quickReplies = listOf("โอเค", "รับทราบ", "กำลังขับรถ")
+                val quickReplies = listOf("ขับรถอยู่ 🚗", "เดี๋ยวโทรกลับ 📞", "ใกล้ถึงแล้ว 📍")
                 for (replyText in quickReplies) {
                     val btn = Button(themeContext).apply {
                         this.text = replyText

@@ -238,6 +238,14 @@
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="กะพริบจอแดงเตือนเมื่อขับเร็วเกิน 120 กม./ชม." android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchPrivacy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Privacy Mode (มีผู้โดยสาร)"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ซ่อนข้อความและอ่านแค่ชื่อคนส่ง เพื่อความเป็นส่วนตัว" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchDND"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

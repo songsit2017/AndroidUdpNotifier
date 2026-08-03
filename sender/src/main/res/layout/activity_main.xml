@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -108,6 +108,62 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- App Filter Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="แอปพลิเคชันที่ต้องการให้แจ้งเตือน"
+                android:textStyle="bold"
+                android:textColor="@color/app_accent"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAppLine"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LINE"
+                android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAppMessenger"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Messenger (Facebook)"
+                android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAppTelegram"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Telegram"
+                android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAppWhatsapp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="WhatsApp"
+                android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchAppGmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gmail"
+                android:checked="true" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
     <!-- Settings Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"

@@ -1,4 +1,4 @@
-package com.example.receiverapp
+﻿package com.example.receiverapp
 
 import android.content.Intent
 import android.net.Uri
@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupPairingControls()
+        startWatchdog()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -217,6 +218,7 @@ class MainActivity : AppCompatActivity() {
         val switchAutoReply = findViewById<CompoundButton>(R.id.switchAutoReply)
         val switchMedia = findViewById<CompoundButton>(R.id.switchMedia)
         val switchBattery = findViewById<CompoundButton>(R.id.switchBattery)
+        val switchPrivacy = findViewById<CompoundButton>(R.id.switchPrivacy)
         val switchDND = findViewById<CompoundButton>(R.id.switchDND)
         val switchVIP = findViewById<CompoundButton>(R.id.switchVIP)
         val switchETA = findViewById<CompoundButton>(R.id.switchETA)
@@ -266,6 +268,7 @@ class MainActivity : AppCompatActivity() {
         switchAutoReply.isChecked = prefs.getBoolean("PREF_AUTO_REPLY", true)
         switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
         switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
+        switchPrivacy.isChecked = prefs.getBoolean("PREF_PRIVACY_MODE", false)
         switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
         switchVIP.isChecked = prefs.getBoolean("PREF_VIP_MODE", true)
         switchETA.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
@@ -285,6 +288,7 @@ class MainActivity : AppCompatActivity() {
         switchAutoReply.setOnCheckedChangeListener { _, c -> listener("PREF_AUTO_REPLY", c) }
         switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
         switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
+        switchPrivacy.setOnCheckedChangeListener { _, c -> listener("PREF_PRIVACY_MODE", c) }
         switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
         switchVIP.setOnCheckedChangeListener { _, c -> listener("PREF_VIP_MODE", c) }
         switchETA.setOnCheckedChangeListener { _, c -> listener("PREF_SHARE_ETA", c) }

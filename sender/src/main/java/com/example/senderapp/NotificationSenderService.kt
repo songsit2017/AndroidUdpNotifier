@@ -1,4 +1,4 @@
-package com.example.senderapp
+﻿package com.example.senderapp
 
 import android.app.Notification
 import android.content.Context
@@ -38,15 +38,20 @@ class NotificationSenderService : NotificationListenerService() {
     private val actionTtlMs = 5 * 60 * 1000L
 
     // Target Packages
-    private val TARGET_PACKAGES = listOf(
-        "jp.naver.line.android", 
-        "com.facebook.orca",
-        "com.facebook.katana",
-        "com.facebook.lite",
-        "org.telegram.messenger",
-        "com.google.android.gm",
-        "com.whatsapp"
-    )
+    private fun getTargetPackages(): List<String> {
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val packages = mutableListOf<String>()
+        if (prefs.getBoolean("APP_LINE", true)) packages.add("jp.naver.line.android")
+        if (prefs.getBoolean("APP_MESSENGER", true)) {
+            packages.add("com.facebook.orca")
+            packages.add("com.facebook.katana")
+            packages.add("com.facebook.lite")
+        }
+        if (prefs.getBoolean("APP_TELEGRAM", true)) packages.add("org.telegram.messenger")
+        if (prefs.getBoolean("APP_WHATSAPP", true)) packages.add("com.whatsapp")
+        if (prefs.getBoolean("APP_GMAIL", true)) packages.add("com.google.android.gm")
+        return packages
+    }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
@@ -251,7 +256,7 @@ class NotificationSenderService : NotificationListenerService() {
         val isCall = notification.category == Notification.CATEGORY_CALL || 
                      (packageName == "jp.naver.line.android" && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notification.category == null)
 
-        if (!TARGET_PACKAGES.contains(packageName) && !isMediaStyle && !isCall) {
+        if (!getTargetPackages().contains(packageName) && !isMediaStyle && !isCall) {
             AppLogger.log("   -> Ignored (not in target list and not media/call)")
             return
         }
@@ -364,7 +369,7 @@ class NotificationSenderService : NotificationListenerService() {
         val isCall = sbn.notification.category == Notification.CATEGORY_CALL || 
                      (packageName == "jp.naver.line.android" && (sbn.notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && sbn.notification.category == null)
 
-        if (TARGET_PACKAGES.contains(packageName) || isMediaStyle || isCall) {
+        if (getTargetPackages().contains(packageName) || isMediaStyle || isCall) {
             val jsonPayload = JSONObject().apply {
                 put("type", "remove")
                 put("package", packageName)

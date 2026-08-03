@@ -136,6 +136,11 @@ class MainActivity : AppCompatActivity() {
         bind(R.id.switchSendImages, "SEND_IMAGES")
         bind(R.id.switchBatteryAlert, "BATTERY_ALERT")
         bind(R.id.switchAutoPark, "AUTO_PARK")
+        bind(R.id.switchAppLine, "APP_LINE")
+        bind(R.id.switchAppMessenger, "APP_MESSENGER")
+        bind(R.id.switchAppTelegram, "APP_TELEGRAM")
+        bind(R.id.switchAppWhatsapp, "APP_WHATSAPP")
+        bind(R.id.switchAppGmail, "APP_GMAIL")
     }
 
     private fun sendDiagnosticTest() {
