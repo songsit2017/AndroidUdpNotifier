@@ -1,4 +1,4 @@
-package com.example.senderapp
+﻿package com.example.senderapp
 
 import android.content.Intent
 import android.os.Bundle
@@ -175,7 +175,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        AutoUpdater.resumePendingInstall(this)
         updatePermissionButtons()
     }
 

@@ -1,4 +1,4 @@
-package com.example.receiverapp
+﻿package com.example.receiverapp
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -187,19 +187,6 @@ object AutoUpdater {
                 android.widget.Toast.makeText(context, "Update rejected: invalid app signature", android.widget.Toast.LENGTH_LONG).show()
                 return
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                !context.packageManager.canRequestPackageInstalls()) {
-                context.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
-                    .edit().putString(PENDING_APK, file.absolutePath).apply()
-                AlertDialog.Builder(context)
-                    .setTitle("Allow app updates")
-                    .setMessage("Please allow Receiver App to install unknown apps. After enabling it, return here and installation will continue automatically.")
-                    .setPositiveButton("Open settings") { _, _ ->
-                        context.startActivity(Intent(
-                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                            Uri.parse("package:${context.packageName}")
-                        ))
-                    }
                     .setNegativeButton("Cancel", null)
                     .show()
                 return
@@ -218,20 +205,6 @@ object AutoUpdater {
         } catch (e: Exception) {
             Log.e(TAG, "Install failed", e)
             android.widget.Toast.makeText(context, "Failed to start installation", android.widget.Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun resumePendingInstall(activity: Activity) {
-        try {
-            val prefs = activity.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
-            val path = prefs.getString(PENDING_APK, null) ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                !activity.packageManager.canRequestPackageInstalls()) return
-            prefs.edit().remove(PENDING_APK).apply()
-            val file = File(path)
-            if (file.isFile) installApk(activity, file)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to resume pending install", e)
         }
     }
 
