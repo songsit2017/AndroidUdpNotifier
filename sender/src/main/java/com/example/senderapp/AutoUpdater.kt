@@ -1,4 +1,4 @@
-﻿package com.example.senderapp
+package com.example.senderapp
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -185,10 +185,6 @@ object AutoUpdater {
             if (!isTrustedUpdate(context, file)) {
                 file.delete()
                 android.widget.Toast.makeText(context, "Update rejected: invalid app signature", android.widget.Toast.LENGTH_LONG).show()
-                return
-            }
-                    .setNegativeButton("Cancel", null)
-                    .show()
                 return
             }
             val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
