@@ -65,11 +65,17 @@ class UdpReceiverService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // Android requires a service started with startForegroundService() to
+        // promote itself immediately. Car head units can initialize TTS/GPS
+        // slowly, so doing that work first may cause the OS to kill the app.
+        startForegroundNotification()
+
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
+        try {
+            tts = TextToSpeech(this) { status ->
+                if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale("th", "TH")
                 
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -102,7 +108,11 @@ class UdpReceiverService : Service() {
                         tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
                     }
                 }
+                }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "TTS is unavailable on this device", e)
+            tts = null
         }
         
         serviceStartTime = System.currentTimeMillis()
@@ -173,7 +183,6 @@ class UdpReceiverService : Service() {
             e.printStackTrace()
         }
         
-        startForegroundNotification()
         startUdpListener()
     }
 
