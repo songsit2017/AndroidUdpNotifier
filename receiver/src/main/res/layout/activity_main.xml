@@ -42,10 +42,11 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnShowPairingQr"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                app:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"
                 android:text="แสดง QR สำหรับจับคู่" />
 
             <TextView
