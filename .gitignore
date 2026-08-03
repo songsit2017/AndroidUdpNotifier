@@ -4,4 +4,5 @@
 local.properties
 *.apk
 .gradle/
+.tools/
 **/build/
