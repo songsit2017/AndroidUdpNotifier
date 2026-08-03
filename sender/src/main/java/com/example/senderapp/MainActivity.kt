@@ -10,11 +10,32 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvLog: TextView
+    private val statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val statusUpdater = object : Runnable {
+        override fun run() {
+            val lastSeen = getSharedPreferences("AppPrefs", MODE_PRIVATE).getLong("LAST_RECEIVER_SEEN", 0L)
+            val age = System.currentTimeMillis() - lastSeen
+            findViewById<TextView>(R.id.tvConnectionStatus)?.text = when {
+                !SecureUdp.hasPairingCode(this@MainActivity) -> "สถานะ: ยังไม่ได้จับคู่"
+                lastSeen > 0 && age < 20_000 -> "สถานะ: เชื่อมต่อแล้ว ✓"
+                else -> "สถานะ: จับคู่แล้ว แต่ยังไม่พบจอรถ"
+            }
+            statusHandler.postDelayed(this, 2_000)
+        }
+    }
+    private val qrScanner = registerForActivityResult(com.journeyapps.barcodescanner.ScanContract()) { result ->
+        if (result.contents != null && SecureUdp.importPairingUri(this, result.contents)) {
+            android.widget.Toast.makeText(this, "จับคู่กับจอรถสำเร็จ", android.widget.Toast.LENGTH_LONG).show()
+            findViewById<TextView>(R.id.tvConnectionStatus).text = "สถานะ: จับคู่แล้ว กำลังรอสัญญาณ"
+        } else if (result.contents != null) {
+            android.widget.Toast.makeText(this, "QR นี้ไม่ใช่รหัสจับคู่ของแอป", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        ensurePairingConfigured()
+        setupPairingControls()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -85,6 +106,25 @@ class MainActivity : AppCompatActivity() {
             // limit to 1000 chars to avoid memory issues
             tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
         }
+        statusHandler.post(statusUpdater)
+    }
+
+    private fun setupPairingControls() {
+        val button = findViewById<Button>(R.id.btnScanPairingQr)
+        button.setOnClickListener {
+            qrScanner.launch(com.journeyapps.barcodescanner.ScanOptions().apply {
+                setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
+                setPrompt("สแกน QR ที่แสดงบนจอรถ")
+                setBeepEnabled(false)
+                setOrientationLocked(false)
+            })
+        }
+        button.setOnLongClickListener {
+            ensurePairingConfigured()
+            true
+        }
+        findViewById<TextView>(R.id.tvConnectionStatus).text =
+            if (SecureUdp.hasPairingCode(this)) "สถานะ: จับคู่แล้ว กำลังรอสัญญาณ" else "สถานะ: แตะเพื่อสแกน QR (กดค้างเพื่อกรอกรหัส)"
     }
 
     private fun ensurePairingConfigured() {
@@ -112,6 +152,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        statusHandler.removeCallbacks(statusUpdater)
         AppLogger.listener = null
     }
 }

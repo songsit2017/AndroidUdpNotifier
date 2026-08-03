@@ -23,11 +23,22 @@ class MainActivity : AppCompatActivity() {
 
     private val OVERLAY_PERMISSION_REQ_CODE = 1234
     private lateinit var tvLog: TextView
+    private val statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val statusUpdater = object : Runnable {
+        override fun run() {
+            val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+            val lastSeen = prefs.getLong("LAST_SENDER_SEEN", 0L)
+            val age = System.currentTimeMillis() - lastSeen
+            findViewById<TextView>(R.id.tvConnectionStatus)?.text =
+                if (lastSeen > 0 && age < 20_000) "สถานะ: เชื่อมต่อโทรศัพท์แล้ว ✓" else "สถานะ: รอการเชื่อมต่อ"
+            statusHandler.postDelayed(this, 2_000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        ensurePairingConfigured()
+        setupPairingControls()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -73,7 +84,42 @@ class MainActivity : AppCompatActivity() {
 
         setupSettings()
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 102)
+        }
+
         checkOverlayPermissionAndStart()
+        statusHandler.post(statusUpdater)
+    }
+
+    private fun setupPairingControls() {
+        try {
+            SecureUdp.ensurePairingUri(this)
+            findViewById<Button>(R.id.btnShowPairingQr).setOnClickListener { showPairingQr() }
+        } catch (e: Exception) {
+            android.util.Log.e("ReceiverMain", "Unable to initialize pairing", e)
+            android.widget.Toast.makeText(this, "สร้างรหัสจับคู่ไม่สำเร็จ", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showPairingQr() {
+        val value = SecureUdp.ensurePairingUri(this)
+        val matrix = com.google.zxing.qrcode.QRCodeWriter().encode(value, com.google.zxing.BarcodeFormat.QR_CODE, 700, 700)
+        val bitmap = android.graphics.Bitmap.createBitmap(matrix.width, matrix.height, android.graphics.Bitmap.Config.RGB_565)
+        for (x in 0 until matrix.width) for (y in 0 until matrix.height) {
+            bitmap.setPixel(x, y, if (matrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
+        val image = android.widget.ImageView(this).apply {
+            setImageBitmap(bitmap)
+            adjustViewBounds = true
+            setPadding(24, 24, 24, 24)
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("สแกนด้วยแอปบนโทรศัพท์")
+            .setView(image)
+            .setPositiveButton("ปิด", null)
+            .show()
     }
 
     private fun ensurePairingConfigured() {
@@ -133,8 +179,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startUdpService() {
-        val serviceIntent = Intent(this, UdpReceiverService::class.java)
-        ContextCompat.startForegroundService(this, serviceIntent)
+        try {
+            val serviceIntent = Intent(this, UdpReceiverService::class.java)
+            ContextCompat.startForegroundService(this, serviceIntent)
+        } catch (e: Exception) {
+            android.util.Log.e("ReceiverMain", "Unable to start receiver service", e)
+            android.widget.Toast.makeText(this, "เริ่มระบบรับข้อมูลไม่สำเร็จ: ${e.javaClass.simpleName}", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun setupSettings() {
@@ -328,6 +379,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        statusHandler.removeCallbacks(statusUpdater)
         AppLogger.listener = null
     }
 }

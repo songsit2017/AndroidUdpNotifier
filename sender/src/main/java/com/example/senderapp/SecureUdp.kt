@@ -53,6 +53,12 @@ object SecureUdp {
         return true
     }
 
+    fun importPairingUri(context: Context, value: String): Boolean {
+        val uri = android.net.Uri.parse(value)
+        if (uri.scheme != "audp" || uri.host != "pair") return false
+        return setPairingCode(context, uri.getQueryParameter("code") ?: return false)
+    }
+
     fun encode(context: Context, plaintext: String): String? {
         val key = key(context) ?: return null
         val timestamp = System.currentTimeMillis()
@@ -103,7 +109,7 @@ object SecureUdp {
         synchronized(this) {
             if (digest != cachedCodeDigest) {
                 val spec = PBEKeySpec(code.toCharArray(), "AndroidUdpNotifier-v1".toByteArray(), 120_000, 256)
-                cachedKey = SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded, "AES")
+                cachedKey = SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1").generateSecret(spec).encoded, "AES")
                 spec.clearPassword()
                 cachedCodeDigest = digest
             }

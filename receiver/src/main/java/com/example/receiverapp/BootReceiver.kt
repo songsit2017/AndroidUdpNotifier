@@ -9,8 +9,12 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == Intent.ACTION_BOOT_COMPLETED || action == "android.intent.action.QUICKBOOT_POWERON") {
-            val serviceIntent = Intent(context, UdpReceiverService::class.java)
-            ContextCompat.startForegroundService(context, serviceIntent)
+            try {
+                val serviceIntent = Intent(context, UdpReceiverService::class.java)
+                ContextCompat.startForegroundService(context, serviceIntent)
+            } catch (e: Exception) {
+                android.util.Log.e("BootReceiver", "Foreground service start was blocked", e)
+            }
         }
     }
 }

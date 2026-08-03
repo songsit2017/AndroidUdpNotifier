@@ -37,6 +37,7 @@ import android.media.AudioManager
 import android.media.RingtoneManager
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.content.ContextCompat
+import java.util.concurrent.ConcurrentHashMap
 
 class UdpReceiverService : Service() {
 
@@ -55,6 +56,7 @@ class UdpReceiverService : Service() {
     private var locationManager: LocationManager? = null
     private var isSpeedWarningActive = false
     private var currentSpeedKmh = 0f
+    private val seenMessageIds = ConcurrentHashMap<String, Long>()
     
     private var lastWeatherCheckLocation: Location? = null
     private var lastWeatherCheckTime = 0L
@@ -303,6 +305,15 @@ class UdpReceiverService : Service() {
                             Log.w(TAG, "Rejected unauthenticated, stale, or replayed UDP packet")
                             continue
                         }
+                        val decoded = JSONObject(jsonString)
+                        val messageId = decoded.optString("_messageId")
+                        if (messageId.isNotEmpty()) {
+                            sendAck(packet.address.hostAddress ?: "", messageId)
+                            val previous = seenMessageIds.putIfAbsent(messageId, System.currentTimeMillis())
+                            if (previous != null) continue
+                            val expiry = System.currentTimeMillis() - 10 * 60 * 1000L
+                            seenMessageIds.entries.removeIf { it.value < expiry }
+                        }
                         AppLogger.log("Received authenticated data")
                         val senderIp = packet.address.hostAddress ?: ""
                         parseAndDisplayData(jsonString, senderIp)
@@ -320,9 +331,11 @@ class UdpReceiverService : Service() {
         try {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             prefs.edit().putString("LAST_SENDER_IP", senderIp).apply()
+            prefs.edit().putLong("LAST_SENDER_SEEN", System.currentTimeMillis()).apply()
 
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
+            if (type == "heartbeat") return
 
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
@@ -735,6 +748,25 @@ class UdpReceiverService : Service() {
                 AppLogger.log("Sent authenticated action")
             } catch (e: Exception) {
                 AppLogger.log("Failed to send action: ${e.message}")
+            }
+        }
+    }
+
+    private fun sendAck(ip: String, messageId: String) {
+        if (ip.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val json = JSONObject().apply {
+                    put("type", "ack")
+                    put("messageId", messageId)
+                }.toString()
+                val encrypted = SecureUdp.encode(this@UdpReceiverService, json) ?: return@launch
+                val payload = encrypted.toByteArray(Charsets.UTF_8)
+                DatagramSocket().use { socket ->
+                    socket.send(DatagramPacket(payload, payload.size, java.net.InetAddress.getByName(ip), 8889))
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Unable to send acknowledgement", e)
             }
         }
     }

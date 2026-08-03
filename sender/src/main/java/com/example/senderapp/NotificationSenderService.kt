@@ -31,6 +31,7 @@ class NotificationSenderService : NotificationListenerService() {
     private var actionListenJob: kotlinx.coroutines.Job? = null
     data class PendingAction(val intent: PendingIntent, val remoteInputKey: String?, val createdAt: Long = System.currentTimeMillis())
     private val pendingIntents = ConcurrentHashMap<String, PendingAction>()
+    private val pendingMessages = ConcurrentHashMap<String, Boolean>()
     private var batteryReceiver: BroadcastReceiver? = null
     private var connectionReceiver: ConnectionReceiver? = null
     private var lastBatteryLevel = -1
@@ -51,12 +52,20 @@ class NotificationSenderService : NotificationListenerService() {
         super.onListenerConnected()
         AppLogger.log("✅ Service Connected to Android System! Ready to read notifications.")
         startActionCommandListener()
+        listenJob = CoroutineScope(Dispatchers.IO).launch {
+            while (isActive) {
+                sendUdpBroadcast(JSONObject().apply { put("type", "heartbeat") }.toString(), reliable = false)
+                kotlinx.coroutines.delay(10_000)
+            }
+        }
 
         connectionReceiver = ConnectionReceiver()
         val filter = IntentFilter()
         filter.addAction(android.net.wifi.WifiManager.NETWORK_STATE_CHANGED_ACTION)
         filter.addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
-        registerReceiver(connectionReceiver, filter)
+        androidx.core.content.ContextCompat.registerReceiver(
+            this, connectionReceiver, filter, androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+        )
 
         batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -76,7 +85,10 @@ class NotificationSenderService : NotificationListenerService() {
                 }
             }
         }
-        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        androidx.core.content.ContextCompat.registerReceiver(
+            this, batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+        )
     }
 
     private fun startActionCommandListener() {
@@ -93,6 +105,12 @@ class NotificationSenderService : NotificationListenerService() {
                     AppLogger.log("Received authenticated action")
                     
                     val json = JSONObject(jsonString)
+                    getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit()
+                        .putLong("LAST_RECEIVER_SEEN", System.currentTimeMillis()).apply()
+                    if (json.optString("type") == "ack") {
+                        pendingMessages.remove(json.optString("messageId"))
+                        continue
+                    }
                     val actionId = json.optString("actionId")
                     val replyText = json.optString("text", "")
                     
@@ -199,6 +217,7 @@ class NotificationSenderService : NotificationListenerService() {
             connectionReceiver = null
         }
         actionListenJob?.cancel()
+        listenJob?.cancel()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -467,37 +486,34 @@ class NotificationSenderService : NotificationListenerService() {
         return broadcastList.distinct()
     }
 
-    private fun sendUdpBroadcast(payload: String) {
+    private fun sendUdpBroadcast(payload: String, reliable: Boolean = true) {
         AppLogger.log("Sending encrypted notification")
         
         CoroutineScope(Dispatchers.IO).launch {
-            var socket: DatagramSocket? = null
+            val messageId = UUID.randomUUID().toString()
+            val message = try { JSONObject(payload).put("_messageId", messageId).toString() } catch (_: Exception) { payload }
+            if (reliable) pendingMessages[messageId] = true
             try {
-                socket = DatagramSocket()
-                socket.broadcast = true
-                val encrypted = SecureUdp.encode(this@NotificationSenderService, payload) ?: run {
-                    AppLogger.log("Pairing code is not configured; packet was not sent")
-                    return@launch
-                }
-                val payloadBytes = encrypted.toByteArray(Charsets.UTF_8)
-                val port = 8888
-                
-                val broadcastAddresses = getBroadcastAddresses()
-                for (address in broadcastAddresses) {
-                    try {
-                        val packet = DatagramPacket(payloadBytes, payloadBytes.size, address, port)
-                        socket.send(packet)
-                        println("Broadcast Sent to $address: $payload")
-                        AppLogger.log("Broadcast Sent to $address")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        AppLogger.log("Broadcast failed to $address: ${e.message}")
+                repeat(if (reliable) 3 else 1) { attempt ->
+                    if (reliable && !pendingMessages.containsKey(messageId)) return@launch
+                    DatagramSocket().use { socket ->
+                        socket.broadcast = true
+                        val encrypted = SecureUdp.encode(this@NotificationSenderService, message) ?: return@launch
+                        val payloadBytes = encrypted.toByteArray(Charsets.UTF_8)
+                        for (address in getBroadcastAddresses()) {
+                            try {
+                                socket.send(DatagramPacket(payloadBytes, payloadBytes.size, address, 8888))
+                            } catch (e: Exception) {
+                                AppLogger.log("Encrypted broadcast failed: ${e.javaClass.simpleName}")
+                            }
+                        }
                     }
+                    if (reliable && attempt < 2) kotlinx.coroutines.delay(700L * (attempt + 1))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                socket?.close()
+                pendingMessages.remove(messageId)
             }
         }
     }

@@ -37,7 +37,7 @@
         <service
             android:name=".UdpReceiverService"
             android:exported="false"
-            android:foregroundServiceType="dataSync|location" />
+            android:foregroundServiceType="dataSync" />
             
         <receiver
             android:name=".BootReceiver"
