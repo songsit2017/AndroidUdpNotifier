@@ -1,4 +1,4 @@
-﻿package com.example.senderapp
+package com.example.senderapp
 
 import android.content.Intent
 import android.os.Bundle
@@ -33,6 +33,23 @@ class MainActivity : AppCompatActivity() {
             statusHandler.postDelayed(this, 2_000)
         }
     }
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            qrScanner.launch(com.journeyapps.barcodescanner.ScanOptions().apply {
+                setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
+                setPrompt("สแกน QR ที่แสดงบนจอรถ")
+                setBeepEnabled(false)
+                setOrientationLocked(true)
+                setCaptureActivity(PortraitCaptureActivity::class.java)
+            })
+        } else {
+            android.widget.Toast.makeText(this, "กรุณาอนุญาตสิทธิ์กล้องเพื่อสแกน QR", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private val qrScanner = registerForActivityResult(com.journeyapps.barcodescanner.ScanContract()) { result ->
         if (result.contents != null && SecureUdp.importPairingUri(this, result.contents)) {
             android.widget.Toast.makeText(this, "จับคู่กับจอรถสำเร็จ", android.widget.Toast.LENGTH_LONG).show()
@@ -82,7 +99,15 @@ class MainActivity : AppCompatActivity() {
                 ), 1)
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q &&
                 androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION), 2)
+                if (android.os.Build.VERSION.SDK_INT >= 30) {
+                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.fromParts("package", packageName, null)
+                    }
+                    startActivity(intent)
+                    android.widget.Toast.makeText(this, "กรุณาเลือก 'อนุญาตตลอดเวลา' (Allow all the time)", android.widget.Toast.LENGTH_LONG).show()
+                } else {
+                    requestPermissions(arrayOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION), 2)
+                }
             } else {
                 android.widget.Toast.makeText(this, "อนุญาต GPS ครบแล้ว", android.widget.Toast.LENGTH_SHORT).show()
             }
@@ -188,8 +213,8 @@ class MainActivity : AppCompatActivity() {
             button.strokeColor = android.content.res.ColorStateList.valueOf(color)
         }
 
-        val listeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners").orEmpty()
-        style(findViewById(R.id.btnOpenSettings), listeners.contains(packageName),
+        val isNotificationGranted = androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
+        style(findViewById(R.id.btnOpenSettings), isNotificationGranted,
             "อนุญาตอ่านการแจ้งเตือนแล้ว", "1. อนุญาตอ่านการแจ้งเตือน")
 
         val fineLocationGranted = androidx.core.content.ContextCompat.checkSelfPermission(
@@ -211,13 +236,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupPairingControls() {
         val button = findViewById<Button>(R.id.btnScanPairingQr)
         button.setOnClickListener {
-            qrScanner.launch(com.journeyapps.barcodescanner.ScanOptions().apply {
-                setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
-                setPrompt("สแกน QR ที่แสดงบนจอรถ")
-                setBeepEnabled(false)
-                setOrientationLocked(true)
-                setCaptureActivity(PortraitCaptureActivity::class.java)
-            })
+            requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
         }
         button.setOnLongClickListener {
             ensurePairingConfigured()
