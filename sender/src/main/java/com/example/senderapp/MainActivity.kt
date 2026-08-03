@@ -160,10 +160,10 @@ class MainActivity : AppCompatActivity() {
                     socket.send(java.net.DatagramPacket(bytes, bytes.size, java.net.InetAddress.getByName(destination), 8888))
                 }
                 AppLogger.log("Diagnostic test sent")
-                runOnUiThread { android.widget.Toast.makeText(this, "ส่งการทดสอบแล้ว", android.widget.Toast.LENGTH_SHORT).show() }
+                runOnUiThread { android.widget.Toast.makeText(this@MainActivity, "ส่งการทดสอบแล้ว", android.widget.Toast.LENGTH_SHORT).show() }
             } catch (e: Exception) {
                 AppLogger.log("Diagnostic test failed: ${e.javaClass.simpleName}")
-                runOnUiThread { android.widget.Toast.makeText(this, "ส่งการทดสอบไม่สำเร็จ", android.widget.Toast.LENGTH_LONG).show() }
+                runOnUiThread { android.widget.Toast.makeText(this@MainActivity, "ส่งการทดสอบไม่สำเร็จ", android.widget.Toast.LENGTH_LONG).show() }
             }
         }
     }
