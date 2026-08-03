@@ -447,11 +447,6 @@
         android:textAlignment="center"
         android:textSize="12sp"
         android:textColor="@color/app_text_secondary" />
-
-        </LinearLayout>
-    </ScrollView>
-
-
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
