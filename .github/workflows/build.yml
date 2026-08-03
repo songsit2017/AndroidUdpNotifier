@@ -78,7 +78,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # List all releases, extract the tag (field 1)
-        gh release list -L 100 | awk -F'\t' '{print $1}' > releases.txt
+        gh release list -L 100 | awk -F'\t' '{print $3}' > releases.txt
         
         # Start from the 3rd line (keeping the first 2) and delete them
         tail -n +3 releases.txt | while read -r version; do
