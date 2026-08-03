@@ -51,7 +51,8 @@ class ConnectionReceiver : BroadcastReceiver() {
                         try {
                             val socket = DatagramSocket()
                             socket.broadcast = true
-                            val data = payload.toByteArray(Charsets.UTF_8)
+                            val encrypted = SecureUdp.encode(context, payload) ?: return@launch
+                            val data = encrypted.toByteArray(Charsets.UTF_8)
                             val packet = DatagramPacket(data, data.size, InetAddress.getByName("255.255.255.255"), 8888)
                             socket.send(packet)
                             socket.close()
@@ -116,6 +117,6 @@ class ConnectionReceiver : BroadcastReceiver() {
             putFloat("PARK_LON", location.longitude.toFloat())
             apply()
         }
-        AppLogger.log("📍 Saved parking location: ${location.latitude}, ${location.longitude}")
+        AppLogger.log("📍 Saved parking location")
     }
 }

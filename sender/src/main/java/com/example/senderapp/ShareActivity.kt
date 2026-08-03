@@ -59,10 +59,13 @@ class ShareActivity : Activity() {
                 socket = DatagramSocket()
                 socket.broadcast = true
                 
-                val payload = JSONObject().apply {
+                val plaintext = JSONObject().apply {
                     put("type", "clipboard")
                     put("text", text)
-                }.toString().toByteArray(Charsets.UTF_8)
+                }.toString()
+                val encrypted = SecureUdp.encode(this@ShareActivity, plaintext)
+                    ?: throw IllegalStateException("Pairing code is not configured")
+                val payload = encrypted.toByteArray(Charsets.UTF_8)
                 
                 val port = 8888
                 val broadcastAddresses = getBroadcastAddresses()
@@ -70,7 +73,7 @@ class ShareActivity : Activity() {
                     try {
                         val packet = DatagramPacket(payload, payload.size, address, port)
                         socket.send(packet)
-                        AppLogger.log("Clipboard sent to $address")
+                        AppLogger.log("Encrypted shared text sent")
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

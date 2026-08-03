@@ -14,6 +14,7 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.view.View
 import android.widget.AdapterView
+import android.widget.EditText
 import android.content.Context
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
@@ -26,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        ensurePairingConfigured()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -72,6 +74,29 @@ class MainActivity : AppCompatActivity() {
         setupSettings()
 
         checkOverlayPermissionAndStart()
+    }
+
+    private fun ensurePairingConfigured() {
+        if (SecureUdp.hasPairingCode(this)) return
+        val input = EditText(this).apply {
+            hint = "อย่างน้อย 12 ตัวอักษร"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("ตั้งรหัสจับคู่ที่ปลอดภัย")
+            .setMessage("กรอกรหัสเดียวกันบนโทรศัพท์และจอรถ แนะนำรหัสสุ่มอย่างน้อย 16 ตัว")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("บันทึก", null)
+            .create().apply {
+                setOnShowListener {
+                    getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        if (SecureUdp.setPairingCode(this@MainActivity, input.text.toString())) dismiss()
+                        else input.error = "รหัสต้องยาวอย่างน้อย 12 ตัวอักษร"
+                    }
+                }
+                show()
+            }
     }
 
     private fun requestIgnoreBatteryOptimizations() {
@@ -144,7 +169,8 @@ class MainActivity : AppCompatActivity() {
                         val json = org.json.JSONObject().apply {
                             put("actionId", "find_phone")
                         }.toString()
-                        val payload = json.toByteArray(Charsets.UTF_8)
+                        val encrypted = SecureUdp.encode(this@MainActivity, json) ?: return@launch
+                        val payload = encrypted.toByteArray(Charsets.UTF_8)
                         val address = java.net.InetAddress.getByName(ip)
                         val packet = java.net.DatagramPacket(payload, payload.size, address, 8889)
                         socket.send(packet)

@@ -297,9 +297,13 @@ class UdpReceiverService : Service() {
                     val packet = DatagramPacket(buffer, buffer.size)
                     try {
                         socket?.receive(packet)
-                        val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                        Log.d(TAG, "Received: $jsonString")
-                        AppLogger.log("Received data: ${jsonString.take(100)}...")
+                        val envelope = String(packet.data, 0, packet.length, Charsets.UTF_8)
+                        val jsonString = SecureUdp.decode(this@UdpReceiverService, envelope)
+                        if (jsonString == null) {
+                            Log.w(TAG, "Rejected unauthenticated, stale, or replayed UDP packet")
+                            continue
+                        }
+                        AppLogger.log("Received authenticated data")
                         val senderIp = packet.address.hostAddress ?: ""
                         parseAndDisplayData(jsonString, senderIp)
                     } catch (e: Exception) {
@@ -723,12 +727,13 @@ class UdpReceiverService : Service() {
                     put("actionId", actionId)
                     if (text != null) put("text", text)
                 }.toString()
-                val payload = json.toByteArray(Charsets.UTF_8)
+                val encrypted = SecureUdp.encode(this@UdpReceiverService, json) ?: return@launch
+                val payload = encrypted.toByteArray(Charsets.UTF_8)
                 val address = java.net.InetAddress.getByName(ip)
                 val packet = DatagramPacket(payload, payload.size, address, 8889)
                 socket.send(packet)
                 socket.close()
-                AppLogger.log("Sent action $actionId to $ip")
+                AppLogger.log("Sent authenticated action")
             } catch (e: Exception) {
                 AppLogger.log("Failed to send action: ${e.message}")
             }

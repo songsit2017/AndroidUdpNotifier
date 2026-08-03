@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.TextView
 import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -13,6 +14,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        ensurePairingConfigured()
 
         tvLog = findViewById(R.id.tvLog)
         
@@ -83,6 +85,29 @@ class MainActivity : AppCompatActivity() {
             // limit to 1000 chars to avoid memory issues
             tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
         }
+    }
+
+    private fun ensurePairingConfigured() {
+        if (SecureUdp.hasPairingCode(this)) return
+        val input = EditText(this).apply {
+            hint = "อย่างน้อย 12 ตัวอักษร"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("ตั้งรหัสจับคู่ที่ปลอดภัย")
+            .setMessage("กรอกรหัสเดียวกันบนโทรศัพท์และจอรถ แนะนำรหัสสุ่มอย่างน้อย 16 ตัว")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("บันทึก", null)
+            .create().apply {
+                setOnShowListener {
+                    getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        if (SecureUdp.setPairingCode(this@MainActivity, input.text.toString())) dismiss()
+                        else input.error = "รหัสต้องยาวอย่างน้อย 12 ตัวอักษร"
+                    }
+                }
+                show()
+            }
     }
 
     override fun onDestroy() {

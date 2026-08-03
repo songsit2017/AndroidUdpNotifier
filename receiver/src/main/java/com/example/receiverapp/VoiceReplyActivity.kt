@@ -66,7 +66,8 @@ class VoiceReplyActivity : Activity() {
                     put("actionId", actionId)
                     put("text", text)
                 }.toString()
-                val payload = json.toByteArray(Charsets.UTF_8)
+                val encrypted = SecureUdp.encode(this@VoiceReplyActivity, json) ?: return@launch
+                val payload = encrypted.toByteArray(Charsets.UTF_8)
                 val address = InetAddress.getByName(ip)
                 val packet = DatagramPacket(payload, payload.size, address, 8889)
                 socket.send(packet)

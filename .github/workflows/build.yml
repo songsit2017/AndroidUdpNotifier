@@ -27,19 +27,20 @@ jobs:
       with:
         gradle-version: '8.4'
         
-    - name: Generate and Commit Keystore
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    - name: Restore release keystore
+      if: github.event_name == 'push'
+      env:
+        RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
       run: |
-        if [ ! -f "keystore.jks" ]; then
-          keytool -genkey -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias -dname "CN=AndroidUdpNotifier, OU=Developer, O=AndroidUdpNotifier, L=Unknown, S=Unknown, C=TH" -storepass password123 -keypass password123
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add keystore.jks
-          git commit -m "Auto-generate Release Keystore [skip ci]"
-          git push
-        fi
+        test -n "$RELEASE_KEYSTORE_BASE64"
+        printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
         
     - name: Build Release APKs
+      env:
+        ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
       run: gradle assembleRelease -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }}
       
     - name: Create GitHub Release

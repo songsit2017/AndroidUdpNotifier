@@ -29,11 +29,12 @@ import android.content.IntentFilter
 class NotificationSenderService : NotificationListenerService() {
     private var listenJob: kotlinx.coroutines.Job? = null
     private var actionListenJob: kotlinx.coroutines.Job? = null
-    data class PendingAction(val intent: PendingIntent, val remoteInputKey: String?)
+    data class PendingAction(val intent: PendingIntent, val remoteInputKey: String?, val createdAt: Long = System.currentTimeMillis())
     private val pendingIntents = ConcurrentHashMap<String, PendingAction>()
     private var batteryReceiver: BroadcastReceiver? = null
     private var connectionReceiver: ConnectionReceiver? = null
     private var lastBatteryLevel = -1
+    private val actionTtlMs = 5 * 60 * 1000L
 
     // Target Packages
     private val TARGET_PACKAGES = listOf(
@@ -87,8 +88,9 @@ class NotificationSenderService : NotificationListenerService() {
                 while (isActive) {
                     val packet = DatagramPacket(buffer, buffer.size)
                     actionSocket.receive(packet)
-                    val jsonString = String(packet.data, 0, packet.length, Charsets.UTF_8)
-                    AppLogger.log("Received action: $jsonString")
+                    val envelope = String(packet.data, 0, packet.length, Charsets.UTF_8)
+                    val jsonString = SecureUdp.decode(this@NotificationSenderService, envelope) ?: continue
+                    AppLogger.log("Received authenticated action")
                     
                     val json = JSONObject(jsonString)
                     val actionId = json.optString("actionId")
@@ -109,7 +111,7 @@ class NotificationSenderService : NotificationListenerService() {
                             }
                         } catch (e: Exception) {}
 
-                        val action = pendingIntents[replyText]
+                        val action = pendingIntents.remove(replyText)?.takeIf { System.currentTimeMillis() - it.createdAt <= actionTtlMs }
                         if (action != null && action.remoteInputKey != null) {
                             val etaText = if (lat.isEmpty()) "📍 แชร์พิกัด: ไม่สามารถดึงพิกัดได้ (ยังไม่เปิดสิทธิ์)" else "📍 ตอนนี้อยู่พิกัด: https://maps.google.com/?q=$lat,$lon 🚗💨"
                             val intent = Intent()
@@ -118,7 +120,7 @@ class NotificationSenderService : NotificationListenerService() {
                             val remoteInput = android.app.RemoteInput.Builder(action.remoteInputKey).build()
                             android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
                             action.intent.send(this@NotificationSenderService, 0, intent)
-                            AppLogger.log("✅ Sent ETA Reply: $etaText")
+                            AppLogger.log("✅ Sent authenticated location reply")
                         }
                         continue
                     }
@@ -161,7 +163,7 @@ class NotificationSenderService : NotificationListenerService() {
                         continue
                     }
 
-                    val action = pendingIntents[actionId]
+                    val action = pendingIntents.remove(actionId)?.takeIf { System.currentTimeMillis() - it.createdAt <= actionTtlMs }
                     if (action != null) {
                         if (replyText.isNotEmpty() && action.remoteInputKey != null) {
                             val intent = Intent()
@@ -170,7 +172,7 @@ class NotificationSenderService : NotificationListenerService() {
                             val remoteInput = android.app.RemoteInput.Builder(action.remoteInputKey).build()
                             android.app.RemoteInput.addResultsToIntent(arrayOf(remoteInput), intent, bundle)
                             action.intent.send(this@NotificationSenderService, 0, intent)
-                            AppLogger.log("✅ Sent Quick Reply: $replyText")
+                            AppLogger.log("✅ Sent authenticated quick reply")
                         } else {
                             action.intent.send()
                             AppLogger.log("✅ Executed action $actionId")
@@ -200,6 +202,8 @@ class NotificationSenderService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        val expiry = System.currentTimeMillis() - actionTtlMs
+        pendingIntents.entries.removeIf { it.value.createdAt < expiry }
         val packageName = sbn.packageName
         AppLogger.log("📩 Detected notification from: $packageName")
 
@@ -260,8 +264,7 @@ class NotificationSenderService : NotificationListenerService() {
         // Determine if Call or Message.
         var type = if (isCall) "call" else "message"
 
-        // Check if it's a Media notification
-        val template = extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
+        // Check if it's a Media notification. `template` was already read above.
         if (template.contains("MediaStyle")) {
             type = "media"
         }
@@ -465,14 +468,18 @@ class NotificationSenderService : NotificationListenerService() {
     }
 
     private fun sendUdpBroadcast(payload: String) {
-        AppLogger.log("Intercepted: $payload")
+        AppLogger.log("Sending encrypted notification")
         
         CoroutineScope(Dispatchers.IO).launch {
             var socket: DatagramSocket? = null
             try {
                 socket = DatagramSocket()
                 socket.broadcast = true
-                val payloadBytes = payload.toByteArray(Charsets.UTF_8)
+                val encrypted = SecureUdp.encode(this@NotificationSenderService, payload) ?: run {
+                    AppLogger.log("Pairing code is not configured; packet was not sent")
+                    return@launch
+                }
+                val payloadBytes = encrypted.toByteArray(Charsets.UTF_8)
                 val port = 8888
                 
                 val broadcastAddresses = getBroadcastAddresses()
