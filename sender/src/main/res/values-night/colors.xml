@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="float_bg">#B3121212</color>
-    <color name="float_text_primary">#FFFFFFFF</color>
-    <color name="float_text_secondary">#B3FFFFFF</color>
-    <color name="float_image_bg">#33FFFFFF</color>
-    <color name="float_icon_tint">#B3FFFFFF</color>
     <color name="app_background">#FF000000</color>
     <color name="app_surface">#FF121212</color>
     <color name="app_surface_muted">#FF1C1C1E</color>
