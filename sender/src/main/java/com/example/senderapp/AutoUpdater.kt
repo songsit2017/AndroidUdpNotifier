@@ -222,13 +222,17 @@ object AutoUpdater {
     }
 
     fun resumePendingInstall(activity: Activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !activity.packageManager.canRequestPackageInstalls()) return
-        val prefs = activity.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
-        val path = prefs.getString(PENDING_APK, null) ?: return
-        prefs.edit().remove(PENDING_APK).apply()
-        val file = File(path)
-        if (file.isFile) installApk(activity, file)
+        try {
+            val prefs = activity.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+            val path = prefs.getString(PENDING_APK, null) ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !activity.packageManager.canRequestPackageInstalls()) return
+            prefs.edit().remove(PENDING_APK).apply()
+            val file = File(path)
+            if (file.isFile) installApk(activity, file)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to resume pending install", e)
+        }
     }
 
     private fun isTrustedUpdate(context: Context, file: File): Boolean {
