@@ -54,8 +54,20 @@ class NotificationSenderService : NotificationListenerService() {
         startActionCommandListener()
         listenJob = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
-                sendUdpBroadcast(JSONObject().apply { put("type", "heartbeat") }.toString(), reliable = false)
-                kotlinx.coroutines.delay(10_000)
+                val prefs = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE)
+                val enabled = prefs.getBoolean("FORWARD_NOTIFICATIONS", true)
+                if (enabled && hasLocalNetwork()) {
+                    sendUdpBroadcast(JSONObject().apply { put("type", "heartbeat") }.toString(), reliable = false)
+                }
+                val lastSeen = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                    .getLong("LAST_RECEIVER_SEEN", 0L)
+                val recentlyConnected = System.currentTimeMillis() - lastSeen < 2 * 60 * 1000L
+                val delayMs = when {
+                    !enabled -> 30 * 60_000L
+                    recentlyConnected -> 60_000L
+                    else -> 5 * 60_000L
+                }
+                kotlinx.coroutines.delay(delayMs)
             }
         }
 
@@ -108,6 +120,10 @@ class NotificationSenderService : NotificationListenerService() {
                     val json = JSONObject(jsonString)
                     getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit()
                         .putLong("LAST_RECEIVER_SEEN", System.currentTimeMillis()).apply()
+                    packet.address.hostAddress?.let { ip ->
+                        getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit()
+                            .putString("LAST_RECEIVER_IP", ip).apply()
+                    }
                     if (json.optString("type") == "ack") {
                         pendingMessages.remove(json.optString("messageId"))
                         continue
@@ -490,6 +506,32 @@ class NotificationSenderService : NotificationListenerService() {
         return broadcastList.distinct()
     }
 
+    private fun hasLocalNetwork(): Boolean {
+        return try {
+            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val network = interfaces.nextElement()
+                if (!network.isUp || network.isLoopback) continue
+                if (network.interfaceAddresses.any { it.broadcast != null }) return true
+            }
+            false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun getDeliveryAddresses(): List<InetAddress> {
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val lastSeen = prefs.getLong("LAST_RECEIVER_SEEN", 0L)
+        val ip = prefs.getString("LAST_RECEIVER_IP", null)
+        if (!ip.isNullOrBlank() && System.currentTimeMillis() - lastSeen < 5 * 60 * 1000L) {
+            try {
+                return listOf(InetAddress.getByName(ip))
+            } catch (_: Exception) { }
+        }
+        return getBroadcastAddresses()
+    }
+
     private fun sendUdpBroadcast(payload: String, reliable: Boolean = true) {
         AppLogger.log("Sending encrypted notification")
         
@@ -504,7 +546,7 @@ class NotificationSenderService : NotificationListenerService() {
                         socket.broadcast = true
                         val encrypted = SecureUdp.encode(this@NotificationSenderService, message) ?: return@launch
                         val payloadBytes = encrypted.toByteArray(Charsets.UTF_8)
-                        for (address in getBroadcastAddresses()) {
+                        for (address in getDeliveryAddresses()) {
                             try {
                                 socket.send(DatagramPacket(payloadBytes, payloadBytes.size, address, 8888))
                             } catch (e: Exception) {
