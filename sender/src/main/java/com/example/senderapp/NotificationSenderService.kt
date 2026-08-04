@@ -113,10 +113,13 @@ class NotificationSenderService : NotificationListenerService() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
                     val level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+                    val status = intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)
+                    val isCharging = status == android.os.BatteryManager.BATTERY_STATUS_CHARGING || status == android.os.BatteryManager.BATTERY_STATUS_FULL
+                    
                     if (level != -1 && level != lastBatteryLevel) {
                         lastBatteryLevel = level
                         val enabled = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE).getBoolean("BATTERY_ALERT", true)
-                        if (enabled && (level == 20 || level == 15 || level == 10 || level == 5)) {
+                        if (enabled && !isCharging && (level == 20 || level == 15 || level == 10 || level == 5)) {
                             val payload = JSONObject().apply {
                                 put("type", "battery")
                                 put("level", level)

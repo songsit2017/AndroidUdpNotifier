@@ -42,8 +42,13 @@ class ConnectionReceiver : BroadcastReceiver() {
                 AppLogger.log("WiFi Connected. Checking battery...")
                 val bm = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
                 val level = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                
+                val batteryIntent = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+                val status = batteryIntent?.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1) ?: -1
+                val isCharging = status == android.os.BatteryManager.BATTERY_STATUS_CHARGING || status == android.os.BatteryManager.BATTERY_STATUS_FULL
+                
                 val batteryAlert = context.getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE).getBoolean("BATTERY_ALERT", true)
-                if (batteryAlert && level in 1..20) {
+                if (batteryAlert && !isCharging && level in 1..20) {
                     val payload = JSONObject().apply {
                         put("type", "battery")
                         put("level", level)
