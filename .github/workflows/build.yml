@@ -37,6 +37,8 @@ jobs:
         
     - name: Build debug APKs for pull requests
       if: github.event_name == 'pull_request'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: gradle assembleDebug
 
     - name: Build signed release APKs
@@ -45,6 +47,7 @@ jobs:
         ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
         ANDROID_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
         ANDROID_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         ACTUAL_ALIAS=$(keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" | sed -n 's/^Alias name: //p' | head -n 1)
         test -n "$ACTUAL_ALIAS"

@@ -17,6 +17,9 @@ android {
         targetSdk = 34
         versionCode = project.findProperty("versionCode")?.toString()?.toInt() ?: 1
         versionName = project.findProperty("versionName")?.toString() ?: "1.0.0"
+        
+        val anthropicApiKey = System.getenv("ANTHROPIC_API_KEY") ?: project.findProperty("ANTHROPIC_API_KEY")?.toString() ?: ""
+        buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
     }
 
     signingConfigs {

@@ -593,20 +593,76 @@ class UdpReceiverService : Service() {
                 if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000)) {
                     autoReplyTimestamps[name] = now
                     
-                    val lowerText = text.lowercase()
-                    val replyMessage = when {
-                        listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน", "กี่โมง", "รอ").any { lowerText.contains(it) } -> 
-                            "กำลังขับรถอยู่ครับ ใกล้ถึงแล้ว 📍"
-                        listOf("โทร", "โทรหา", "โทรกลับ", "ว่างไหม", "คุย").any { lowerText.contains(it) } -> 
-                            "กำลังขับรถอยู่ครับ เดี๋ยวจอดแล้วโทรกลับนะ 📞"
-                        listOf("ด่วน", "สำคัญ", "เป็นไร", "เกิดไรขึ้น").any { lowerText.contains(it) } -> 
-                            "กำลังขับรถอยู่ครับ ถ้ามีเรื่องด่วนโทรมาได้เลยครับ 🚨"
-                        else -> 
-                            "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗"
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val apiKey = BuildConfig.ANTHROPIC_API_KEY
+                        var replyMessage: String? = null
+                        
+                        if (apiKey.isNotEmpty()) {
+                            try {
+                                val url = java.net.URL("https://api.anthropic.com/v1/messages")
+                                val conn = url.openConnection() as java.net.HttpURLConnection
+                                conn.requestMethod = "POST"
+                                conn.setRequestProperty("x-api-key", apiKey)
+                                conn.setRequestProperty("anthropic-version", "2023-06-01")
+                                conn.setRequestProperty("content-type", "application/json")
+                                conn.doOutput = true
+                                
+                                val escapedText = org.json.JSONObject.quote(text)
+                                val jsonBody = """
+                                    {
+                                      "model": "claude-3-haiku-20240307",
+                                      "max_tokens": 100,
+                                      "system": "คุณคือระบบตอบแชทอัตโนมัติของคนที่กำลังขับรถอยู่ ให้ตอบกลับข้อความสั้นๆ สุภาพ เป็นภาษาไทย ว่ากำลังขับรถอยู่และตอบตามบริบท (ถ้าข้อความสั้นหรือไม่มีบริบท ให้ตอบแค่ว่ากำลังขับรถอยู่เดี๋ยวติดต่อกลับ)",
+                                      "messages": [
+                                        {"role": "user", "content": $escapedText}
+                                      ]
+                                    }
+                                """.trimIndent()
+                                
+                                conn.outputStream.use { os ->
+                                    val input = jsonBody.toByteArray(Charsets.UTF_8)
+                                    os.write(input, 0, input.size)
+                                }
+                                
+                                if (conn.responseCode == 200) {
+                                    val response = conn.inputStream.bufferedReader().use { it.readText() }
+                                    val jsonObject = org.json.JSONObject(response)
+                                    val contentArray = jsonObject.optJSONArray("content")
+                                    if (contentArray != null && contentArray.length() > 0) {
+                                        val generatedText = contentArray.getJSONObject(0).optString("text")
+                                        if (generatedText.isNotEmpty()) {
+                                            replyMessage = generatedText
+                                        }
+                                    }
+                                } else {
+                                    val errorResponse = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                                    Log.e(TAG, "Anthropic API failed with code: ${conn.responseCode}, error: $errorResponse")
+                                }
+                                conn.disconnect()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Anthropic auto-reply failed", e)
+                            }
+                        }
+                        
+                        if (replyMessage == null) {
+                            val lowerText = text.lowercase()
+                            replyMessage = when {
+                                listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน", "กี่โมง", "รอ").any { lowerText.contains(it) } -> 
+                                    "กำลังขับรถอยู่ครับ ใกล้ถึงแล้ว 📍"
+                                listOf("โทร", "โทรหา", "โทรกลับ", "ว่างไหม", "คุย").any { lowerText.contains(it) } -> 
+                                    "กำลังขับรถอยู่ครับ เดี๋ยวจอดแล้วโทรกลับนะ 📞"
+                                listOf("ด่วน", "สำคัญ", "เป็นไร", "เกิดไรขึ้น").any { lowerText.contains(it) } -> 
+                                    "กำลังขับรถอยู่ครับ ถ้ามีเรื่องด่วนโทรมาได้เลยครับ 🚨"
+                                else -> 
+                                    "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗"
+                            }
+                        }
+                        
+                        CoroutineScope(Dispatchers.Main).launch {
+                            sendActionCommand(senderIp, replyActionId, replyMessage)
+                            AppLogger.log("Auto-replied (Claude Smart) to $name")
+                        }
                     }
-                    
-                    sendActionCommand(senderIp, replyActionId, replyMessage)
-                    AppLogger.log("Auto-replied (Offline Smart) to $name")
                 }
             }
 
