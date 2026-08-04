@@ -591,9 +591,22 @@ class UdpReceiverService : Service() {
                 val lastReplyTime = autoReplyTimestamps[name] ?: 0L
                 // Rate limit: Auto-reply at most once every 5 minutes per sender
                 if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000)) {
-                    sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗")
                     autoReplyTimestamps[name] = now
-                    AppLogger.log("Auto-replied to message while driving (to: $name)")
+                    
+                    val lowerText = text.lowercase()
+                    val replyMessage = when {
+                        listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน", "กี่โมง", "รอ").any { lowerText.contains(it) } -> 
+                            "กำลังขับรถอยู่ครับ ใกล้ถึงแล้ว 📍"
+                        listOf("โทร", "โทรหา", "โทรกลับ", "ว่างไหม", "คุย").any { lowerText.contains(it) } -> 
+                            "กำลังขับรถอยู่ครับ เดี๋ยวจอดแล้วโทรกลับนะ 📞"
+                        listOf("ด่วน", "สำคัญ", "เป็นไร", "เกิดไรขึ้น").any { lowerText.contains(it) } -> 
+                            "กำลังขับรถอยู่ครับ ถ้ามีเรื่องด่วนโทรมาได้เลยครับ 🚨"
+                        else -> 
+                            "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗"
+                    }
+                    
+                    sendActionCommand(senderIp, replyActionId, replyMessage)
+                    AppLogger.log("Auto-replied (Offline Smart) to $name")
                 }
             }
 
