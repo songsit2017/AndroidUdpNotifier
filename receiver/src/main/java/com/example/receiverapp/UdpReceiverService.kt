@@ -556,8 +556,14 @@ class UdpReceiverService : Service() {
                 try {
                     val imageBytes = Base64.decode(appIconBase64, Base64.DEFAULT)
                     val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                    appIconBadge?.setImageBitmap(bitmap)
-                    appIconBadge?.visibility = View.VISIBLE
+                    
+                    if (base64Image.isNullOrEmpty()) {
+                        profileImage?.setImageBitmap(bitmap)
+                        appIconBadge?.visibility = View.GONE
+                    } else {
+                        appIconBadge?.setImageBitmap(bitmap)
+                        appIconBadge?.visibility = View.VISIBLE
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to decode app icon", e)
                 }
