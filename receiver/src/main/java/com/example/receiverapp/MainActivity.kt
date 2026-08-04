@@ -214,6 +214,7 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val switchQuickReply = findViewById<CompoundButton>(R.id.switchQuickReply)
         val switchTTS = findViewById<CompoundButton>(R.id.switchTTS)
+        val switchTTSMale = findViewById<CompoundButton>(R.id.switchTTSMale)
         val switchGreeting = findViewById<CompoundButton>(R.id.switchGreeting)
         val switchWeatherGreeting = findViewById<CompoundButton>(R.id.switchWeatherGreeting)
         val switchAudioDucking = findViewById<CompoundButton>(R.id.switchAudioDucking)
@@ -264,6 +265,7 @@ class MainActivity : AppCompatActivity() {
         // Load saved or defaults
         switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
         switchTTS.isChecked = prefs.getBoolean("PREF_TTS", true)
+        switchTTSMale.isChecked = prefs.getBoolean("PREF_TTS_MALE", false)
         switchGreeting.isChecked = prefs.getBoolean("PREF_GREETING", true)
         switchWeatherGreeting.isChecked = prefs.getBoolean("PREF_WEATHER_GREETING", true)
         switchAudioDucking.isChecked = prefs.getBoolean("PREF_AUDIO_DUCKING", true)
@@ -284,6 +286,7 @@ class MainActivity : AppCompatActivity() {
         
         switchQuickReply.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
         switchTTS.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
+        switchTTSMale.setOnCheckedChangeListener { _, c -> listener("PREF_TTS_MALE", c) }
         switchGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_GREETING", c) }
         switchWeatherGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_WEATHER_GREETING", c) }
         switchAudioDucking.setOnCheckedChangeListener { _, c -> listener("PREF_AUDIO_DUCKING", c) }

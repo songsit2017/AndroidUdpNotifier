@@ -189,6 +189,11 @@ class UdpReceiverService : Service() {
         startUdpListener()
     }
 
+    private val p: String
+        get() = if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS_MALE", false)) "ครับ" else "ค่ะ"
+    private val pNa: String
+        get() = if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS_MALE", false)) "นะครับ" else "นะคะ"
+
     private fun checkWeather(location: Location?, isStartup: Boolean) {
         if (isFetchingWeather) return
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
@@ -240,9 +245,9 @@ class UdpReceiverService : Service() {
                 if (isStartup) {
                     if (isTtsEnabled && isGreetingEnabled) {
                         val msg = if (isBadWeather) {
-                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา $weatherDesc ขับขี่ระมัดระวังด้วยนะครับ"
+                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา $weatherDesc ขับขี่ระมัดระวังด้วย$pNa"
                         } else {
-                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพครับ"
+                            "ระบบเชื่อมต่อพร้อมทำงาน อุณหภูมิวันนี้ $temp องศา ขอให้เดินทางโดยสวัสดิภาพ$p"
                         }
                         
                         if (isBadWeather) {
@@ -257,7 +262,7 @@ class UdpReceiverService : Service() {
                     }
                 } else {
                     if (isBadWeather && !wasBadWeather && isTtsEnabled) {
-                        val msg = "แจ้งเตือนสภาพอากาศข้างหน้า: $weatherDesc อุณหภูมิ $temp องศา ขับขี่ระมัดระวังด้วยนะครับ"
+                        val msg = "แจ้งเตือนสภาพอากาศข้างหน้า: $weatherDesc อุณหภูมิ $temp องศา ขับขี่ระมัดระวังด้วย$pNa"
                         try {
                             val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                             val r = RingtoneManager.getRingtone(applicationContext, notification)
@@ -271,7 +276,7 @@ class UdpReceiverService : Service() {
                 
             } catch (e: Exception) {
                 if (isStartup && isTtsEnabled && isGreetingEnabled) {
-                    tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
+                    tts?.speak("ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพ$p", TextToSpeech.QUEUE_FLUSH, null, "GREETING")
                 }
             } finally {
                 isFetchingWeather = false
@@ -429,7 +434,7 @@ class UdpReceiverService : Service() {
                         showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, null, senderIp)
                         val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
                         if (isTtsEnabled) {
-                            tts?.speak("แจ้งเตือน แบตเตอรี่มือถือเหลือ $level เปอร์เซ็นต์ โปรดเสียบชาร์จด้วยครับ", TextToSpeech.QUEUE_ADD, null, "BATTERY")
+                            tts?.speak("แจ้งเตือน แบตเตอรี่มือถือเหลือ $level เปอร์เซ็นต์ โปรดเสียบชาร์จด้วย$p", TextToSpeech.QUEUE_ADD, null, "BATTERY")
                         }
                     }
                 }
@@ -880,7 +885,7 @@ class UdpReceiverService : Service() {
             checkWeather(null, true)
         } else {
             tts?.speak(
-                "ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพครับ",
+                "ระบบเชื่อมต่อพร้อมทำงาน ขอให้เดินทางโดยสวัสดิภาพ$p",
                 TextToSpeech.QUEUE_FLUSH,
                 null,
                 "GREETING"

@@ -148,6 +148,14 @@
                         android:text="Text-to-Speech"
                         android:checked="true" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
+                    
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchTTSMale"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="เสียงผู้ชาย (ลงท้าย ครับ)"
+                        android:checked="false" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ปิด = เสียงผู้หญิง (ลงท้าย ค่ะ)" android:textSize="12sp" android:textColor="@color/app_text_secondary" android:layout_marginBottom="8dp" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchGreeting"
