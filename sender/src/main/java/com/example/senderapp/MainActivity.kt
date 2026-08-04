@@ -166,6 +166,8 @@ class MainActivity : AppCompatActivity() {
         bind(R.id.switchAppTelegram, "APP_TELEGRAM")
         bind(R.id.switchAppWhatsapp, "APP_WHATSAPP")
         bind(R.id.switchAppGmail, "APP_GMAIL")
+        bind(R.id.switchAppShopping, "APP_SHOPPING")
+        bind(R.id.switchAppBanking, "APP_BANKING")
     }
 
     private fun sendDiagnosticTest() {

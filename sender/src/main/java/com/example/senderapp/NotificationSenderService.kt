@@ -50,6 +50,27 @@ class NotificationSenderService : NotificationListenerService() {
         if (prefs.getBoolean("APP_TELEGRAM", true)) packages.add("org.telegram.messenger")
         if (prefs.getBoolean("APP_WHATSAPP", true)) packages.add("com.whatsapp")
         if (prefs.getBoolean("APP_GMAIL", true)) packages.add("com.google.android.gm")
+        
+        if (prefs.getBoolean("APP_SHOPPING", true)) {
+            packages.add("com.shopee.th")
+            packages.add("com.lazada.android")
+            packages.add("com.airpay.android") // ShopeePay
+            packages.add("com.shopee.ph") // Shopee PH (just in case)
+        }
+        
+        if (prefs.getBoolean("APP_BANKING", true)) {
+            packages.add("com.kasikorn.retail.mbanking.jap") // K PLUS
+            packages.add("com.scb.phone") // SCB EASY
+            packages.add("com.ktb.customer.jai") // Krungthai NEXT
+            packages.add("com.bbl.mobilebanking") // Bualuang mBanking
+            packages.add("com.krungsri.ndid") // KMA Krungsri
+            packages.add("com.gsb.mymogms") // MyMo GSB
+            packages.add("com.gsb.mymo") // MyMo GSB
+            packages.add("com.ttbbank.tc") // ttb touch
+            packages.add("com.kiatnakin.phatra") // KKP Mobile
+            packages.add("com.krungsri.uchoose") // UCHOOSE
+            packages.add("com.tisco.mobile") // TISCO
+        }
         return packages
     }
 
