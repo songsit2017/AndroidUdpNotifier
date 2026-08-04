@@ -53,10 +53,14 @@ class NotificationSenderService : NotificationListenerService() {
         return packages
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        startActionCommandListener()
+    }
+
     override fun onListenerConnected() {
         super.onListenerConnected()
         AppLogger.log("✅ Service Connected to Android System! Ready to read notifications.")
-        startActionCommandListener()
         listenJob = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
                 val prefs = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE)
@@ -110,6 +114,7 @@ class NotificationSenderService : NotificationListenerService() {
     }
 
     private fun startActionCommandListener() {
+        actionListenJob?.cancel()
         actionListenJob = CoroutineScope(Dispatchers.IO).launch {
             var actionSocket: DatagramSocket? = null
             try {
