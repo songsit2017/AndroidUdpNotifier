@@ -1,4 +1,4 @@
-﻿package com.example.senderapp
+package com.example.senderapp
 
 import android.app.Notification
 import android.content.Context
@@ -276,8 +276,32 @@ class NotificationSenderService : NotificationListenerService() {
         val extras = notification.extras
 
         // Extract title (Name) and text (Message)
-        val title = extras.getString(Notification.EXTRA_TITLE)?.trim() ?: ""
+        var title = extras.getString(Notification.EXTRA_TITLE)?.trim() ?: ""
         var text = extras.getString(Notification.EXTRA_TEXT)?.trim() ?: ""
+
+        // Handle MessagingStyle (often used by Line, WhatsApp, Messenger, Telegram)
+        val messages = extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+        if (messages != null && messages.isNotEmpty()) {
+            try {
+                val latestMessage = messages.last() as? android.os.Bundle
+                if (latestMessage != null) {
+                    val msgText = latestMessage.getCharSequence("text")?.toString()?.trim()
+                    val senderPerson = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                        latestMessage.getParcelable<android.app.Person>("sender_person")?.name?.toString()
+                    } else null
+                    val sender = senderPerson ?: latestMessage.getCharSequence("sender")?.toString()
+                    
+                    if (!msgText.isNullOrEmpty()) {
+                        text = msgText
+                        if (!sender.isNullOrEmpty()) {
+                            title = sender
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
         if (packageName == "com.facebook.katana" || packageName == "com.facebook.lite") {
             if (text.isNotEmpty()) {
@@ -298,7 +322,8 @@ class NotificationSenderService : NotificationListenerService() {
             val lowerTitle = title.lowercase()
             if (lowerText.contains("chat head") || lowerText.contains("chathead") || 
                 lowerTitle.contains("chat head") || lowerTitle.contains("chathead") ||
-                lowerText.contains("เริ่มการสนทนา") || lowerTitle.contains("เริ่มการสนทนา")) {
+                lowerText.contains("เริ่มการสนทนา") || lowerTitle.contains("เริ่มการสนทนา") ||
+                lowerText.contains("กำลังใช้แชทเฮดอยู่") || lowerTitle.contains("กำลังใช้แชทเฮดอยู่")) {
                 AppLogger.log("   -> Ignored (Messenger Chat Head background notification)")
                 return
             }
