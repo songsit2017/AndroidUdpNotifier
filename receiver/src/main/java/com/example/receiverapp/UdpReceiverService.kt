@@ -59,7 +59,6 @@ class UdpReceiverService : Service() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var pendingConnectionAnnouncement = false
-    private var connectionAnnounced = false
     private var lastHeartbeatAt = 0L
     private var serviceStartTime = 0L
     private var locationManager: LocationManager? = null
@@ -80,6 +79,10 @@ class UdpReceiverService : Service() {
         startForegroundNotification()
 
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        if (prefs.getString("LAST_SENDER_IP", null) != null) {
+            pendingConnectionAnnouncement = true
+        }
+        
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         
         try {
@@ -352,20 +355,19 @@ class UdpReceiverService : Service() {
     private fun parseAndDisplayData(jsonString: String, senderIp: String) {
         try {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            val wasPaired = prefs.getString("LAST_SENDER_IP", null) != null
+            if (!wasPaired) {
+                pendingConnectionAnnouncement = true
+                announceConnectionIfReady()
+            }
+
             prefs.edit().putString("LAST_SENDER_IP", senderIp).apply()
             prefs.edit().putLong("LAST_SENDER_SEEN", System.currentTimeMillis()).apply()
 
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")
             if (type == "heartbeat") {
-                val now = System.currentTimeMillis()
-                val isNewConnection = !connectionAnnounced || now - lastHeartbeatAt > 150_000L
-                lastHeartbeatAt = now
-                connectionAnnounced = true
-                if (isNewConnection) {
-                    pendingConnectionAnnouncement = true
-                    announceConnectionIfReady()
-                }
+                lastHeartbeatAt = System.currentTimeMillis()
                 return
             }
 

@@ -1,4 +1,4 @@
-﻿package com.example.receiverapp
+package com.example.receiverapp
 
 import android.content.Intent
 import android.net.Uri
@@ -28,14 +28,16 @@ class MainActivity : AppCompatActivity() {
         override fun run() {
             val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
             val lastSeen = prefs.getLong("LAST_SENDER_SEEN", 0L)
-            val age = System.currentTimeMillis() - lastSeen
-            findViewById<TextView>(R.id.tvConnectionStatus)?.text =
-                if (lastSeen > 0 && age < 20_000) "สถานะ: เชื่อมต่อโทรศัพท์แล้ว ✓" else "สถานะ: รอการเชื่อมต่อ"
             val ip = prefs.getString("LAST_SENDER_IP", null)
+            val age = System.currentTimeMillis() - lastSeen
+            
+            findViewById<TextView>(R.id.tvConnectionStatus)?.text =
+                if (ip != null) "สถานะ: พร้อมใช้งาน (จับคู่แล้ว ✓)" else "สถานะ: รอการจับคู่"
+                
             val ageSeconds = if (lastSeen == 0L) null else age / 1000
             findViewById<TextView>(R.id.tvDiagnosticsHealth)?.text = when {
-                ageSeconds != null && ageSeconds < 20 -> "● เชื่อมต่อปกติ • รับข้อมูล ${ageSeconds} วินาทีที่แล้ว • ${ip ?: "ไม่ทราบ IP"}"
-                ageSeconds != null -> "● ขาดการเชื่อมต่อ • พบ Sender ล่าสุด ${ageSeconds} วินาทีที่แล้ว"
+                ageSeconds != null && ageSeconds < 20 -> "● เชื่อมต่อล่าสุดตอนนี้ • ${ip}"
+                ageSeconds != null -> "● สแตนด์บาย • ขาดการติดต่อ ${ageSeconds} วินาที • ${ip}"
                 else -> "● Receiver พร้อม • ยังไม่เคยพบ Sender"
             }
             statusHandler.postDelayed(this, 2_000)
