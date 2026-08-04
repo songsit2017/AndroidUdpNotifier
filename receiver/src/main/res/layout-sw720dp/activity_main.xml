@@ -212,7 +212,7 @@
                         android:checked="true" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="แสดงปุ่มส่งพิกัด GPS เมื่อมีคนทักถามตำแหน่ง" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
 </LinearLayout>
-                </LinearLayout>
+                </GridLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Safety Card -->
@@ -279,7 +279,7 @@
                         android:checked="false" />
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="โหมดห้ามรบกวน (ปิดแจ้งเตือนทุกอย่างยกเว้น VIP)" android:textSize="20sp" android:textColor="@color/app_text_secondary" />
 </LinearLayout>
-                </LinearLayout>
+                </GridLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Media Card -->
@@ -348,7 +348,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Popup Position:" android:textSize="20sp" android:textColor="@color/app_text_primary"/>
                         <Spinner android:id="@+id/spinnerPopupPosition" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
                     </LinearLayout>
-                </LinearLayout>
+                </GridLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
