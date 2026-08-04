@@ -781,31 +781,34 @@ class UdpReceiverService : Service() {
             }
 
             if (type == "media") {
-                actionsContainer?.visibility = View.VISIBLE
-                actionsScrollView?.visibility = View.VISIBLE
-                val mediaControls = listOf(
-                    Triple("⏪", "media_prev", "#2196F3"),
-                    Triple("⏯️", "media_play_pause", "#FF9800"),
-                    Triple("⏩", "media_next", "#2196F3")
-                )
-                for ((icon, action, color) in mediaControls) {
-                    val btn = Button(themeContext).apply {
-                        this.text = icon
-                        this.isAllCaps = false
-                        backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(color))
-                        setTextColor(android.graphics.Color.WHITE)
-                        textSize = 20f
-                        setOnClickListener {
-                            sendActionCommand(senderIp, action)
-                        }
-                    }
-                    val lp = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { marginEnd = 16 }
-                    actionsContainer?.addView(btn, lp)
-                }
-            }
+                  actionsContainer?.visibility = View.VISIBLE
+                  actionsScrollView?.visibility = View.VISIBLE
+                  val mediaControls = listOf(
+                      Triple(R.drawable.ic_media_previous, "media_prev", "#333333"),
+                      Triple(R.drawable.ic_media_play_pause, "media_play_pause", "#FF9800"),
+                      Triple(R.drawable.ic_media_next, "media_next", "#333333")
+                  )
+                  for ((iconRes, action, color) in mediaControls) {
+                      val btn = android.widget.ImageButton(themeContext).apply {
+                          setImageResource(iconRes)
+                          val bg = android.graphics.drawable.GradientDrawable()
+                          bg.shape = android.graphics.drawable.GradientDrawable.OVAL
+                          bg.setColor(android.graphics.Color.parseColor(color))
+                          background = bg
+                          setPadding(32, 32, 32, 32)
+                          elevation = 8f
+                          scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                          setOnClickListener {
+                              sendActionCommand(senderIp, action)
+                          }
+                      }
+                      val lp = LinearLayout.LayoutParams(140, 140).apply { 
+                          marginEnd = 24 
+                          gravity = android.view.Gravity.CENTER_VERTICAL
+                      }
+                      actionsContainer?.addView(btn, lp)
+                  }
+              }
 
             if (type == "fatigue") {
                 actionsContainer?.visibility = View.VISIBLE
@@ -859,7 +862,7 @@ class UdpReceiverService : Service() {
                 }
             }
             
-            if (type != "call") {
+            if (type != "call" && type != "media") {
                 autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
                     delay(8000)
                     removeFloatingWindow()
