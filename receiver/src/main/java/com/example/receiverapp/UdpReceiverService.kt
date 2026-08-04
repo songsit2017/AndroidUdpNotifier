@@ -1,4 +1,4 @@
-﻿package com.example.receiverapp
+package com.example.receiverapp
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -43,6 +43,7 @@ class UdpReceiverService : Service() {
 
     companion object {
         const val ACTION_DIAGNOSTIC_TEST = "com.example.receiverapp.DIAGNOSTIC_TEST"
+        val autoReplyTimestamps = mutableMapOf<String, Long>()
     }
 
     private val TAG = "UdpReceiver"
@@ -586,9 +587,13 @@ class UdpReceiverService : Service() {
             }
             if (replyActionId != null) {
                 val isAutoReplyEnabled = prefs.getBoolean("PREF_AUTO_REPLY", true)
-                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message") {
+                val now = System.currentTimeMillis()
+                val lastReplyTime = autoReplyTimestamps[name] ?: 0L
+                // Rate limit: Auto-reply at most once every 5 minutes per sender
+                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000)) {
                     sendActionCommand(senderIp, replyActionId, "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗")
-                    AppLogger.log("Auto-replied to message while driving")
+                    autoReplyTimestamps[name] = now
+                    AppLogger.log("Auto-replied to message while driving (to: $name)")
                 }
             }
 
