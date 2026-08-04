@@ -121,7 +121,7 @@
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/app_accent"
                 app:strokeWidth="2dp"
-                android:text="?? ��õ�駤���к� (Settings)" />
+                android:text="การตั้งค่าระบบ (Settings)" />
 
 
             <com.google.android.material.button.MaterialButton
