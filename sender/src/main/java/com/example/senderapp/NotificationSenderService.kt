@@ -352,9 +352,19 @@ class NotificationSenderService : NotificationListenerService() {
         var replyActionId: String? = null
 
         notification.actions?.forEach { action ->
-            val actionTitle = action.title?.toString()
+            var actionTitle = action.title?.toString()
             val intent = action.actionIntent
             val remoteInputs = action.remoteInputs
+
+            if (isMediaStyle && actionTitle != null) {
+                actionTitle = when (actionTitle.lowercase(java.util.Locale.ROOT)) {
+                    "play", "เล่น" -> "▶️"
+                    "pause", "หยุด" -> "⏸️"
+                    "next", "ถัดไป", "skip forward" -> "⏭️"
+                    "previous", "ก่อนหน้า", "prev", "skip backward" -> "⏮️"
+                    else -> actionTitle
+                }
+            }
 
             if (actionTitle != null && intent != null) {
                 val id = UUID.randomUUID().toString()
@@ -399,7 +409,9 @@ class NotificationSenderService : NotificationListenerService() {
         val isCall = sbn.notification.category == Notification.CATEGORY_CALL || 
                      (packageName == "jp.naver.line.android" && (sbn.notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && sbn.notification.category == null)
 
-        if (getTargetPackages().contains(packageName) || isMediaStyle || isCall) {
+        if (isMediaStyle) return // Ignore remove for media to prevent flickering/disappearing
+
+        if (getTargetPackages().contains(packageName) || isCall) {
             val jsonPayload = JSONObject().apply {
                 put("type", "remove")
                 put("package", packageName)
@@ -411,11 +423,40 @@ class NotificationSenderService : NotificationListenerService() {
     private fun extractAndCompressImage(notification: Notification, context: Context): String? {
         var bitmap: Bitmap? = null
 
+        // Try getting avatar from MessagingStyle sender
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                val messages = notification.extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+                if (messages != null && messages.isNotEmpty()) {
+                    val latestMessage = messages.last() as? android.os.Bundle
+                    if (latestMessage != null) {
+                        val senderPerson = latestMessage.getParcelable<android.app.Person>("sender_person")
+                        if (senderPerson?.icon != null) {
+                            val drawable = senderPerson.icon!!.loadDrawable(context)
+                            bitmap = drawableToBitmap(drawable)
+                        }
+                    }
+                }
+                
+                if (bitmap == null) {
+                    val person = notification.extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
+                    if (person?.icon != null) {
+                        val drawable = person.icon!!.loadDrawable(context)
+                        bitmap = drawableToBitmap(drawable)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.log("Failed to extract MessagingStyle icon: ${e.message}")
+        }
+
         // Try using the getLargeIcon method (API 23+)
-        val largeIcon: Icon? = notification.getLargeIcon()
-        if (largeIcon != null) {
-            val drawable = largeIcon.loadDrawable(context)
-            bitmap = drawableToBitmap(drawable)
+        if (bitmap == null) {
+            val largeIcon: Icon? = notification.getLargeIcon()
+            if (largeIcon != null) {
+                val drawable = largeIcon.loadDrawable(context)
+                bitmap = drawableToBitmap(drawable)
+            }
         } 
         
         // Fallback for EXTRA_LARGE_ICON
