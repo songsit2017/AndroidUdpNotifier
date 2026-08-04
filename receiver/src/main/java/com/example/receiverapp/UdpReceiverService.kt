@@ -91,6 +91,14 @@ class UdpReceiverService : Service() {
                 ttsReady = true
                 tts?.language = Locale("th", "TH")
                 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val audioAttrs = android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    tts?.setAudioAttributes(audioAttrs)
+                }
+
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
