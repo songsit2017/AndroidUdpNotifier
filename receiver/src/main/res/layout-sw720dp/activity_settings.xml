@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/app_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="@color/app_surface"
+        android:elevation="4dp">
+        
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_revert"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"/>
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="��õ�駤���к� (Settings)"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/app_text_primary" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            
+<!-- Features Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
+                        android:text="General Features"
+                        android:textStyle="bold"
+                        android:textColor="@color/app_accent"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quick Replies" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แสดงปุ่มตอบกลับด่วนบนจอรถ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchQuickReply" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Text-to-Speech" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchTTS" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+                        
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="เสียงผู้ชาย (ลงท้าย ครับ)" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ปิด = เสียงผู้หญิง (ลงท้าย ค่ะ)" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchTTSMale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Startup Greeting" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="พูดทักทายเมื่อสตาร์ทรถ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchGreeting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Weather &amp; PM 2.5 Greeting" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="รายงานสภาพอากาศตอนสตาร์ทรถ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchWeatherGreeting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Smart Audio Ducking" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="หรี่เสียงเพลงอัตโนมัติขณะระบบพูด" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchAudioDucking" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-Reply While Driving" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ส่งข้อความตอบกลับอัตโนมัติเมื่อขับรถอยู่" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchAutoReply" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="VIP Mode" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ทะลวงโหมดห้ามรบกวน หากมีคำว่า ด่วน/ฉุกเฉิน/สำคัญ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchVIP" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Share ETA" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แสดงปุ่มส่งพิกัด GPS เมื่อมีคนทักถามตำแหน่ง" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchETA" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+                </GridLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Safety Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
+                        android:text="Safety &amp; Health"
+                        android:textStyle="bold"
+                        android:textColor="#FF3B30"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fatigue Alert" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="เตือนพักสายตาและหาปั๊มเมื่อขับรถครบ 2 ชั่วโมง" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchFatigue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Speed Limit Warning" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="กะพริบจอแดงเตือนเมื่อขับเร็วเกิน 120 กม./ชม." android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Privacy Mode (มีผู้โดยสาร)" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ซ่อนข้อความและอ่านแค่ชื่อคนส่ง เพื่อความเป็นส่วนตัว" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchPrivacy" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Do Not Disturb" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="โหมดห้ามรบกวน (ปิดแจ้งเตือนทุกอย่างยกเว้น VIP)" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchDND" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" />
+</LinearLayout>
+</LinearLayout>
+                </GridLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Media Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
+                        android:text="Media &amp; System"
+                        android:textStyle="bold"
+                        android:textColor="#34C759"
+                        android:textSize="20sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Now Playing Overlay" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แสดงเพลงที่กำลังเล่นและปุ่มควบคุม" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchMedia" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Battery Alerts" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แจ้งเตือนเมื่อแบตมือถือต่ำกว่า 20%" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchBattery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+</LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Theme:" android:textSize="20sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerTheme" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Popup Position:" android:textSize="20sp" android:textColor="@color/app_text_primary"/>
+                        <Spinner android:id="@+id/spinnerPopupPosition" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+                    </LinearLayout>
+                </GridLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

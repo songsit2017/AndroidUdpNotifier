@@ -127,7 +127,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        setupSettings()
+        findViewById<Button>(R.id.btnSettings)?.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.btnAddGeoReminder)?.setOnClickListener {
+            showAddGeoReminderDialog()
+        }
+
+        findViewById<Button>(R.id.btnFindPhone)?.setOnClickListener {
+            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            val ip = prefs.getString("LAST_SENDER_IP", null)
+            if (ip != null) {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    try {
+                        val socket = java.net.DatagramSocket()
+                        val json = org.json.JSONObject().apply {
+                            put("actionId", "find_phone")
+                        }.toString()
+                        val encrypted = SecureUdp.encode(this@MainActivity, json) ?: return@launch
+                        val payload = encrypted.toByteArray(Charsets.UTF_8)
+                        val address = java.net.InetAddress.getByName(ip)
+                        val packet = java.net.DatagramPacket(payload, payload.size, address, 8889)
+                        socket.send(packet)
+                        socket.close()
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            android.widget.Toast.makeText(this@MainActivity, "🚨 ส่งคำสั่งค้นหามือถือแล้ว!", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            } else {
+                android.widget.Toast.makeText(this@MainActivity, "ยังไม่เคยได้รับข้อมูลจากมือถือเลย", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -232,128 +266,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSettings() {
-        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-        val switchQuickReply = findViewById<CompoundButton>(R.id.switchQuickReply)
-        val switchTTS = findViewById<CompoundButton>(R.id.switchTTS)
-        val switchTTSMale = findViewById<CompoundButton>(R.id.switchTTSMale)
-        val switchGreeting = findViewById<CompoundButton>(R.id.switchGreeting)
-        val switchWeatherGreeting = findViewById<CompoundButton>(R.id.switchWeatherGreeting)
-        val switchAudioDucking = findViewById<CompoundButton>(R.id.switchAudioDucking)
-        val switchAutoReply = findViewById<CompoundButton>(R.id.switchAutoReply)
-        val switchMedia = findViewById<CompoundButton>(R.id.switchMedia)
-        val switchBattery = findViewById<CompoundButton>(R.id.switchBattery)
-        val switchPrivacy = findViewById<CompoundButton>(R.id.switchPrivacy)
-        val switchDND = findViewById<CompoundButton>(R.id.switchDND)
-        val switchVIP = findViewById<CompoundButton>(R.id.switchVIP)
-        val switchETA = findViewById<CompoundButton>(R.id.switchETA)
-        val switchFatigue = findViewById<CompoundButton>(R.id.switchFatigue)
-        val switchSpeed = findViewById<CompoundButton>(R.id.switchSpeed)
-        val btnFindPhone = findViewById<Button>(R.id.btnFindPhone)
-        val btnAddGeoReminder = findViewById<Button>(R.id.btnAddGeoReminder)
 
-        btnAddGeoReminder.setOnClickListener {
-            showAddGeoReminderDialog()
-        }
-
-        btnFindPhone.setOnClickListener {
-            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-            val ip = prefs.getString("LAST_SENDER_IP", null)
-            if (ip != null) {
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                    try {
-                        val socket = java.net.DatagramSocket()
-                        val json = org.json.JSONObject().apply {
-                            put("actionId", "find_phone")
-                        }.toString()
-                        val encrypted = SecureUdp.encode(this@MainActivity, json) ?: return@launch
-                        val payload = encrypted.toByteArray(Charsets.UTF_8)
-                        val address = java.net.InetAddress.getByName(ip)
-                        val packet = java.net.DatagramPacket(payload, payload.size, address, 8889)
-                        socket.send(packet)
-                        socket.close()
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                            android.widget.Toast.makeText(this@MainActivity, "🚨 ส่งคำสั่งค้นหามือถือแล้ว!", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            } else {
-                android.widget.Toast.makeText(this, "ยังไม่เคยได้รับข้อมูลจากมือถือเลย", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Load saved or defaults
-        switchQuickReply.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
-        switchTTS.isChecked = prefs.getBoolean("PREF_TTS", true)
-        switchTTSMale.isChecked = prefs.getBoolean("PREF_TTS_MALE", false)
-        switchGreeting.isChecked = prefs.getBoolean("PREF_GREETING", true)
-        switchWeatherGreeting.isChecked = prefs.getBoolean("PREF_WEATHER_GREETING", true)
-        switchAudioDucking.isChecked = prefs.getBoolean("PREF_AUDIO_DUCKING", true)
-        switchAutoReply.isChecked = prefs.getBoolean("PREF_AUTO_REPLY", true)
-        switchMedia.isChecked = prefs.getBoolean("PREF_MEDIA", true)
-        switchBattery.isChecked = prefs.getBoolean("PREF_BATTERY", true)
-        switchPrivacy.isChecked = prefs.getBoolean("PREF_PRIVACY_MODE", false)
-        switchDND.isChecked = prefs.getBoolean("PREF_DND", false)
-        switchVIP.isChecked = prefs.getBoolean("PREF_VIP_MODE", true)
-        switchETA.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
-        switchFatigue.isChecked = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
-        switchSpeed.isChecked = prefs.getBoolean("PREF_SPEED_WARNING", true)
-
-        // Save on change
-        val listener = { key: String, isChecked: Boolean ->
-            prefs.edit().putBoolean(key, isChecked).apply()
-        }
-        
-        switchQuickReply.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
-        switchTTS.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
-        switchTTSMale.setOnCheckedChangeListener { _, c -> listener("PREF_TTS_MALE", c) }
-        switchGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_GREETING", c) }
-        switchWeatherGreeting.setOnCheckedChangeListener { _, c -> listener("PREF_WEATHER_GREETING", c) }
-        switchAudioDucking.setOnCheckedChangeListener { _, c -> listener("PREF_AUDIO_DUCKING", c) }
-        switchAutoReply.setOnCheckedChangeListener { _, c -> listener("PREF_AUTO_REPLY", c) }
-        switchMedia.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
-        switchBattery.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
-        switchPrivacy.setOnCheckedChangeListener { _, c -> listener("PREF_PRIVACY_MODE", c) }
-        switchDND.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
-        switchVIP.setOnCheckedChangeListener { _, c -> listener("PREF_VIP_MODE", c) }
-        switchETA.setOnCheckedChangeListener { _, c -> listener("PREF_SHARE_ETA", c) }
-        switchFatigue.setOnCheckedChangeListener { _, c -> listener("PREF_FATIGUE_ALERT", c) }
-        switchSpeed.setOnCheckedChangeListener { _, c -> listener("PREF_SPEED_WARNING", c) }
-
-        val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
-        val themes = arrayOf("Classic", "Honda Type-R", "BMW M", "Tesla")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, themes)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerTheme.adapter = adapter
-
-        val currentTheme = prefs.getString("PREF_THEME", "Classic")
-        spinnerTheme.setSelection(themes.indexOf(currentTheme))
-
-        spinnerTheme.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                prefs.edit().putString("PREF_THEME", themes[position]).apply()
-            }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
-        
-        val spinnerPopupPosition = findViewById<Spinner>(R.id.spinnerPopupPosition)
-        val positions = arrayOf("Top", "Center", "Bottom")
-        val posAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, positions)
-        posAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerPopupPosition.adapter = posAdapter
-        
-        val currentPosition = prefs.getString("PREF_POPUP_GRAVITY", "Top")
-        spinnerPopupPosition.setSelection(positions.indexOf(currentPosition))
-        
-        spinnerPopupPosition.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                prefs.edit().putString("PREF_POPUP_GRAVITY", positions[position]).apply()
-            }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
-    }
 
     private fun showAddGeoReminderDialog() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager

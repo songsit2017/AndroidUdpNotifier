@@ -1,0 +1,117 @@
+package com.example.receiverapp
+
+import android.content.Context
+import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.CompoundButton
+import android.widget.Spinner
+import androidx.appcompat.app.AppCompatActivity
+
+class SettingsActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_settings)
+
+        // Setup Back Button
+        findViewById<View>(R.id.btnBack)?.setOnClickListener {
+            finish()
+        }
+
+        setupSettings()
+    }
+
+    private fun setupSettings() {
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val switchQuickReply = findViewById<CompoundButton>(R.id.switchQuickReply)
+        val switchTTS = findViewById<CompoundButton>(R.id.switchTTS)
+        val switchTTSMale = findViewById<CompoundButton>(R.id.switchTTSMale)
+        val switchGreeting = findViewById<CompoundButton>(R.id.switchGreeting)
+        val switchWeatherGreeting = findViewById<CompoundButton>(R.id.switchWeatherGreeting)
+        val switchAudioDucking = findViewById<CompoundButton>(R.id.switchAudioDucking)
+        val switchAutoReply = findViewById<CompoundButton>(R.id.switchAutoReply)
+        val switchMedia = findViewById<CompoundButton>(R.id.switchMedia)
+        val switchBattery = findViewById<CompoundButton>(R.id.switchBattery)
+        val switchPrivacy = findViewById<CompoundButton>(R.id.switchPrivacy)
+        val switchDND = findViewById<CompoundButton>(R.id.switchDND)
+        val switchVIP = findViewById<CompoundButton>(R.id.switchVIP)
+        val switchETA = findViewById<CompoundButton>(R.id.switchETA)
+        val switchFatigue = findViewById<CompoundButton>(R.id.switchFatigue)
+        val switchSpeed = findViewById<CompoundButton>(R.id.switchSpeed)
+
+        // Load saved or defaults
+        switchQuickReply?.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
+        switchTTS?.isChecked = prefs.getBoolean("PREF_TTS", true)
+        switchTTSMale?.isChecked = prefs.getBoolean("PREF_TTS_MALE", false)
+        switchGreeting?.isChecked = prefs.getBoolean("PREF_GREETING", true)
+        switchWeatherGreeting?.isChecked = prefs.getBoolean("PREF_WEATHER_GREETING", true)
+        switchAudioDucking?.isChecked = prefs.getBoolean("PREF_AUDIO_DUCKING", true)
+        switchAutoReply?.isChecked = prefs.getBoolean("PREF_AUTO_REPLY", true)
+        switchMedia?.isChecked = prefs.getBoolean("PREF_MEDIA", true)
+        switchBattery?.isChecked = prefs.getBoolean("PREF_BATTERY", true)
+        switchPrivacy?.isChecked = prefs.getBoolean("PREF_PRIVACY_MODE", false)
+        switchDND?.isChecked = prefs.getBoolean("PREF_DND", false)
+        switchVIP?.isChecked = prefs.getBoolean("PREF_VIP_MODE", true)
+        switchETA?.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
+        switchFatigue?.isChecked = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
+        switchSpeed?.isChecked = prefs.getBoolean("PREF_SPEED_WARNING", true)
+
+        // Save on change
+        val listener = { key: String, isChecked: Boolean ->
+            prefs.edit().putBoolean(key, isChecked).apply()
+        }
+        
+        switchQuickReply?.setOnCheckedChangeListener { _, c -> listener("PREF_QUICK_REPLY", c) }
+        switchTTS?.setOnCheckedChangeListener { _, c -> listener("PREF_TTS", c) }
+        switchTTSMale?.setOnCheckedChangeListener { _, c -> listener("PREF_TTS_MALE", c) }
+        switchGreeting?.setOnCheckedChangeListener { _, c -> listener("PREF_GREETING", c) }
+        switchWeatherGreeting?.setOnCheckedChangeListener { _, c -> listener("PREF_WEATHER_GREETING", c) }
+        switchAudioDucking?.setOnCheckedChangeListener { _, c -> listener("PREF_AUDIO_DUCKING", c) }
+        switchAutoReply?.setOnCheckedChangeListener { _, c -> listener("PREF_AUTO_REPLY", c) }
+        switchMedia?.setOnCheckedChangeListener { _, c -> listener("PREF_MEDIA", c) }
+        switchBattery?.setOnCheckedChangeListener { _, c -> listener("PREF_BATTERY", c) }
+        switchPrivacy?.setOnCheckedChangeListener { _, c -> listener("PREF_PRIVACY_MODE", c) }
+        switchDND?.setOnCheckedChangeListener { _, c -> listener("PREF_DND", c) }
+        switchVIP?.setOnCheckedChangeListener { _, c -> listener("PREF_VIP_MODE", c) }
+        switchETA?.setOnCheckedChangeListener { _, c -> listener("PREF_SHARE_ETA", c) }
+        switchFatigue?.setOnCheckedChangeListener { _, c -> listener("PREF_FATIGUE_ALERT", c) }
+        switchSpeed?.setOnCheckedChangeListener { _, c -> listener("PREF_SPEED_WARNING", c) }
+
+        val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
+        if (spinnerTheme != null) {
+            val themes = arrayOf("Classic", "Honda Type-R", "BMW M", "Tesla")
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, themes)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerTheme.adapter = adapter
+
+            val currentTheme = prefs.getString("PREF_THEME", "Classic")
+            spinnerTheme.setSelection(themes.indexOf(currentTheme))
+
+            spinnerTheme.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                    prefs.edit().putString("PREF_THEME", themes[position]).apply()
+                }
+                override fun onNothingSelected(parent: AdapterView<*>) {}
+            }
+        }
+        
+        val spinnerPopupPosition = findViewById<Spinner>(R.id.spinnerPopupPosition)
+        if (spinnerPopupPosition != null) {
+            val positions = arrayOf("Top", "Center", "Bottom")
+            val posAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, positions)
+            posAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerPopupPosition.adapter = posAdapter
+            
+            val currentPosition = prefs.getString("PREF_POPUP_GRAVITY", "Top")
+            spinnerPopupPosition.setSelection(positions.indexOf(currentPosition))
+            
+            spinnerPopupPosition.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                    prefs.edit().putString("PREF_POPUP_GRAVITY", positions[position]).apply()
+                }
+                override fun onNothingSelected(parent: AdapterView<*>) {}
+            }
+        }
+    }
+}
