@@ -6,6 +6,10 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
 import android.os.Build
@@ -61,6 +65,9 @@ class UdpReceiverService : Service() {
     private var pendingConnectionAnnouncement = false
     private var lastHeartbeatAt = 0L
     private var serviceStartTime = 0L
+    
+    private var mediaSession: MediaSession? = null
+    private var screenOffReceiver: BroadcastReceiver? = null
     private var locationManager: LocationManager? = null
     private var isSpeedWarningActive = false
     private var currentSpeedKmh = 0f
@@ -84,6 +91,42 @@ class UdpReceiverService : Service() {
         }
         
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        
+        mediaSession = MediaSession(this, "UdpReceiverSession")
+        mediaSession?.setCallback(object : MediaSession.Callback() {
+            override fun onSkipToNext() {
+                super.onSkipToNext()
+                CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() }
+            }
+            override fun onSkipToPrevious() {
+                super.onSkipToPrevious()
+                CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() }
+            }
+        })
+        val state = PlaybackState.Builder()
+            .setActions(PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+            .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+            .build()
+        mediaSession?.setPlaybackState(state)
+
+        screenOffReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_SCREEN_OFF || intent?.action == Intent.ACTION_SHUTDOWN) {
+                    val now = System.currentTimeMillis()
+                    if (lastHeartbeatAt > 0 && now - lastHeartbeatAt < 30000) {
+                        val isTtsEnabled = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)
+                        if (isTtsEnabled) {
+                            tts?.speak("ระบบกำลังจะปิดการทำงาน อย่าลืมโทรศัพท์มือถือของคุณ$pNa", TextToSpeech.QUEUE_FLUSH, null, "SHUTDOWN_REMINDER")
+                        }
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SHUTDOWN)
+        }
+        registerReceiver(screenOffReceiver, filter)
         
         try {
             tts = TextToSpeech(this) { status ->
@@ -194,6 +237,23 @@ class UdpReceiverService : Service() {
             e.printStackTrace()
         }
         
+        CoroutineScope(Dispatchers.IO).launch {
+            var wasConnected = false
+            while (isActive) {
+                val now = System.currentTimeMillis()
+                if (lastHeartbeatAt > 0 && now - lastHeartbeatAt < 30000) {
+                    wasConnected = true
+                } else if (wasConnected && now - lastHeartbeatAt >= 30000) {
+                    wasConnected = false
+                    val isTtsEnabled = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)
+                    if (isTtsEnabled) {
+                        tts?.speak("การเชื่อมต่อขาดหาย อย่าลืมโทรศัพท์มือถือของคุณ$pNa", TextToSpeech.QUEUE_FLUSH, null, "DISCONNECT_REMINDER")
+                    }
+                }
+                delay(5000)
+            }
+        }
+
         startUdpListener()
     }
 
@@ -871,6 +931,7 @@ class UdpReceiverService : Service() {
             }
             
             if (type != "call" && type != "media") {
+                mediaSession?.isActive = true
                 autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
                     delay(8000)
                     removeFloatingWindow()
@@ -944,6 +1005,7 @@ class UdpReceiverService : Service() {
     private fun removeFloatingWindow() {
         try {
             autoDismissJob?.cancel()
+            mediaSession?.isActive = false
             if (floatingView != null) {
                 windowManager?.removeView(floatingView)
                 floatingView = null
@@ -985,6 +1047,8 @@ class UdpReceiverService : Service() {
         super.onDestroy()
         listenJob?.cancel()
         socket?.close()
+        screenOffReceiver?.let { unregisterReceiver(it) }
+        mediaSession?.release()
         tts?.stop()
         tts?.shutdown()
         CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() }

@@ -112,6 +112,26 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 override fun onNothingSelected(parent: AdapterView<*>) {}
             }
+            
+            val editGeoLat = findViewById<android.widget.EditText>(R.id.editGeoLat)
+            val editGeoLon = findViewById<android.widget.EditText>(R.id.editGeoLon)
+            val editGeoMsg = findViewById<android.widget.EditText>(R.id.editGeoMsg)
+            val btnSaveGeo = findViewById<android.widget.Button>(R.id.btnSaveGeo)
+
+            editGeoLat?.setText(prefs.getString("GEO_REMINDER_LAT", ""))
+            editGeoLon?.setText(prefs.getString("GEO_REMINDER_LON", ""))
+            editGeoMsg?.setText(prefs.getString("GEO_REMINDER_MSG", ""))
+
+            btnSaveGeo?.setOnClickListener {
+                prefs.edit().apply {
+                    putString("GEO_REMINDER_LAT", editGeoLat?.text.toString())
+                    putString("GEO_REMINDER_LON", editGeoLon?.text.toString())
+                    putString("GEO_REMINDER_MSG", editGeoMsg?.text.toString())
+                    putBoolean("GEO_REMINDER_TRIGGERED", false)
+                    apply()
+                }
+                android.widget.Toast.makeText(this@SettingsActivity, "บันทึกพิกัดเตือนความจำสำเร็จ!", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
