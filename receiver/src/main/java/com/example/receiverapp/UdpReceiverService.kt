@@ -480,22 +480,30 @@ class UdpReceiverService : Service() {
 
     private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false) {
         try {
-            removeFloatingWindow()
+            val isUpdatingExistingMedia = (type == "media" && floatingView != null)
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
 
             // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
             val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)
-            val inflater = LayoutInflater.from(themeContext)
             
-            floatingView = inflater.inflate(R.layout.floating_notification, null)
+            val viewToUse = if (isUpdatingExistingMedia) {
+                autoDismissJob?.cancel()
+                floatingView!!
+            } else {
+                removeFloatingWindow()
+                val inflater = LayoutInflater.from(themeContext)
+                inflater.inflate(R.layout.floating_notification, null).also { floatingView = it }
+            }
 
-            val nameText = floatingView?.findViewById<TextView>(R.id.nameText)
-            val messageText = floatingView?.findViewById<TextView>(R.id.messageText)
-            val profileImage = floatingView?.findViewById<ImageView>(R.id.profileImage)
-            val appIconBadge = floatingView?.findViewById<ImageView>(R.id.appIconBadge)
-            val closeButton = floatingView?.findViewById<ImageButton>(R.id.closeButton)
-            val actionsContainer = floatingView?.findViewById<LinearLayout>(R.id.actionsContainer)
-            val actionsScrollView = floatingView?.findViewById<HorizontalScrollView>(R.id.actionsScrollView)
+            val nameText = viewToUse.findViewById<TextView>(R.id.nameText)
+            val messageText = viewToUse.findViewById<TextView>(R.id.messageText)
+            val profileImage = viewToUse.findViewById<ImageView>(R.id.profileImage)
+            val appIconBadge = viewToUse.findViewById<ImageView>(R.id.appIconBadge)
+            val closeButton = viewToUse.findViewById<ImageButton>(R.id.closeButton)
+            val actionsContainer = viewToUse.findViewById<LinearLayout>(R.id.actionsContainer)
+            val actionsScrollView = viewToUse.findViewById<HorizontalScrollView>(R.id.actionsScrollView)
+            
+            actionsContainer?.removeAllViews()
 
             nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
             
@@ -512,7 +520,7 @@ class UdpReceiverService : Service() {
                 messageText?.text = text.ifEmpty { "Incoming $type" }
             }
 
-            val cardView = floatingView as? androidx.cardview.widget.CardView
+            val cardView = viewToUse as? androidx.cardview.widget.CardView
             val themePref = prefs.getString("PREF_THEME", "Classic") ?: "Classic"
             
             // Check global night mode explicitly
@@ -821,40 +829,42 @@ class UdpReceiverService : Service() {
 
             closeButton?.setOnClickListener { removeFloatingWindow() }
 
-        val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-        }
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT
-        )
-
-        val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
-        params.gravity = when (pos) {
-            "Center" -> Gravity.CENTER
-            "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        }
-        params.y = if (pos == "Center") 0 else 40
-
-        try {
-            windowManager?.addView(floatingView, params)
+            if (!isUpdatingExistingMedia) {
+                val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                } else {
+                    @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+                }
+        
+                val params = WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    layoutFlag,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    PixelFormat.TRANSLUCENT
+                )
+        
+                val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
+                params.gravity = when (pos) {
+                    "Center" -> Gravity.CENTER
+                    "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                    else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                }
+                params.y = if (pos == "Center") 0 else 40
+        
+                try {
+                    windowManager?.addView(viewToUse, params)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to add floating view", e)
+                }
+            }
+            
             if (type != "call") {
                 autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
                     delay(8000)
                     removeFloatingWindow()
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to add floating view", e)
-        }
-        
         } catch (e: Exception) {
             Log.e(TAG, "Fatal Error in showFloatingWindow: ", e)
             AppLogger.log("Crash avoided in showFloatingWindow: ${e.message}")

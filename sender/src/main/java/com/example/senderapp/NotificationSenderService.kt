@@ -476,50 +476,70 @@ class NotificationSenderService : NotificationListenerService() {
 
         // Try using the getLargeIcon method (API 23+)
         if (bitmap == null) {
-            val largeIcon: Icon? = notification.getLargeIcon()
-            if (largeIcon != null) {
-                val drawable = largeIcon.loadDrawable(context)
-                bitmap = drawableToBitmap(drawable)
+            try {
+                val largeIcon: Icon? = notification.getLargeIcon()
+                if (largeIcon != null) {
+                    val drawable = largeIcon.loadDrawable(context)
+                    bitmap = drawableToBitmap(drawable)
+                }
+            } catch (e: Exception) {
+                AppLogger.log("Failed to extract LargeIcon: ${e.message}")
             }
         } 
         
         // Fallback for EXTRA_LARGE_ICON
         if (bitmap == null) {
-            val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_LARGE_ICON)
-            if (parcelable is Bitmap) {
-                bitmap = parcelable
-            } else if (parcelable is Icon) {
-                val drawable = parcelable.loadDrawable(context)
-                bitmap = drawableToBitmap(drawable)
+            try {
+                val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_LARGE_ICON)
+                if (parcelable is Bitmap) {
+                    bitmap = parcelable
+                } else if (parcelable is Icon) {
+                    val drawable = parcelable.loadDrawable(context)
+                    bitmap = drawableToBitmap(drawable)
+                }
+            } catch (e: Exception) {
+                AppLogger.log("Failed to extract EXTRA_LARGE_ICON: ${e.message}")
             }
         }
 
         // Fallback for EXTRA_PICTURE
         if (bitmap == null) {
-            val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_PICTURE)
-            if (parcelable is Bitmap) {
-                bitmap = parcelable
-            } else if (parcelable is Icon) {
-                val drawable = parcelable.loadDrawable(context)
-                bitmap = drawableToBitmap(drawable)
+            try {
+                val parcelable = notification.extras.getParcelable<android.os.Parcelable>(Notification.EXTRA_PICTURE)
+                if (parcelable is Bitmap) {
+                    bitmap = parcelable
+                } else if (parcelable is Icon) {
+                    val drawable = parcelable.loadDrawable(context)
+                    bitmap = drawableToBitmap(drawable)
+                }
+            } catch (e: Exception) {
+                AppLogger.log("Failed to extract EXTRA_PICTURE: ${e.message}")
             }
         }
 
         // Fallback for Person objects (Android P+)
         if (bitmap == null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            val person = notification.extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
-            if (person?.icon != null) {
-                val drawable = person.icon!!.loadDrawable(context)
-                bitmap = drawableToBitmap(drawable)
+            try {
+                val person = notification.extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
+                if (person?.icon != null) {
+                    val drawable = person.icon!!.loadDrawable(context)
+                    bitmap = drawableToBitmap(drawable)
+                }
+            } catch (e: Exception) {
+                AppLogger.log("Failed to extract EXTRA_MESSAGING_PERSON: ${e.message}")
             }
         }
         
         // Fallback for Call Person (Android S+)
         if (bitmap == null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            val person = notification.extras.getParcelable<android.app.Person>("android.callPerson")
-            if (person?.icon != null) {
-                val drawable = person.icon!!.loadDrawable(context)
-                bitmap = drawableToBitmap(drawable)
+            try {
+                val person = notification.extras.getParcelable<android.app.Person>("android.callPerson")
+                if (person?.icon != null) {
+                    val drawable = person.icon!!.loadDrawable(context)
+                    bitmap = drawableToBitmap(drawable)
+                }
+            } catch (e: Exception) {
+                AppLogger.log("Failed to extract callPerson: ${e.message}")
             }
         }
 
@@ -560,11 +580,9 @@ class NotificationSenderService : NotificationListenerService() {
         if (drawable is BitmapDrawable) return drawable.bitmap
 
         return try {
-            val bitmap = Bitmap.createBitmap(
-                drawable.intrinsicWidth.takeIf { it > 0 } ?: 1,
-                drawable.intrinsicHeight.takeIf { it > 0 } ?: 1,
-                Bitmap.Config.ARGB_8888
-            )
+            val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 108
+            val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 108
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
