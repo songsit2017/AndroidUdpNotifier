@@ -70,8 +70,8 @@ jobs:
           📌 **Build Number:** #${{ github.run_number }}
           🤖 อัปโหลดไฟล์ APK ล่าสุดให้ดาวน์โหลดด้านล่างนี้เลยครับ
         files: |
-          sender/build/outputs/apk/release/sender-release.apk
-          receiver/build/outputs/apk/release/receiver-release.apk
+          sender/build/outputs/apk/release/ADH-Notifier-Server.apk
+          receiver/build/outputs/apk/release/ADH-Notifier-Client.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
