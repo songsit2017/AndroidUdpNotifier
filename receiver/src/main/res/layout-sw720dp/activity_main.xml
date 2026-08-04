@@ -117,15 +117,16 @@
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
-                <LinearLayout
+                <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:columnCount="2"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
                         android:text="General Features"
                         android:textStyle="bold"
                         android:textColor="@color/app_accent"
@@ -223,15 +224,16 @@
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
-                <LinearLayout
+                <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:columnCount="2"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
                         android:text="Safety &amp; Health"
                         android:textStyle="bold"
                         android:textColor="#FF3B30"
@@ -289,15 +291,16 @@
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
-                <LinearLayout
+                <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:columnCount="2"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_columnSpan="2"
                         android:text="Media &amp; System"
                         android:textStyle="bold"
                         android:textColor="#34C759"
@@ -325,7 +328,8 @@
 </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
@@ -335,7 +339,8 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
