@@ -25,7 +25,7 @@ object AutoUpdater {
 
     private const val TAG = "AutoUpdater"
     private const val GITHUB_API_URL = "https://api.github.com/repos/songsit2017/AndroidUdpNotifier/releases/latest"
-    private const val ASSET_NAME = "receiver-release.apk"
+    private const val ASSET_NAME = "ADH-Notifier-Client.apk"
     private const val MAX_APK_BYTES = 100L * 1024L * 1024L
     private const val UPDATE_PREFS = "AutoUpdaterPrefs"
     private const val PENDING_APK = "pending_apk"
