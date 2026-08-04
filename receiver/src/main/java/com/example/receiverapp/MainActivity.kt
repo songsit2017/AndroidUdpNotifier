@@ -395,6 +395,9 @@ class MainActivity : AppCompatActivity() {
 
         val locationGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         style(R.id.btnRequestLocation, locationGranted, "อนุญาต Location แล้ว", "3. อนุญาต Location")
+
+        val allGranted = overlayGranted && batteryGranted && locationGranted
+        findViewById<android.view.View>(R.id.cardPermissions)?.visibility = if (allGranted) android.view.View.GONE else android.view.View.VISIBLE
     }
 
     override fun onDestroy() {
