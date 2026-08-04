@@ -365,6 +365,7 @@ class UdpReceiverService : Service() {
                 pendingConnectionAnnouncement = true
                 announceConnectionIfReady()
             }
+            sendBroadcast(android.content.Intent("com.example.receiverapp.PAIRING_SUCCESS"))
 
             prefs.edit().putString("LAST_SENDER_IP", senderIp).apply()
             prefs.edit().putLong("LAST_SENDER_SEEN", System.currentTimeMillis()).apply()

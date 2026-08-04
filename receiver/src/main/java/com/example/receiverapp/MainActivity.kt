@@ -23,6 +23,18 @@ class MainActivity : AppCompatActivity() {
 
     private val OVERLAY_PERMISSION_REQ_CODE = 1234
     private lateinit var tvLog: TextView
+    private var qrDialog: android.app.AlertDialog? = null
+
+    private val pairingSuccessReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: android.content.Intent?) {
+            if (qrDialog?.isShowing == true) {
+                qrDialog?.dismiss()
+                qrDialog = null
+                android.widget.Toast.makeText(this@MainActivity, "จับคู่สำเร็จ", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private val statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val statusUpdater = object : Runnable {
         override fun run() {
@@ -62,6 +74,17 @@ class MainActivity : AppCompatActivity() {
         
         // Auto check on startup
         AutoUpdater.checkForUpdates(this, showToastIfUpToDate = false)
+
+        ContextCompat.startForegroundService(this, android.content.Intent(this, UdpReceiverService::class.java))
+        
+        statusHandler.post(statusUpdater)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pairingSuccessReceiver, android.content.IntentFilter("com.example.receiverapp.PAIRING_SUCCESS"), Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(pairingSuccessReceiver, android.content.IntentFilter("com.example.receiverapp.PAIRING_SUCCESS"))
+        }
 
         findViewById<Button>(R.id.btnTestSystem).setOnClickListener {
             try {
@@ -112,7 +135,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         checkOverlayPermissionAndStart()
-        statusHandler.post(statusUpdater)
     }
 
     private fun setupPairingControls() {
@@ -137,7 +159,7 @@ class MainActivity : AppCompatActivity() {
             adjustViewBounds = true
             setPadding(24, 24, 24, 24)
         }
-        android.app.AlertDialog.Builder(this)
+        qrDialog = android.app.AlertDialog.Builder(this)
             .setTitle("สแกนด้วยแอปบนโทรศัพท์")
             .setView(image)
             .setPositiveButton("ปิด", null)
@@ -406,6 +428,9 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         statusHandler.removeCallbacks(statusUpdater)
+        try {
+            unregisterReceiver(pairingSuccessReceiver)
+        } catch (e: Exception) {}
         AppLogger.listener = null
     }
     private fun startWatchdog() {
