@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         tvLog = findViewById(R.id.tvLog)
         
         val tvVersionInfo = findViewById<TextView>(R.id.tvVersionInfo)
-        tvVersionInfo.text = "Version ${BuildConfig.VERSION_NAME} | Created by Songsit2017 x PUPU"
+        tvVersionInfo.text = "ADH Notifier Server | Version ${BuildConfig.VERSION_NAME} | Created by Songsit2017 x PUPU"
 
         val btnCheckUpdate = findViewById<Button>(R.id.btnCheckUpdate)
         btnCheckUpdate.setOnClickListener {

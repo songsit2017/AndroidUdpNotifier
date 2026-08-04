@@ -305,12 +305,12 @@ class UdpReceiverService : Service() {
 
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "UDP Receiver Service", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNEL_ID, "ADH Notifier Client", NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Receiver Active")
+            .setContentTitle("ADH Notifier Client")
             .setContentText("Listening for incoming calls and messages...")
             .setSmallIcon(android.R.drawable.ic_dialog_info) 
             .setOngoing(true)
