@@ -405,6 +405,8 @@ class NotificationSenderService : NotificationListenerService() {
             }
         }
 
+        val isGroup = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
+
         // Build JSON Payload
         val jsonPayload = JSONObject().apply {
             put("type", type)
@@ -413,6 +415,7 @@ class NotificationSenderService : NotificationListenerService() {
             put("text", text)
             put("imageBase64", imageBase64 ?: JSONObject.NULL)
             put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
+            put("isGroup", isGroup)
             put("actions", actionsArray)
             if (replyActionId != null) {
                 put("replyActionId", replyActionId)

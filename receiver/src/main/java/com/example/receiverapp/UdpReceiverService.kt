@@ -379,6 +379,7 @@ class UdpReceiverService : Service() {
 
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
+            val isGroup = jsonObject.optBoolean("isGroup", false)
             
             val textContentLower = text.lowercase()
             val titleContentLower = name.lowercase()
@@ -470,14 +471,14 @@ class UdpReceiverService : Service() {
             }
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp)
+                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false) {
         try {
             removeFloatingWindow()
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
@@ -604,7 +605,7 @@ class UdpReceiverService : Service() {
                 val now = System.currentTimeMillis()
                 val lastReplyTime = autoReplyTimestamps[name] ?: 0L
                 // Rate limit: Auto-reply at most once every 5 minutes per sender
-                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000)) {
+                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000) && !isGroup) {
                     autoReplyTimestamps[name] = now
                     
                     CoroutineScope(Dispatchers.IO).launch {

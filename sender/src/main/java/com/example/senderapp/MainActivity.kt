@@ -152,22 +152,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupFeatureSwitches() {
         val prefs = getSharedPreferences("SenderPrefs", MODE_PRIVATE)
-        fun bind(id: Int, key: String, defaultValue: Boolean = true) {
+        fun bind(id: Int, key: String, defaultValue: Boolean = true, packageName: String? = null) {
             val control = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(id)
             control.isChecked = prefs.getBoolean(key, defaultValue)
             control.setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean(key, checked).apply() }
+            
+            if (packageName != null) {
+                try {
+                    val drawable = packageManager.getApplicationIcon(packageName)
+                    val iconSize = (32 * resources.displayMetrics.density).toInt()
+                    drawable.setBounds(0, 0, iconSize, iconSize)
+                    control.setCompoundDrawables(drawable, null, null, null)
+                    control.compoundDrawablePadding = (12 * resources.displayMetrics.density).toInt()
+                } catch (e: Exception) {
+                    // App not installed
+                }
+            }
         }
         bind(R.id.switchForwardNotifications, "FORWARD_NOTIFICATIONS")
         bind(R.id.switchSendImages, "SEND_IMAGES")
         bind(R.id.switchBatteryAlert, "BATTERY_ALERT")
         bind(R.id.switchAutoPark, "AUTO_PARK")
-        bind(R.id.switchAppLine, "APP_LINE")
-        bind(R.id.switchAppMessenger, "APP_MESSENGER")
-        bind(R.id.switchAppTelegram, "APP_TELEGRAM")
-        bind(R.id.switchAppWhatsapp, "APP_WHATSAPP")
-        bind(R.id.switchAppGmail, "APP_GMAIL")
-        bind(R.id.switchAppShopping, "APP_SHOPPING")
-        bind(R.id.switchAppBanking, "APP_BANKING")
+        bind(R.id.switchAppLine, "APP_LINE", true, "jp.naver.line.android")
+        bind(R.id.switchAppMessenger, "APP_MESSENGER", true, "com.facebook.orca")
+        bind(R.id.switchAppTelegram, "APP_TELEGRAM", true, "org.telegram.messenger")
+        bind(R.id.switchAppWhatsapp, "APP_WHATSAPP", true, "com.whatsapp")
+        bind(R.id.switchAppGmail, "APP_GMAIL", true, "com.google.android.gm")
+        bind(R.id.switchAppShopping, "APP_SHOPPING", true, "com.shopee.th")
+        bind(R.id.switchAppBanking, "APP_BANKING", true, "com.kasikorn.retail.mbanking.jap")
     }
 
     private fun sendDiagnosticTest() {
