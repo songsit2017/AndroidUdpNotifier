@@ -305,8 +305,22 @@ class NotificationSenderService : NotificationListenerService() {
         val extras = notification.extras
 
         // Extract title (Name) and text (Message)
-        var title = extras.getString(Notification.EXTRA_TITLE)?.trim() ?: ""
-        var text = extras.getString(Notification.EXTRA_TEXT)?.trim() ?: ""
+        var title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim() ?: ""
+        var text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim() ?: ""
+
+        // 3. Explicitly ignore Messenger Chat Heads (which sometimes lack FLAG_ONGOING_EVENT)
+        if (packageName == "com.facebook.orca") {
+            val lowerTitle = title.lowercase()
+            val lowerText = text.lowercase()
+            if (lowerTitle.contains("chat heads") || lowerText.contains("chat heads") ||
+                lowerTitle.contains("แชทเฮด") || lowerText.contains("แชทเฮด") ||
+                lowerTitle.contains("กำลังใช้งานแชทเฮด") || lowerText.contains("กำลังใช้งานแชทเฮด") ||
+                lowerTitle.contains("active chat heads") || lowerText.contains("active chat heads") ||
+                lowerText == "active" || lowerTitle == "active") {
+                AppLogger.log("   -> Ignored (Messenger Chat Heads)")
+                return
+            }
+        }
 
         // Handle MessagingStyle (often used by Line, WhatsApp, Messenger, Telegram)
         val messages = extras.getParcelableArray(Notification.EXTRA_MESSAGES)
