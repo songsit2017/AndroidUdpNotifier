@@ -209,15 +209,18 @@ class UdpReceiverService : Service() {
                             checkWeather(location, false)
                         }
                         
-                        val geoLat = prefs.getString("GEO_REMINDER_LAT", null)
-                        val geoLon = prefs.getString("GEO_REMINDER_LON", null)
+                        val geoLatStr = prefs.getString("GEO_REMINDER_LAT", "")
+                        val geoLonStr = prefs.getString("GEO_REMINDER_LON", "")
                         val geoMsg = prefs.getString("GEO_REMINDER_MSG", "")
                         val triggered = prefs.getBoolean("GEO_REMINDER_TRIGGERED", true)
                         
+                        val geoLat = geoLatStr?.toDoubleOrNull()
+                        val geoLon = geoLonStr?.toDoubleOrNull()
+                        
                         if (geoLat != null && geoLon != null && geoMsg!!.isNotEmpty() && !triggered) {
                             val target = Location("").apply {
-                                latitude = geoLat.toDouble()
-                                longitude = geoLon.toDouble()
+                                latitude = geoLat
+                                longitude = geoLon
                             }
                             if (location.distanceTo(target) < 500) {
                                 prefs.edit().putBoolean("GEO_REMINDER_TRIGGERED", true).apply()
