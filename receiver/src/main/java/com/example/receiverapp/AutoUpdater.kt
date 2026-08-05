@@ -91,7 +91,7 @@ object AutoUpdater {
     }
 
     private fun showUpdateDialog(activity: Activity, newVersion: String, downloadUrl: String, expectedDigest: String) {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
             .setTitle("New Update Available")
             .setMessage("Version $newVersion is available. Do you want to download and install it?")
             .setPositiveButton("Update") { _, _ ->

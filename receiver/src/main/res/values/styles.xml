@@ -11,5 +11,17 @@
         <item name="android:navigationBarColor">@color/app_background</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="colorAccent">@color/app_accent</item>
+        <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialog</item>
+        <item name="alertDialogTheme">@style/CustomAlertDialog</item>
+    </style>
+
+    <style name="CustomMaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorPrimary">@color/app_accent</item>
+        <item name="colorAccent">@color/app_accent</item>
+    </style>
+
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="colorAccent">@color/app_accent</item>
     </style>
 </resources>
