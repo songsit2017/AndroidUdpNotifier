@@ -281,7 +281,7 @@ class NotificationSenderService : NotificationListenerService() {
 
         val notification = sbn.notification
         val template = notification.extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
-        val isMediaStyle = template.contains("MediaStyle")
+        val isMediaStyle = template.contains("MediaStyle") || sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
         val isCall = notification.category == Notification.CATEGORY_CALL || 
                      (packageName == "jp.naver.line.android" && (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && notification.category == null)
 
@@ -361,8 +361,8 @@ class NotificationSenderService : NotificationListenerService() {
         // Determine if Call or Message.
         var type = if (isCall) "call" else "message"
 
-        // Check if it's a Media notification. `template` was already read above.
-        if (template.contains("MediaStyle")) {
+        // Check if it's a Media notification.
+        if (isMediaStyle) {
             type = "media"
         }
 
@@ -432,7 +432,7 @@ class NotificationSenderService : NotificationListenerService() {
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
         val template = sbn.notification.extras.getString(Notification.EXTRA_TEMPLATE) ?: ""
-        val isMediaStyle = template.contains("MediaStyle")
+        val isMediaStyle = template.contains("MediaStyle") || sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
         val isCall = sbn.notification.category == Notification.CATEGORY_CALL || 
                      (packageName == "jp.naver.line.android" && (sbn.notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 && sbn.notification.category == null)
 
