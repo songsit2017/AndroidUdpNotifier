@@ -240,23 +240,6 @@ class UdpReceiverService : Service() {
             e.printStackTrace()
         }
         
-        CoroutineScope(Dispatchers.IO).launch {
-            var wasConnected = false
-            while (isActive) {
-                val now = System.currentTimeMillis()
-                if (lastHeartbeatAt > 0 && now - lastHeartbeatAt < 30000) {
-                    wasConnected = true
-                } else if (wasConnected && now - lastHeartbeatAt >= 30000) {
-                    wasConnected = false
-                    val isTtsEnabled = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)
-                    if (isTtsEnabled) {
-                        tts?.speak("การเชื่อมต่อขาดหาย อย่าลืมโทรศัพท์มือถือของคุณ$pNa", TextToSpeech.QUEUE_FLUSH, null, "DISCONNECT_REMINDER")
-                    }
-                }
-                delay(5000)
-            }
-        }
-
         startUdpListener()
     }
 
