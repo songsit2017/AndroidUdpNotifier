@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         if (result.contents != null && SecureUdp.importPairingUri(this, result.contents)) {
             android.widget.Toast.makeText(this, "จับคู่กับจอรถสำเร็จ", android.widget.Toast.LENGTH_LONG).show()
             findViewById<TextView>(R.id.tvConnectionStatus).text = "สถานะ: จับคู่แล้ว กำลังรอสัญญาณ"
+            sendHeartbeatNow()
         } else if (result.contents != null) {
             android.widget.Toast.makeText(this, "QR นี้ไม่ใช่รหัสจับคู่ของแอป", android.widget.Toast.LENGTH_LONG).show()
         }
@@ -219,41 +220,45 @@ class MainActivity : AppCompatActivity() {
         // Broadcast a heartbeat to quickly wake up/discover the receiver and update the connection status
         val lastSeen = getSharedPreferences("AppPrefs", MODE_PRIVATE).getLong("LAST_RECEIVER_SEEN", 0L)
         if (SecureUdp.hasPairingCode(this) && System.currentTimeMillis() - lastSeen > 15_000L) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                try {
-                    val json = org.json.JSONObject().apply {
-                        put("type", "heartbeat")
-                        put("_messageId", java.util.UUID.randomUUID().toString())
-                    }.toString()
-                    val encrypted = SecureUdp.encode(this@MainActivity, json) ?: return@launch
-                    val bytes = encrypted.toByteArray(Charsets.UTF_8)
-                    java.net.DatagramSocket().use { socket ->
-                        socket.broadcast = true
-                        
-                        // Try all broadcast addresses
-                        val list = mutableListOf<java.net.InetAddress>()
-                        try {
-                            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-                            while (interfaces.hasMoreElements()) {
-                                val network = interfaces.nextElement()
-                                if (network.isLoopback || !network.isUp) continue
-                                for (address in network.interfaceAddresses) {
-                                    address.broadcast?.let { list.add(it) }
-                                }
+            sendHeartbeatNow()
+        }
+    }
+
+    private fun sendHeartbeatNow() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                val json = org.json.JSONObject().apply {
+                    put("type", "heartbeat")
+                    put("_messageId", java.util.UUID.randomUUID().toString())
+                }.toString()
+                val encrypted = SecureUdp.encode(this@MainActivity, json) ?: return@launch
+                val bytes = encrypted.toByteArray(Charsets.UTF_8)
+                java.net.DatagramSocket().use { socket ->
+                    socket.broadcast = true
+                    
+                    // Try all broadcast addresses
+                    val list = mutableListOf<java.net.InetAddress>()
+                    try {
+                        val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+                        while (interfaces.hasMoreElements()) {
+                            val network = interfaces.nextElement()
+                            if (network.isLoopback || !network.isUp) continue
+                            for (address in network.interfaceAddresses) {
+                                address.broadcast?.let { list.add(it) }
                             }
-                        } catch (_: Exception) {}
-                        if (list.isEmpty()) {
-                            list.add(java.net.InetAddress.getByName("255.255.255.255"))
                         }
-                        
-                        for (address in list) {
-                            try {
-                                socket.send(java.net.DatagramPacket(bytes, bytes.size, address, 8888))
-                            } catch (_: Exception) {}
-                        }
+                    } catch (_: Exception) {}
+                    if (list.isEmpty()) {
+                        list.add(java.net.InetAddress.getByName("255.255.255.255"))
                     }
-                } catch (_: Exception) {}
-            }
+                    
+                    for (address in list) {
+                        try {
+                            socket.send(java.net.DatagramPacket(bytes, bytes.size, address, 8888))
+                        } catch (_: Exception) {}
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 
