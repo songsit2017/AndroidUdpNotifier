@@ -346,13 +346,6 @@ class NotificationSenderService : NotificationListenerService() {
             }
         }
 
-        if (packageName == "com.facebook.katana" || packageName == "com.facebook.lite") {
-            if (text.isNotEmpty()) {
-                text += "\n\n"
-            }
-            text += "⚠️ ขณะนี้กำลังขับขี่ยานพาหนะ เพื่อความปลอดภัยโปรดระมัดระวังในการใช้งาน"
-        }
-
         // 3. Ignore completely empty notifications
         if (title.isEmpty() && text.isEmpty()) {
             AppLogger.log("   -> Ignored (Empty title and text)")
