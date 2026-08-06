@@ -136,7 +136,7 @@ class UdpReceiverService : Service() {
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     val audioAttrs = android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
                         .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                     tts?.setAudioAttributes(audioAttrs)
@@ -205,7 +205,7 @@ class UdpReceiverService : Service() {
                         val timeSinceLastCheck = System.currentTimeMillis() - lastWeatherCheckTime
                         val dist = if (lastWeatherCheckLocation != null) location.distanceTo(lastWeatherCheckLocation!!) else Float.MAX_VALUE
                         
-                        if (dist > 30000f || timeSinceLastCheck > 3600000L) {
+                        if (dist > 10000f || timeSinceLastCheck > 600000L) { // 10km or 10 mins
                             checkWeather(location, false)
                         }
                         
