@@ -136,7 +136,7 @@ class UdpReceiverService : Service() {
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     val audioAttrs = android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setUsage(android.media.AudioAttributes.USAGE_ALARM)
                         .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                     tts?.setAudioAttributes(audioAttrs)
@@ -376,7 +376,10 @@ class UdpReceiverService : Service() {
     private fun startUdpListener() {
         listenJob = CoroutineScope(Dispatchers.IO).launch {
             try {
-                socket = DatagramSocket(PORT)
+                socket = DatagramSocket(null).apply {
+                    reuseAddress = true
+                    bind(java.net.InetSocketAddress(PORT))
+                }
                 val buffer = ByteArray(65535)
 
                 while (isActive) {
