@@ -452,7 +452,7 @@ class UdpReceiverService : Service() {
                 val textContent = jsonObject.optString("text", "")
                 if (textContent.isNotEmpty()) {
                     val urlRegex = "(?i)\\b((?:https?://|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))".toRegex()
-                    val isMapLink = textContent.contains("maps.google.com") || textContent.contains("goo.gl/maps") || textContent.contains("maps.app.goo.gl")
+                    val isMapLink = textContent.contains("maps.google.com") || textContent.contains("goo.gl/maps") || textContent.contains("maps.app.goo.gl") || textContent.contains("google.com/maps") || textContent.contains("google.co.th/maps")
                     
                     if (isMapLink) {
                         val match = urlRegex.find(textContent)
@@ -461,7 +461,13 @@ class UdpReceiverService : Service() {
                                 try {
                                     val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(match.value))
                                     intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    startActivity(intent)
+                                    intent.setPackage("com.google.android.apps.maps")
+                                    try {
+                                        startActivity(intent)
+                                    } catch (e: android.content.ActivityNotFoundException) {
+                                        intent.setPackage(null)
+                                        startActivity(intent)
+                                    }
                                     android.widget.Toast.makeText(this@UdpReceiverService, "📍 เปิดนำทางจากมือถือ", android.widget.Toast.LENGTH_LONG).show()
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Failed to launch maps from clipboard", e)
@@ -822,7 +828,7 @@ class UdpReceiverService : Service() {
                 }
             }
 
-            val isMapLink = text.contains("maps.google.com") || text.contains("goo.gl/maps") || text.contains("maps.app.goo.gl")
+            val isMapLink = text.contains("maps.google.com") || text.contains("goo.gl/maps") || text.contains("maps.app.goo.gl") || text.contains("google.com/maps") || text.contains("google.co.th/maps")
             if (isMapLink) {
                 actionsContainer?.visibility = View.VISIBLE
                 actionsScrollView?.visibility = View.VISIBLE
@@ -836,7 +842,13 @@ class UdpReceiverService : Service() {
                             if (match != null) {
                                 val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(match.value))
                                 intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                startActivity(intent)
+                                intent.setPackage("com.google.android.apps.maps")
+                                try {
+                                    startActivity(intent)
+                                } catch (e: android.content.ActivityNotFoundException) {
+                                    intent.setPackage(null)
+                                    startActivity(intent)
+                                }
                                 removeFloatingWindow()
                             }
                         } catch (e: Exception) {
