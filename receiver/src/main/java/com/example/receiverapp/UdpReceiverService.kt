@@ -857,45 +857,77 @@ class UdpReceiverService : Service() {
                   actionsScrollView?.visibility = View.VISIBLE
                   actionsContainer?.gravity = android.view.Gravity.CENTER
 
-                  // Determine icon tint based on theme
+                  val dp = resources.displayMetrics.density
                   val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
                       android.content.res.Configuration.UI_MODE_NIGHT_YES
-                  val iconTint = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.parseColor("#1A1A1A")
-                  val playTint = android.graphics.Color.parseColor("#FF9800") // accent stays orange
+                  // Secondary icons: dark on light bg, white on dark bg
+                  val iconTint = if (isDark) android.graphics.Color.parseColor("#E0E0E0")
+                                 else android.graphics.Color.parseColor("#424242")
 
-                  // [prev, play/pause, next] — play is slightly bigger for visual hierarchy
-                  data class MediaBtn(val iconRes: Int, val action: String, val sizeDp: Int, val tint: Int)
-                  val dp = resources.displayMetrics.density
-                  val mediaButtons = listOf(
-                      MediaBtn(R.drawable.ic_media_previous,  "media_prev",       44, iconTint),
-                      MediaBtn(R.drawable.ic_media_play_pause,"media_play_pause", 56, playTint),
-                      MediaBtn(R.drawable.ic_media_next,      "media_next",       44, iconTint)
-                  )
-
-                  for (mb in mediaButtons) {
-                      val btn = android.widget.ImageButton(themeContext).apply {
-                          setImageResource(mb.iconRes)
-                          setColorFilter(mb.tint, android.graphics.PorterDuff.Mode.SRC_IN)
-                          // Transparent background with ripple
+                  // ── Helper: borderless ripple button (Prev / Next) ──────────────────
+                  fun makeIconBtn(iconRes: Int, action: String, sizeDp: Int): android.widget.ImageButton {
+                      return android.widget.ImageButton(themeContext).apply {
+                          setImageResource(iconRes)
+                          setColorFilter(iconTint, android.graphics.PorterDuff.Mode.SRC_IN)
                           background = with(android.util.TypedValue()) {
-                              themeContext.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, this, true)
+                              themeContext.theme.resolveAttribute(
+                                  android.R.attr.selectableItemBackgroundBorderless, this, true)
                               themeContext.getDrawable(resourceId)
                           }
                           elevation = 0f
                           scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-                          val pad = (12 * density).toInt()
-                          setPadding(pad, pad, pad, pad)
-                          setOnClickListener { sendActionCommand(senderIp, mb.action) }
+                          val p = (10 * dp).toInt()
+                          setPadding(p, p, p, p)
+                          setOnClickListener { sendActionCommand(senderIp, action) }
                       }
-                      val sizePx = (mb.sizeDp * dp).toInt()
-                      val lp = LinearLayout.LayoutParams(sizePx, sizePx).apply {
-                          marginStart = (8 * dp).toInt()
-                          marginEnd  = (8 * dp).toInt()
+                  }
+
+                  // ── Helper: filled pill play/pause button (Material You style) ───────
+                  fun makePlayBtn(iconRes: Int): android.widget.ImageButton {
+                      val accentColor = android.graphics.Color.parseColor("#FF9800")
+                      val pillBg = android.graphics.drawable.GradientDrawable().apply {
+                          shape = android.graphics.drawable.GradientDrawable.OVAL
+                          setColor(accentColor)
+                      }
+                      // Ripple over the pill
+                      val rippleColor = android.content.res.ColorStateList.valueOf(
+                          android.graphics.Color.parseColor("#33FFFFFF"))
+                      val rippleBg = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                          android.graphics.drawable.RippleDrawable(rippleColor, pillBg, pillBg)
+                      } else pillBg
+
+                      return android.widget.ImageButton(themeContext).apply {
+                          setImageResource(iconRes)
+                          setColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
+                          background = rippleBg
+                          elevation = 2f
+                          scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                          val p = (14 * dp).toInt()
+                          setPadding(p, p, p, p)
+                          setOnClickListener { sendActionCommand(senderIp, "media_play_pause") }
+                      }
+                  }
+
+                  // ── Build controls row: [⏮  44dp] [▶/⏸  64dp] [⏭  44dp] ─────────
+                  val prevBtn = makeIconBtn(R.drawable.ic_media_previous, "media_prev", 44)
+                  val playBtn = makePlayBtn(R.drawable.ic_media_play_pause)
+                  val nextBtn = makeIconBtn(R.drawable.ic_media_next,     "media_next", 44)
+
+                  fun addBtn(btn: android.widget.ImageButton, sizeDp: Int) {
+                      val px = (sizeDp * dp).toInt()
+                      val lp = LinearLayout.LayoutParams(px, px).apply {
+                          marginStart = (10 * dp).toInt()
+                          marginEnd   = (10 * dp).toInt()
                           gravity = android.view.Gravity.CENTER_VERTICAL
                       }
                       actionsContainer?.addView(btn, lp)
                   }
+
+                  addBtn(prevBtn, 44)
+                  addBtn(playBtn, 64)
+                  addBtn(nextBtn, 44)
               }
+
 
             if (type == "fatigue") {
                 actionsContainer?.visibility = View.VISIBLE
