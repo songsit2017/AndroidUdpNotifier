@@ -951,34 +951,32 @@ class UdpReceiverService : Service() {
 
             closeButton?.setOnClickListener { removeFloatingWindow() }
 
-            if (!isUpdatingExistingMedia) {
-                val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                } else {
-                    @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-                }
-        
-                val params = WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    layoutFlag,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                    PixelFormat.TRANSLUCENT
-                )
-        
-                val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
-                params.gravity = when (pos) {
-                    "Center" -> Gravity.CENTER
-                    "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                    else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                }
-                params.y = if (pos == "Center") 0 else 40
-        
-                try {
-                    windowManager?.addView(viewToUse, params)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to add floating view", e)
-                }
+            val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+            }
+    
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                layoutFlag,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT
+            )
+    
+            val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
+            params.gravity = when (pos) {
+                "Center" -> Gravity.CENTER
+                "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            }
+            params.y = if (pos == "Center") 0 else 40
+    
+            try {
+                windowManager?.addView(viewToUse, params)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to add floating view", e)
             }
             
             if (type != "call" && type != "media") {
