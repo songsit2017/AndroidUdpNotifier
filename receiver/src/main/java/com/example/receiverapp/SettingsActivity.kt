@@ -20,6 +20,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         setupSettings()
+        populatePairedDevices()
     }
 
     private fun setupSettings() {
@@ -132,6 +133,67 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 android.widget.Toast.makeText(this@SettingsActivity, "บันทึกพิกัดเตือนความจำสำเร็จ!", android.widget.Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun populatePairedDevices() {
+        val container = findViewById<android.widget.LinearLayout>(R.id.containerPairedDevices) ?: return
+        container.removeAllViews()
+        val devices = PairedDevices.getDevices(this)
+        
+        if (devices.isEmpty()) {
+            val tv = android.widget.TextView(this).apply {
+                text = "ยังไม่มีอุปกรณ์ที่จับคู่"
+                setTextColor(android.graphics.Color.GRAY)
+                setPadding(0, 8, 0, 8)
+            }
+            container.addView(tv)
+            return
+        }
+
+        for ((ip, lastSeen) in devices) {
+            val row = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(0, 16, 0, 16)
+            }
+
+            val textInfo = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                layoutParams = android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            
+            val tvIp = android.widget.TextView(this).apply {
+                text = "Device IP: $ip"
+                textSize = 16f
+            }
+            
+            val ageSec = (System.currentTimeMillis() - lastSeen) / 1000
+            val ageMin = ageSec / 60
+            val ageStr = if (ageMin > 0) "${ageMin}m ago" else "${ageSec}s ago"
+            val tvSeen = android.widget.TextView(this).apply {
+                text = "Last seen: $ageStr"
+                textSize = 12f
+                setTextColor(android.graphics.Color.GRAY)
+            }
+
+            textInfo.addView(tvIp)
+            textInfo.addView(tvSeen)
+
+            val btnDelete = android.widget.ImageButton(this).apply {
+                setImageResource(android.R.drawable.ic_menu_delete)
+                setBackgroundResource(android.R.color.transparent)
+                setColorFilter(android.graphics.Color.parseColor("#FF3B30"))
+                setPadding(16, 16, 16, 16)
+                setOnClickListener {
+                    PairedDevices.removeDevice(this@SettingsActivity, ip)
+                    populatePairedDevices() // refresh
+                }
+            }
+
+            row.addView(textInfo)
+            row.addView(btnDelete)
+            container.addView(row)
         }
     }
 }

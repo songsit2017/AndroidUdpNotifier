@@ -86,7 +86,7 @@ class UdpReceiverService : Service() {
         startForegroundNotification()
 
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-        if (prefs.getString("LAST_SENDER_IP", null) != null) {
+        if (PairedDevices.getDevices(this).isNotEmpty()) {
             pendingConnectionAnnouncement = true
         }
         
@@ -414,15 +414,14 @@ class UdpReceiverService : Service() {
     private fun parseAndDisplayData(jsonString: String, senderIp: String) {
         try {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-            val wasPaired = prefs.getString("LAST_SENDER_IP", null) != null
+            val wasPaired = PairedDevices.getDevices(this).containsKey(senderIp)
             if (!wasPaired) {
                 pendingConnectionAnnouncement = true
                 announceConnectionIfReady()
             }
             sendBroadcast(android.content.Intent("com.example.receiverapp.PAIRING_SUCCESS").setPackage(packageName))
 
-            prefs.edit().putString("LAST_SENDER_IP", senderIp).apply()
-            prefs.edit().putLong("LAST_SENDER_SEEN", System.currentTimeMillis()).apply()
+            PairedDevices.addOrUpdateDevice(this, senderIp)
 
             val jsonObject = JSONObject(jsonString)
             val type = jsonObject.optString("type", "unknown")

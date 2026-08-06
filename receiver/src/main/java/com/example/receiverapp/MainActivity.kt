@@ -38,13 +38,15 @@ class MainActivity : AppCompatActivity() {
     private val statusHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val statusUpdater = object : Runnable {
         override fun run() {
-            val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-            val lastSeen = prefs.getLong("LAST_SENDER_SEEN", 0L)
-            val ip = prefs.getString("LAST_SENDER_IP", null)
+            val devices = PairedDevices.getDevices(this@MainActivity)
+            val ip = PairedDevices.getActiveDeviceIp(this@MainActivity)
+            val lastSeen = if (ip != null) devices[ip] ?: 0L else 0L
             val age = System.currentTimeMillis() - lastSeen
             
+            val totalPaired = devices.size
+            
             findViewById<TextView>(R.id.tvConnectionStatus)?.text =
-                if (ip != null) "สถานะ: พร้อมใช้งาน (จับคู่แล้ว ✓)" else "สถานะ: รอการจับคู่"
+                if (totalPaired > 0) "สถานะ: พร้อมใช้งาน (จับคู่ $totalPaired เครื่อง ✓)" else "สถานะ: รอการจับคู่"
                 
             val ageSeconds = if (lastSeen == 0L) null else age / 1000
             findViewById<TextView>(R.id.tvDiagnosticsHealth)?.text = when {
@@ -137,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnFindPhone)?.setOnClickListener {
             val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-            val ip = prefs.getString("LAST_SENDER_IP", null)
+            val ip = PairedDevices.getActiveDeviceIp(this@MainActivity)
             if (ip != null) {
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                     try {
