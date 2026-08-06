@@ -556,22 +556,40 @@ class UdpReceiverService : Service() {
             val closeButton = viewToUse.findViewById<ImageButton>(R.id.closeButton)
             val actionsContainer = viewToUse.findViewById<LinearLayout>(R.id.actionsContainer)
             val actionsScrollView = viewToUse.findViewById<HorizontalScrollView>(R.id.actionsScrollView)
+            val mediaInfoText = viewToUse.findViewById<TextView>(R.id.mediaInfoText)
             
             actionsContainer?.removeAllViews()
 
-            nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
+            // For media: show single-line marquee; for others: show stacked name/message
+            if (type == "media") {
+                nameText?.visibility = View.GONE
+                messageText?.visibility = View.GONE
+                mediaInfoText?.visibility = View.VISIBLE
+                // Format: "Song title  ·  Artist"
+                val mediaLine = if (text.isNotEmpty()) "$name  ·  $text" else name
+                mediaInfoText?.text = mediaLine
+                mediaInfoText?.isSelected = true // enables marquee
+            } else {
+                nameText?.visibility = View.VISIBLE
+                messageText?.visibility = View.VISIBLE
+                mediaInfoText?.visibility = View.GONE
+
+                nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
+            }
             
             val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { text.lowercase().contains(it) || name.lowercase().contains(it) }
-            if (isVip) {
+            if (isVip && type != "media") {
                 nameText?.text = "🚨 [VIP] ${nameText?.text}"
                 nameText?.setTextColor(android.graphics.Color.parseColor("#FF5252"))
             }
             
             val isPrivacyMode = prefs.getBoolean("PREF_PRIVACY_MODE", false)
-            if (isPrivacyMode && !isVip && type == "message") {
-                messageText?.text = "แตะเพื่ออ่านข้อความ"
-            } else {
-                messageText?.text = text.ifEmpty { "Incoming $type" }
+            if (type != "media") {
+                if (isPrivacyMode && !isVip && type == "message") {
+                    messageText?.text = "แตะเพื่ออ่านข้อความ"
+                } else {
+                    messageText?.text = text.ifEmpty { "Incoming $type" }
+                }
             }
 
             val cardView = viewToUse as? androidx.cardview.widget.CardView
