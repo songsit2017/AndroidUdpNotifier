@@ -534,16 +534,16 @@ class UdpReceiverService : Service() {
 
     private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false) {
         try {
-            val isUpdatingExistingMedia = (type == "media" && floatingView != null)
-            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            // Media player uses its own album-art card layout
+            if (type == "media") {
+                showMediaFloatingWindow(name, text, base64Image, appIconBase64, senderIp)
+                return
+            }
 
-            // Wrap context with a theme so AppCompat components (and ?attr/...) can inflate properly
+            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
             val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)
             
-            val viewToUse = if (isUpdatingExistingMedia) {
-                autoDismissJob?.cancel()
-                floatingView!!
-            } else {
+            val viewToUse = run {
                 removeFloatingWindow()
                 val inflater = LayoutInflater.from(themeContext)
                 inflater.inflate(R.layout.floating_notification, null).also { floatingView = it }
@@ -1050,6 +1050,103 @@ class UdpReceiverService : Service() {
             } catch (e: Exception) {
                 Log.w(TAG, "Unable to send acknowledgement", e)
             }
+        }
+    }
+
+    // ── Dedicated compact media player card (floating_media.xml) ─────────────
+    private fun showMediaFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, senderIp: String) {
+        try {
+            val isUpdating = floatingView != null && floatingView?.findViewById<android.view.View>(R.id.mediaSongTitle) != null
+            val themeContext = android.view.ContextThemeWrapper(this, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)
+
+            val view = if (isUpdating) {
+                autoDismissJob?.cancel()
+                floatingView!!
+            } else {
+                removeFloatingWindow()
+                LayoutInflater.from(themeContext).inflate(R.layout.floating_media, null).also { floatingView = it }
+            }
+
+            val albumArt     = view.findViewById<ImageView>(R.id.mediaAlbumArt)
+            val appIconView  = view.findViewById<ImageView>(R.id.mediaAppIcon)
+            val appNameView  = view.findViewById<TextView>(R.id.mediaAppName)
+            val songTitle    = view.findViewById<TextView>(R.id.mediaSongTitle)
+            val artistName   = view.findViewById<TextView>(R.id.mediaArtistName)
+            val closeBtn     = view.findViewById<ImageButton>(R.id.mediaCloseBtn)
+            val prevBtn      = view.findViewById<ImageButton>(R.id.mediaPrevBtn)
+            val playBtn      = view.findViewById<ImageButton>(R.id.mediaPlayBtn)
+            val nextBtn      = view.findViewById<ImageButton>(R.id.mediaNextBtn)
+
+            // Song info
+            songTitle?.text = name.ifEmpty { "Now Playing" }
+            songTitle?.isSelected = true // start marquee
+            artistName?.text = text
+
+            // Album art (contact/album photo)
+            if (!base64Image.isNullOrEmpty()) {
+                try {
+                    val bytes = Base64.decode(base64Image, Base64.DEFAULT)
+                    albumArt?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                    albumArt?.visibility = View.VISIBLE
+                } catch (_: Exception) {}
+            }
+
+            // App icon badge
+            if (!appIconBase64.isNullOrEmpty()) {
+                try {
+                    val bytes = Base64.decode(appIconBase64, Base64.DEFAULT)
+                    val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    appIconView?.setImageBitmap(bmp)
+                    appIconView?.visibility = View.VISIBLE
+                } catch (_: Exception) {}
+            }
+
+            // App name (show package label if available, else hide)
+            appNameView?.text = appNameView?.text ?: ""
+
+            // Play button — filled orange circle with ripple
+            val accentColor = android.graphics.Color.parseColor("#FF9800")
+            val pillBg = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(accentColor)
+            }
+            val ripple = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                android.graphics.drawable.RippleDrawable(
+                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#33FFFFFF")),
+                    pillBg, pillBg)
+            } else pillBg
+            playBtn?.background = ripple
+            playBtn?.setColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
+
+            // Wire controls
+            prevBtn?.setOnClickListener { sendActionCommand(senderIp, "media_prev") }
+            playBtn?.setOnClickListener { sendActionCommand(senderIp, "media_play_pause") }
+            nextBtn?.setOnClickListener { sendActionCommand(senderIp, "media_next") }
+            closeBtn?.setOnClickListener { removeFloatingWindow() }
+
+            if (!isUpdating) {
+                val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+
+                val params = WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    layoutFlag,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    PixelFormat.TRANSLUCENT
+                ).apply {
+                    gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
+                    y = 40
+                }
+                windowManager?.addView(view, params)
+            }
+
+            // Media stays visible until explicitly removed
+            mediaSession?.isActive = true
+
+        } catch (e: Exception) {
+            Log.e(TAG, "showMediaFloatingWindow failed", e)
         }
     }
 
