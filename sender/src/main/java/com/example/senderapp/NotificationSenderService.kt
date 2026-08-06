@@ -457,7 +457,7 @@ class NotificationSenderService : NotificationListenerService() {
     private fun extractAndCompressImage(notification: Notification, context: Context): String? {
         var bitmap: Bitmap? = null
 
-        // Try getting avatar from MessagingStyle sender
+        // Try getting avatar from MessagingStyle sender (handles URI-type icons for Messenger, etc.)
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 val messages = notification.extras.getParcelableArray(Notification.EXTRA_MESSAGES)
@@ -466,8 +466,7 @@ class NotificationSenderService : NotificationListenerService() {
                     if (latestMessage != null) {
                         val senderPerson = latestMessage.getParcelable<android.app.Person>("sender_person")
                         if (senderPerson?.icon != null) {
-                            val drawable = senderPerson.icon!!.loadDrawable(context)
-                            bitmap = drawableToBitmap(drawable)
+                            bitmap = loadIconSafely(senderPerson.icon!!, context)
                         }
                     }
                 }
@@ -475,8 +474,7 @@ class NotificationSenderService : NotificationListenerService() {
                 if (bitmap == null) {
                     val person = notification.extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
                     if (person?.icon != null) {
-                        val drawable = person.icon!!.loadDrawable(context)
-                        bitmap = drawableToBitmap(drawable)
+                        bitmap = loadIconSafely(person.icon!!, context)
                     }
                 }
             }
@@ -484,13 +482,12 @@ class NotificationSenderService : NotificationListenerService() {
             AppLogger.log("Failed to extract MessagingStyle icon: ${e.message}")
         }
 
-        // Try using the getLargeIcon method (API 23+)
+        // Try using the getLargeIcon method (API 23+) — also handle URI-type icons
         if (bitmap == null) {
             try {
                 val largeIcon: Icon? = notification.getLargeIcon()
                 if (largeIcon != null) {
-                    val drawable = largeIcon.loadDrawable(context)
-                    bitmap = drawableToBitmap(drawable)
+                    bitmap = loadIconSafely(largeIcon, context)
                 }
             } catch (e: Exception) {
                 AppLogger.log("Failed to extract LargeIcon: ${e.message}")
@@ -581,6 +578,36 @@ class NotificationSenderService : NotificationListenerService() {
             val bytes = outputStream.toByteArray()
             Base64.encodeToString(bytes, Base64.NO_WRAP)
         } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Safely load an Icon to Bitmap. Handles TYPE_URI icons (used by Messenger/Facebook)
+     * that would silently fail with loadDrawable() due to missing URI permissions.
+     */
+    private fun loadIconSafely(icon: Icon, context: Context): Bitmap? {
+        // For URI-type icons, read directly through ContentResolver
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            try {
+                val type = icon.type
+                // Icon.TYPE_URI = 4, Icon.TYPE_URI_ADAPTIVE_BITMAP = 5
+                if (type == 4 || type == 5) {
+                    val uri = icon.uri
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val decoded = android.graphics.BitmapFactory.decodeStream(stream)
+                        if (decoded != null) return decoded
+                    }
+                }
+            } catch (e: Exception) {
+                AppLogger.log("loadIconSafely URI fallback failed: ${e.message}")
+            }
+        }
+        // Default path for other icon types
+        return try {
+            drawableToBitmap(icon.loadDrawable(context))
+        } catch (e: Exception) {
+            AppLogger.log("loadIconSafely loadDrawable failed: ${e.message}")
             null
         }
     }
