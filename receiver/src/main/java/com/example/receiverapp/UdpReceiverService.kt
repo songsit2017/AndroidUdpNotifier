@@ -1072,7 +1072,6 @@ class UdpReceiverService : Service() {
             val appNameView  = view.findViewById<TextView>(R.id.mediaAppName)
             val songTitle    = view.findViewById<TextView>(R.id.mediaSongTitle)
             val artistName   = view.findViewById<TextView>(R.id.mediaArtistName)
-            val closeBtn     = view.findViewById<ImageButton>(R.id.mediaCloseBtn)
             val prevBtn      = view.findViewById<ImageButton>(R.id.mediaPrevBtn)
             val playBtn      = view.findViewById<ImageButton>(R.id.mediaPlayBtn)
             val nextBtn      = view.findViewById<ImageButton>(R.id.mediaNextBtn)
@@ -1122,7 +1121,38 @@ class UdpReceiverService : Service() {
             prevBtn?.setOnClickListener { sendActionCommand(senderIp, "media_prev") }
             playBtn?.setOnClickListener { sendActionCommand(senderIp, "media_play_pause") }
             nextBtn?.setOnClickListener { sendActionCommand(senderIp, "media_next") }
-            closeBtn?.setOnClickListener { removeFloatingWindow() }
+
+            // Swipe left / right / up to dismiss (no close button)
+            var swipeStartX = 0f
+            var swipeStartY = 0f
+            val swipeThresholdPx = (80 * resources.displayMetrics.density) // 80dp
+            view.setOnTouchListener { _, event ->
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        swipeStartX = event.rawX
+                        swipeStartY = event.rawY
+                        false
+                    }
+                    android.view.MotionEvent.ACTION_UP -> {
+                        val dx = event.rawX - swipeStartX
+                        val dy = event.rawY - swipeStartY
+                        val absDx = kotlin.math.abs(dx)
+                        val absDy = kotlin.math.abs(dy)
+                        if (absDx > swipeThresholdPx || (absDy > swipeThresholdPx && dy < 0)) {
+                            // Swipe detected — animate out then remove
+                            val targetX = if (dx > 0) view.width.toFloat() else -view.width.toFloat()
+                            view.animate()
+                                .translationX(targetX)
+                                .alpha(0f)
+                                .setDuration(220)
+                                .withEndAction { CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() } }
+                                .start()
+                            true
+                        } else false
+                    }
+                    else -> false
+                }
+            }
 
             if (!isUpdating) {
                 val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)

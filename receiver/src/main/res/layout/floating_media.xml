@@ -44,7 +44,7 @@
             android:paddingTop="10dp"
             android:paddingBottom="10dp">
 
-            <!-- Row 1: App icon · App name ············· Close button -->
+            <!-- Row 1: App icon · App name (no close button — use swipe to dismiss) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -60,9 +60,8 @@
 
                 <TextView
                     android:id="@+id/mediaAppName"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:text="Music"
                     android:textColor="#99FFFFFF"
@@ -71,15 +70,6 @@
                     android:fontFamily="sans-serif-medium"
                     android:singleLine="true"
                     android:ellipsize="end" />
-
-                <ImageButton
-                    android:id="@+id/mediaCloseBtn"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    android:tint="#99FFFFFF"
-                    android:padding="4dp" />
             </LinearLayout>
 
             <!-- Row 2: Song title (large, marquee) -->
