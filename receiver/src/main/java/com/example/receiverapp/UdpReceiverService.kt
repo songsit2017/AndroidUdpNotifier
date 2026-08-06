@@ -855,27 +855,42 @@ class UdpReceiverService : Service() {
             if (type == "media") {
                   actionsContainer?.visibility = View.VISIBLE
                   actionsScrollView?.visibility = View.VISIBLE
-                  val mediaControls = listOf(
-                      Triple(R.drawable.ic_media_previous, "media_prev", "#333333"),
-                      Triple(R.drawable.ic_media_play_pause, "media_play_pause", "#FF9800"),
-                      Triple(R.drawable.ic_media_next, "media_next", "#333333")
+                  actionsContainer?.gravity = android.view.Gravity.CENTER
+
+                  // Determine icon tint based on theme
+                  val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                      android.content.res.Configuration.UI_MODE_NIGHT_YES
+                  val iconTint = if (isDark) android.graphics.Color.WHITE else android.graphics.Color.parseColor("#1A1A1A")
+                  val playTint = android.graphics.Color.parseColor("#FF9800") // accent stays orange
+
+                  // [prev, play/pause, next] — play is slightly bigger for visual hierarchy
+                  data class MediaBtn(val iconRes: Int, val action: String, val sizeDp: Int, val tint: Int)
+                  val dp = resources.displayMetrics.density
+                  val mediaButtons = listOf(
+                      MediaBtn(R.drawable.ic_media_previous,  "media_prev",       44, iconTint),
+                      MediaBtn(R.drawable.ic_media_play_pause,"media_play_pause", 56, playTint),
+                      MediaBtn(R.drawable.ic_media_next,      "media_next",       44, iconTint)
                   )
-                  for ((iconRes, action, color) in mediaControls) {
+
+                  for (mb in mediaButtons) {
                       val btn = android.widget.ImageButton(themeContext).apply {
-                          setImageResource(iconRes)
-                          val bg = android.graphics.drawable.GradientDrawable()
-                          bg.shape = android.graphics.drawable.GradientDrawable.OVAL
-                          bg.setColor(android.graphics.Color.parseColor(color))
-                          background = bg
-                          setPadding(32, 32, 32, 32)
-                          elevation = 8f
-                          scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-                          setOnClickListener {
-                              sendActionCommand(senderIp, action)
+                          setImageResource(mb.iconRes)
+                          setColorFilter(mb.tint, android.graphics.PorterDuff.Mode.SRC_IN)
+                          // Transparent background with ripple
+                          background = with(android.util.TypedValue()) {
+                              themeContext.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, this, true)
+                              themeContext.getDrawable(resourceId)
                           }
+                          elevation = 0f
+                          scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                          val pad = (12 * density).toInt()
+                          setPadding(pad, pad, pad, pad)
+                          setOnClickListener { sendActionCommand(senderIp, mb.action) }
                       }
-                      val lp = LinearLayout.LayoutParams(140, 140).apply { 
-                          marginEnd = 24 
+                      val sizePx = (mb.sizeDp * dp).toInt()
+                      val lp = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                          marginStart = (8 * dp).toInt()
+                          marginEnd  = (8 * dp).toInt()
                           gravity = android.view.Gravity.CENTER_VERTICAL
                       }
                       actionsContainer?.addView(btn, lp)
