@@ -1086,9 +1086,15 @@ class UdpReceiverService : Service() {
             val nextBtn      = view.findViewById<ImageButton>(R.id.mediaNextBtn)
 
             // Song info
-            songTitle?.text = name.ifEmpty { "Now Playing" }
+            val titleStr = name.ifEmpty { "Now Playing" }
+            val artistStr = text
+            if (artistStr.isNotEmpty()) {
+                songTitle?.text = "$titleStr - $artistStr"
+            } else {
+                songTitle?.text = titleStr
+            }
             songTitle?.isSelected = true // start marquee
-            artistName?.text = text
+            artistName?.text = ""
 
             // Album art (contact/album photo)
             if (!base64Image.isNullOrEmpty()) {
