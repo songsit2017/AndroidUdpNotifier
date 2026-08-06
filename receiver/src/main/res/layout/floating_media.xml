@@ -11,8 +11,8 @@
     app:cardBackgroundColor="#FF000000">
 
     <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_width="400dp"
+        android:layout_height="64dp">
 
         <!-- Album art stretched as card background -->
         <ImageView
