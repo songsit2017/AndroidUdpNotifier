@@ -436,6 +436,7 @@ class UdpReceiverService : Service() {
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
             val isGroup = jsonObject.optBoolean("isGroup", false)
+            val isBot = jsonObject.optBoolean("isBot", false)
             
             val textContentLower = text.lowercase()
             val titleContentLower = name.lowercase()
@@ -692,8 +693,9 @@ class UdpReceiverService : Service() {
                 val isAutoReplyEnabled = prefs.getBoolean("PREF_AUTO_REPLY", true)
                 val now = System.currentTimeMillis()
                 val lastReplyTime = autoReplyTimestamps[name] ?: 0L
+                val isOfficialAccount = isBot || name.contains("Official", ignoreCase = true) || name.contains("Promotion", ignoreCase = true)
                 // Rate limit: Auto-reply at most once every 5 minutes per sender
-                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000) && !isGroup) {
+                if (isAutoReplyEnabled && currentSpeedKmh > 10f && type == "message" && (now - lastReplyTime > 5 * 60 * 1000) && !isGroup && !isOfficialAccount) {
                     autoReplyTimestamps[name] = now
                     
                     CoroutineScope(Dispatchers.IO).launch {
@@ -733,8 +735,8 @@ class UdpReceiverService : Service() {
                                     val contentArray = jsonObject.optJSONArray("content")
                                     if (contentArray != null && contentArray.length() > 0) {
                                         val generatedText = contentArray.getJSONObject(0).optString("text")
-                                        if (generatedText.isNotEmpty()) {
-                                            replyMessage = generatedText
+                                        if (generatedText.isNotBlank()) {
+                                            replyMessage = "$generatedText (ตอบกลับอัตโนมัติจาก AI)"
                                         }
                                     }
                                 } else {
@@ -751,13 +753,13 @@ class UdpReceiverService : Service() {
                             val lowerText = text.lowercase()
                             replyMessage = when {
                                 listOf("ถึงไหน", "ใกล้ถึง", "อยู่ไหน", "กี่โมง", "รอ").any { lowerText.contains(it) } -> 
-                                    "กำลังขับรถอยู่ครับ ใกล้ถึงแล้ว 📍"
+                                    "กำลังขับรถอยู่ครับ ใกล้ถึงแล้ว 📍 (ตอบกลับอัตโนมัติจากระบบ)"
                                 listOf("โทร", "โทรหา", "โทรกลับ", "ว่างไหม", "คุย").any { lowerText.contains(it) } -> 
-                                    "กำลังขับรถอยู่ครับ เดี๋ยวจอดแล้วโทรกลับนะ 📞"
+                                    "กำลังขับรถอยู่ครับ เดี๋ยวจอดแล้วโทรกลับนะ 📞 (ตอบกลับอัตโนมัติจากระบบ)"
                                 listOf("ด่วน", "สำคัญ", "เป็นไร", "เกิดไรขึ้น").any { lowerText.contains(it) } -> 
-                                    "กำลังขับรถอยู่ครับ ถ้ามีเรื่องด่วนโทรมาได้เลยครับ 🚨"
+                                    "กำลังขับรถอยู่ครับ ถ้ามีเรื่องด่วนโทรมาได้เลยครับ 🚨 (ตอบกลับอัตโนมัติจากระบบ)"
                                 else -> 
-                                    "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗"
+                                    "กำลังขับรถอยู่ เดี๋ยวติดต่อกลับครับ 🚗 (ตอบกลับอัตโนมัติจากระบบ)"
                             }
                         }
                         

@@ -419,6 +419,14 @@ class NotificationSenderService : NotificationListenerService() {
         }
 
         val isGroup = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
+        
+        var isBot = false
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            try {
+                val person = extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
+                if (person?.isBot == true) isBot = true
+            } catch (e: Exception) {}
+        }
 
         // Build JSON Payload
         val jsonPayload = JSONObject().apply {
@@ -429,6 +437,7 @@ class NotificationSenderService : NotificationListenerService() {
             put("imageBase64", imageBase64 ?: JSONObject.NULL)
             put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
             put("isGroup", isGroup)
+            put("isBot", isBot)
             put("actions", actionsArray)
             if (replyActionId != null) {
                 put("replyActionId", replyActionId)
