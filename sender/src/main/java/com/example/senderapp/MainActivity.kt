@@ -199,10 +199,32 @@ class MainActivity : AppCompatActivity() {
                     put("_messageId", java.util.UUID.randomUUID().toString())
                 }.toString()
                 val encrypted = SecureUdp.encode(this@MainActivity, json) ?: error("Pairing key unavailable")
+                val bytes = encrypted.toByteArray(Charsets.UTF_8)
                 java.net.DatagramSocket().use { socket ->
                     socket.broadcast = true
-                    val bytes = encrypted.toByteArray(Charsets.UTF_8)
-                    socket.send(java.net.DatagramPacket(bytes, bytes.size, java.net.InetAddress.getByName(destination), 8888))
+                    
+                    val list = mutableListOf<java.net.InetAddress>()
+                    if (destination != "255.255.255.255") {
+                        try { list.add(java.net.InetAddress.getByName(destination)) } catch (_: Exception) {}
+                    }
+                    try {
+                        val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+                        while (interfaces.hasMoreElements()) {
+                            val network = interfaces.nextElement()
+                            if (network.isLoopback || !network.isUp) continue
+                            for (address in network.interfaceAddresses) {
+                                address.broadcast?.let { list.add(it) }
+                            }
+                        }
+                    } catch (_: Exception) {}
+                    try { list.add(java.net.InetAddress.getByName("255.255.255.255")) } catch (_: Exception) {}
+                    try { list.add(java.net.InetAddress.getByName("192.168.43.255")) } catch (_: Exception) {}
+                    
+                    for (address in list.distinct()) {
+                        try {
+                            socket.send(java.net.DatagramPacket(bytes, bytes.size, address, 8888))
+                        } catch (e: Exception) {}
+                    }
                 }
                 AppLogger.log("Diagnostic test sent")
                 runOnUiThread { android.widget.Toast.makeText(this@MainActivity, "ส่งการทดสอบแล้ว", android.widget.Toast.LENGTH_SHORT).show() }

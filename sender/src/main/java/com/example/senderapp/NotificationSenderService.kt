@@ -142,7 +142,10 @@ class NotificationSenderService : NotificationListenerService() {
         actionListenJob = CoroutineScope(Dispatchers.IO).launch {
             var actionSocket: DatagramSocket? = null
             try {
-                actionSocket = DatagramSocket(8889)
+                actionSocket = DatagramSocket(null).apply {
+                    reuseAddress = true
+                    bind(java.net.InetSocketAddress(8889))
+                }
                 val buffer = ByteArray(4096)
                 while (isActive) {
                     val packet = DatagramPacket(buffer, buffer.size)
@@ -554,10 +557,9 @@ class NotificationSenderService : NotificationListenerService() {
 
         return try {
             // UDP has size limits. We scale down the image heavily to ensure we don't fragment or drop packets.
-            // A 64x64 heavily compressed JPEG is small enough to fit within a standard UDP MTU.
-            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 64, 64, true)
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 36, 36, true)
             val outputStream = ByteArrayOutputStream()
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 30, outputStream)
             
             val imageBytes = outputStream.toByteArray()
             Base64.encodeToString(imageBytes, Base64.NO_WRAP)
@@ -571,8 +573,8 @@ class NotificationSenderService : NotificationListenerService() {
         return try {
             val drawable = context.packageManager.getApplicationIcon(packageName)
             val bitmap = drawableToBitmap(drawable) ?: return null
-            // App icons are small and transparent, use 48x48 PNG
-            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 48, 48, true)
+            // Scale icon to very small 24x24 to save UDP space
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 24, 24, true)
             val outputStream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
             val bytes = outputStream.toByteArray()
