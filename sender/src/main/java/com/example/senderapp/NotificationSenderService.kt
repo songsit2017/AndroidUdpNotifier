@@ -203,14 +203,34 @@ class NotificationSenderService : NotificationListenerService() {
                             val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
                             audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM), 0)
                             
-                            val alarmUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                            var alarmUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                            if (alarmUri == null) alarmUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)
+                            if (alarmUri == null) alarmUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+                            
                             val ringtone = android.media.RingtoneManager.getRingtone(this@NotificationSenderService, alarmUri)
-                            ringtone.play()
+                            if (ringtone != null) {
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                                    ringtone.audioAttributes = android.media.AudioAttributes.Builder()
+                                        .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                        .build()
+                                }
+                                ringtone.play()
+                            }
+
+                            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                vibrator.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 1000, 1000, 1000), -1))
+                            } else {
+                                @Suppress("DEPRECATION")
+                                vibrator.vibrate(longArrayOf(0, 1000, 1000, 1000, 1000), -1)
+                            }
                             
                             // Stop after 10 seconds
                             CoroutineScope(Dispatchers.Main).launch {
                                 kotlinx.coroutines.delay(10000)
-                                ringtone.stop()
+                                ringtone?.stop()
+                                vibrator.cancel()
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
