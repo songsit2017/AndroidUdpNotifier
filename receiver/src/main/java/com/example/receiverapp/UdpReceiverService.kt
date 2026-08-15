@@ -78,6 +78,10 @@ class UdpReceiverService : Service() {
     private var wasBadWeather = false
     private var isFetchingWeather = false
 
+    private var lastLocationAnnounceLocation: Location? = null
+    private var lastKnownDistrict: String? = null
+    private var lastKnownProvince: String? = null
+
     override fun onCreate() {
         super.onCreate()
         // Android requires a service started with startForegroundService() to
@@ -207,6 +211,47 @@ class UdpReceiverService : Service() {
                         
                         if (dist > 10000f || timeSinceLastCheck > 600000L) { // 10km or 10 mins
                             checkWeather(location, false)
+                        }
+                        
+                        // Location Announcement
+                        val isLocationAnnounceEnabled = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
+                        if (isLocationAnnounceEnabled) {
+                            val announceDist = if (lastLocationAnnounceLocation != null) location.distanceTo(lastLocationAnnounceLocation!!) else Float.MAX_VALUE
+                            if (announceDist > 2000f) { // Check every 2 km
+                                lastLocationAnnounceLocation = location
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        val geocoder = android.location.Geocoder(this@UdpReceiverService, java.util.Locale("th", "TH"))
+                                        val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                        if (!addresses.isNullOrEmpty()) {
+                                            val addr = addresses[0]
+                                            val subDistrict = addr.subLocality ?: ""
+                                            val district = addr.subAdminArea ?: addr.locality ?: ""
+                                            val province = addr.adminArea ?: ""
+                                            
+                                            if (district.isNotEmpty() && province.isNotEmpty()) {
+                                                if (lastKnownDistrict != district || lastKnownProvince != province) {
+                                                    // Location changed
+                                                    lastKnownDistrict = district
+                                                    lastKnownProvince = province
+                                                    
+                                                    val msg = "เข้าสู่พื้นที่: ตำบล$subDistrict อำเภอ$district จังหวัด$province"
+                                                    
+                                                    CoroutineScope(Dispatchers.Main).launch {
+                                                        showFloatingWindow("แจ้งเตือนพิกัด", msg, null, null, "system", null, null, "127.0.0.1", false)
+                                                        
+                                                        if (prefs.getBoolean("PREF_LOCATION_VOICE", false)) {
+                                                            tts?.speak(msg, TextToSpeech.QUEUE_ADD, null, null)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        AppLogger.log("Geocoder failed: ${e.message}")
+                                    }
+                                }
+                            }
                         }
                         
                         val geoLatStr = prefs.getString("GEO_REMINDER_LAT", "")

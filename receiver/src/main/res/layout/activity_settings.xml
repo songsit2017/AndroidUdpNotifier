@@ -144,6 +144,22 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Location Announcements" android:textSize="16sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แจ้งเตือนเมื่อขับรถเข้าเขตอำเภอ/จังหวัดใหม่" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchLocationAnnounce" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Voice Location Announcements" android:textSize="16sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="อ่านออกเสียงชื่ออำเภอ/จังหวัด" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchLocationAnnounceVoice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="false" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Smart Audio Ducking" android:textSize="16sp" android:textColor="@color/app_text_primary" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="หรี่เสียงเพลงอัตโนมัติขณะระบบพูด" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
     </LinearLayout>

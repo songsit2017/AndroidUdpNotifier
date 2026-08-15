@@ -40,6 +40,8 @@ class SettingsActivity : AppCompatActivity() {
         val switchETA = findViewById<CompoundButton>(R.id.switchETA)
         val switchFatigue = findViewById<CompoundButton>(R.id.switchFatigue)
         val switchSpeed = findViewById<CompoundButton>(R.id.switchSpeed)
+        val switchLocationAnnounce = findViewById<CompoundButton>(R.id.switchLocationAnnounce)
+        val switchLocationAnnounceVoice = findViewById<CompoundButton>(R.id.switchLocationAnnounceVoice)
 
         // Load saved or defaults
         switchQuickReply?.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
@@ -57,6 +59,8 @@ class SettingsActivity : AppCompatActivity() {
         switchETA?.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
         switchFatigue?.isChecked = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
         switchSpeed?.isChecked = prefs.getBoolean("PREF_SPEED_WARNING", true)
+        switchLocationAnnounce?.isChecked = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
+        switchLocationAnnounceVoice?.isChecked = prefs.getBoolean("PREF_LOCATION_VOICE", false)
 
         // Save on change
         val listener = { key: String, isChecked: Boolean ->
@@ -78,6 +82,8 @@ class SettingsActivity : AppCompatActivity() {
         switchETA?.setOnCheckedChangeListener { _, c -> listener("PREF_SHARE_ETA", c) }
         switchFatigue?.setOnCheckedChangeListener { _, c -> listener("PREF_FATIGUE_ALERT", c) }
         switchSpeed?.setOnCheckedChangeListener { _, c -> listener("PREF_SPEED_WARNING", c) }
+        switchLocationAnnounce?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_ANNOUNCE", c) }
+        switchLocationAnnounceVoice?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_VOICE", c) }
 
         val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
         if (spinnerTheme != null) {
