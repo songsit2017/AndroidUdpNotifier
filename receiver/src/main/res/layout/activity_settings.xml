@@ -112,6 +112,14 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Show Call Popup" android:textSize="16sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ปิด = ให้ DuDu OS จัดการหน้าจอรับสายเอง" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchShowCallPopup" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Text-to-Speech" android:textSize="16sp" android:textColor="@color/app_text_primary" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="อ่านข้อความที่ได้รับออกเสียงอัตโนมัติ" android:textSize="12sp" android:textColor="@color/app_text_secondary" />
     </LinearLayout>

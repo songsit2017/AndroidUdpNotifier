@@ -572,6 +572,19 @@ class UdpReceiverService : Service() {
                 if (!isMediaEnabled) return
             }
 
+            // Allow hiding our call popup so DuDu OS (or any car head unit OS) can handle it natively
+            if (type == "call") {
+                val showCallPopup = prefs.getBoolean("PREF_SHOW_CALL_POPUP", true)
+                if (!showCallPopup) {
+                    // Still speak the name aloud even if popup is suppressed
+                    val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+                    if (isTtsEnabled && ttsReady) {
+                        tts?.speak("มีสายโทรเข้าจาก $name", TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                    return
+                }
+            }
+
             val base64Image = if (jsonObject.isNull("imageBase64")) null else jsonObject.getString("imageBase64")
             val appIconBase64 = if (jsonObject.isNull("appIconBase64")) null else jsonObject.getString("appIconBase64")
             val actionsArray = jsonObject.optJSONArray("actions")
