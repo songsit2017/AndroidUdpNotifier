@@ -79,6 +79,7 @@ class UdpReceiverService : Service() {
 
     private var locationListener: LocationListener? = null
     private var lastLocationAnnounceLocation: Location? = null
+    private var lastKnownSubDistrict: String? = null
     private var lastKnownDistrict: String? = null
     private var lastKnownProvince: String? = null
     
@@ -243,8 +244,9 @@ class UdpReceiverService : Service() {
                                             val province = addr.adminArea ?: ""
                                             
                                             if (district.isNotEmpty() && province.isNotEmpty()) {
-                                                if (lastKnownDistrict != district || lastKnownProvince != province) {
+                                                if (lastKnownDistrict != district || lastKnownProvince != province || lastKnownSubDistrict != subDistrict) {
                                                     // Location changed
+                                                    lastKnownSubDistrict = subDistrict
                                                     lastKnownDistrict = district
                                                     lastKnownProvince = province
                                                     
