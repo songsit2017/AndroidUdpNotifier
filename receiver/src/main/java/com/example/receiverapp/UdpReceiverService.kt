@@ -608,14 +608,14 @@ class UdpReceiverService : Service() {
             }
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup)
+                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false, isBot: Boolean = false) {
         try {
             // Media player uses its own album-art card layout
             if (type == "media") {
