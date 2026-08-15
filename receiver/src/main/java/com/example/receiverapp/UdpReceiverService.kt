@@ -115,11 +115,16 @@ class UdpReceiverService : Service() {
 
         screenOffReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_OFF || intent?.action == Intent.ACTION_SHUTDOWN) {
+                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                    serviceStartTime = System.currentTimeMillis()
+                    AppLogger.log("Screen turned ON, reset fatigue timer")
+                } else if (intent?.action == Intent.ACTION_SCREEN_OFF || intent?.action == Intent.ACTION_SHUTDOWN) {
                     val now = System.currentTimeMillis()
                     if (lastHeartbeatAt > 0 && now - lastHeartbeatAt < 30000) {
                         val isTtsEnabled = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)
                         if (isTtsEnabled) {
+                            val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                            val pNa = if (prefs.getBoolean("PREF_TTS_MALE", false)) "ครับ" else "ค่ะ"
                             tts?.speak("ระบบกำลังจะปิดการทำงาน อย่าลืมโทรศัพท์มือถือของคุณ$pNa", TextToSpeech.QUEUE_FLUSH, null, "SHUTDOWN_REMINDER")
                         }
                     }
@@ -127,6 +132,7 @@ class UdpReceiverService : Service() {
             }
         }
         val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_SHUTDOWN)
         }
