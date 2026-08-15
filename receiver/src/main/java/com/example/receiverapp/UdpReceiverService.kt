@@ -47,7 +47,6 @@ class UdpReceiverService : Service() {
 
     companion object {
         const val ACTION_DIAGNOSTIC_TEST = "com.example.receiverapp.DIAGNOSTIC_TEST"
-        val autoReplyTimestamps = mutableMapOf<String, Long>()
     }
 
     private val TAG = "UdpReceiver"
@@ -78,9 +77,17 @@ class UdpReceiverService : Service() {
     private var wasBadWeather = false
     private var isFetchingWeather = false
 
+    private var locationListener: LocationListener? = null
     private var lastLocationAnnounceLocation: Location? = null
     private var lastKnownDistrict: String? = null
     private var lastKnownProvince: String? = null
+    
+    // Auto-reply timestamps with max 200 entries to prevent unbounded growth
+    private val autoReplyTimestamps = object : LinkedHashMap<String, Long>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
+            return size > 200
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -203,7 +210,7 @@ class UdpReceiverService : Service() {
             val isSpeedWarningEnabled = prefs.getBoolean("PREF_SPEED_WARNING", true)
             
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, object : LocationListener {
+                locationListener = object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val speedKmh = location.speed * 3.6f
                         currentSpeedKmh = speedKmh
@@ -285,7 +292,8 @@ class UdpReceiverService : Service() {
                     override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
                     override fun onProviderEnabled(provider: String) {}
                     override fun onProviderDisabled(provider: String) {}
-                })
+                }
+                locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 10f, locationListener!!)
             }
         } catch(e: Exception) {
             e.printStackTrace()
@@ -328,6 +336,8 @@ class UdpReceiverService : Service() {
 
                 val requestUrl = java.net.URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code")
                 val conn = requestUrl.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 10000
+                conn.readTimeout = 10000
                 val response = conn.inputStream.bufferedReader().readText()
                 val json = JSONObject(response)
                 val currentObj = json.getJSONObject("current")
@@ -757,6 +767,8 @@ class UdpReceiverService : Service() {
                             try {
                                 val url = java.net.URL("https://api.anthropic.com/v1/messages")
                                 val conn = url.openConnection() as java.net.HttpURLConnection
+                                conn.connectTimeout = 10000
+                                conn.readTimeout = 15000
                                 conn.requestMethod = "POST"
                                 conn.setRequestProperty("x-api-key", apiKey)
                                 conn.setRequestProperty("anthropic-version", "2023-06-01")
@@ -1296,6 +1308,10 @@ class UdpReceiverService : Service() {
         super.onDestroy()
         listenJob?.cancel()
         socket?.close()
+        // Unregister GPS listener to stop hardware and prevent memory leak
+        if (locationListener != null) {
+            locationManager?.removeUpdates(locationListener!!)
+        }
         screenOffReceiver?.let { unregisterReceiver(it) }
         mediaSession?.release()
         tts?.stop()

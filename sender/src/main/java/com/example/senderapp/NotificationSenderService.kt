@@ -274,6 +274,21 @@ class NotificationSenderService : NotificationListenerService() {
         listenJob?.cancel()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // Safety net: ensure receivers are always unregistered even if onListenerDisconnected isn't called
+        batteryReceiver?.let {
+            try { unregisterReceiver(it) } catch (_: Exception) {}
+            batteryReceiver = null
+        }
+        connectionReceiver?.let {
+            try { unregisterReceiver(it) } catch (_: Exception) {}
+            connectionReceiver = null
+        }
+        actionListenJob?.cancel()
+        listenJob?.cancel()
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val senderPrefs = getSharedPreferences("SenderPrefs", Context.MODE_PRIVATE)
         if (!senderPrefs.getBoolean("FORWARD_NOTIFICATIONS", true)) return
@@ -376,12 +391,8 @@ class NotificationSenderService : NotificationListenerService() {
             type = "media"
         }
 
-        // Extract and compress Image
+        // Extract Actions (must happen on main thread while notification is valid)
         val includeImages = senderPrefs.getBoolean("SEND_IMAGES", true)
-        val imageBase64 = if (includeImages) extractAndCompressImage(notification, this) else null
-        val appIconBase64 = if (includeImages) getAppIconBase64(packageName, this) else null
-
-        // Extract Actions
         val actionsArray = org.json.JSONArray()
         var replyActionId: String? = null
 
@@ -392,17 +403,16 @@ class NotificationSenderService : NotificationListenerService() {
 
             if (isMediaStyle && actionTitle != null) {
                 actionTitle = when (actionTitle.lowercase(java.util.Locale.ROOT)) {
-                    "play", "เล่น" -> "▶️"
-                    "pause", "หยุด" -> "⏸️"
-                    "next", "ถัดไป", "skip forward" -> "⏭️"
-                    "previous", "ก่อนหน้า", "prev", "skip backward" -> "⏮️"
+                    "play", "\u0e40\u0e25\u0e48\u0e19" -> "\u25b6\ufe0f"
+                    "pause", "\u0e2b\u0e22\u0e38\u0e14" -> "\u23f8\ufe0f"
+                    "next", "\u0e16\u0e31\u0e14\u0e44\u0e1b", "skip forward" -> "\u23ed\ufe0f"
+                    "previous", "\u0e01\u0e48\u0e2d\u0e19\u0e2b\u0e19\u0e49\u0e32", "prev", "skip backward" -> "\u23ee\ufe0f"
                     else -> actionTitle
                 }
             }
 
             if (actionTitle != null && intent != null) {
                 val id = UUID.randomUUID().toString()
-                
                 if (remoteInputs != null && remoteInputs.isNotEmpty() && replyActionId == null) {
                     val remoteInputKey = remoteInputs[0].resultKey
                     pendingIntents[id] = PendingAction(intent, remoteInputKey)
@@ -418,34 +428,49 @@ class NotificationSenderService : NotificationListenerService() {
             }
         }
 
-        val isGroup = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
-        
-        var isBot = false
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            try {
-                val person = extras.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
-                if (person?.isBot == true) isBot = true
-            } catch (e: Exception) {}
-        }
+        // Build/compress/send payload on IO thread to prevent ANR on main thread
+        val notificationRef = notification
+        val extrasRef = extras
+        val typeRef = type
+        val packageNameRef = packageName
+        val replyActionIdRef = replyActionId
+        val actionsArrayRef = actionsArray
+        val titleRef = title
+        val textRef = text
+        CoroutineScope(Dispatchers.IO).launch {
+            // Extract and compress Image
+            val imageBase64 = if (includeImages) extractAndCompressImage(notificationRef, this@NotificationSenderService) else null
+            val appIconBase64 = if (includeImages && imageBase64 == null) getAppIconBase64(packageNameRef, this@NotificationSenderService) else null
 
-        // Build JSON Payload
-        val jsonPayload = JSONObject().apply {
-            put("type", type)
-            put("package", packageName)
-            put("name", title)
-            put("text", text)
-            put("imageBase64", imageBase64 ?: JSONObject.NULL)
-            put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
-            put("isGroup", isGroup)
-            put("isBot", isBot)
-            put("actions", actionsArray)
-            if (replyActionId != null) {
-                put("replyActionId", replyActionId)
+            val isGroup = extrasRef.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
+            
+            var isBot = false
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                try {
+                    val person = extrasRef.getParcelable<android.app.Person>(Notification.EXTRA_MESSAGING_PERSON)
+                    if (person?.isBot == true) isBot = true
+                } catch (e: Exception) { AppLogger.log("isBot check failed: ${e.message}") }
             }
-        }.toString()
 
-        // Send via UDP Broadcast
-        sendUdpBroadcast(jsonPayload)
+            // Build JSON Payload
+            val jsonPayload = JSONObject().apply {
+                put("type", typeRef)
+                put("package", packageNameRef)
+                put("name", titleRef)
+                put("text", textRef)
+                put("imageBase64", imageBase64 ?: JSONObject.NULL)
+                put("appIconBase64", appIconBase64 ?: JSONObject.NULL)
+                put("isGroup", isGroup)
+                put("isBot", isBot)
+                put("actions", actionsArrayRef)
+                if (replyActionIdRef != null) {
+                    put("replyActionId", replyActionIdRef)
+                }
+            }.toString()
+
+            // Send via UDP Broadcast
+            sendUdpBroadcast(jsonPayload)
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {

@@ -143,10 +143,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         AppLogger.listener = { message ->
-            val currentText = tvLog.text.toString()
-            val newText = "$message\n\n$currentText"
-            // limit to 1000 chars to avoid memory issues
-            tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
+            runOnUiThread {
+                val currentText = tvLog.text.toString()
+                val newText = "$message\n\n$currentText"
+                // limit to 2000 chars to avoid memory issues
+                tvLog.text = if (newText.length > 2000) newText.substring(0, 2000) else newText
+            }
         }
         statusHandler.post(statusUpdater)
     }
