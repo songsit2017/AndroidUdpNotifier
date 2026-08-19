@@ -231,7 +231,7 @@ class UdpReceiverService : Service() {
                         val isLocationAnnounceEnabled = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
                         if (isLocationAnnounceEnabled) {
                             val announceDist = if (lastLocationAnnounceLocation != null) location.distanceTo(lastLocationAnnounceLocation!!) else Float.MAX_VALUE
-                            if (announceDist > 2000f) { // Check every 2 km
+                            if (announceDist > 1000f) { // Check every 1 km
                                 lastLocationAnnounceLocation = location
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
@@ -433,7 +433,11 @@ class UdpReceiverService : Service() {
             .setOngoing(true)
             .build()
 
-        startForeground(1, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(1, notification)
+        }
     }
 
     private fun startUdpListener() {
