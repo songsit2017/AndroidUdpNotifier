@@ -779,17 +779,79 @@ class UdpReceiverService : Service() {
                     autoReplyTimestamps[name] = now
                     
                     CoroutineScope(Dispatchers.IO).launch {
-                        val apiKey = BuildConfig.ANTHROPIC_API_KEY
+                        val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
+                        val geminiApiKey = prefs.getString("PREF_GEMINI_API_KEY", "") ?: ""
                         var replyMessage: String? = null
                         
-                        if (apiKey.isNotEmpty()) {
+                        if (geminiApiKey.isNotEmpty()) {
+                            try {
+                                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$geminiApiKey")
+                                val conn = url.openConnection() as java.net.HttpURLConnection
+                                conn.connectTimeout = 10000
+                                conn.readTimeout = 15000
+                                conn.requestMethod = "POST"
+                                conn.setRequestProperty("content-type", "application/json")
+                                conn.doOutput = true
+                                
+                                val escapedText = org.json.JSONObject.quote(text)
+                                val jsonBody = """
+                                    {
+                                      "systemInstruction": {
+                                        "parts": [
+                                          {
+                                            "text": "คุณคือระบบตอบแชทอัตโนมัติของคนที่กำลังขับรถอยู่ ให้ตอบกลับข้อความสั้นๆ สุภาพ เป็นภาษาไทย ว่ากำลังขับรถอยู่และตอบตามบริบท (ถ้าข้อความสั้นหรือไม่มีบริบท ให้ตอบแค่ว่ากำลังขับรถอยู่เดี๋ยวติดต่อกลับ)"
+                                          }
+                                        ]
+                                      },
+                                      "contents": [
+                                        {
+                                          "parts": [
+                                            {
+                                              "text": $escapedText
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                """.trimIndent()
+                                
+                                conn.outputStream.use { os ->
+                                    val input = jsonBody.toByteArray(Charsets.UTF_8)
+                                    os.write(input, 0, input.size)
+                                }
+                                
+                                if (conn.responseCode == 200) {
+                                    val response = conn.inputStream.bufferedReader().use { it.readText() }
+                                    val jsonObject = org.json.JSONObject(response)
+                                    val candidates = jsonObject.optJSONArray("candidates")
+                                    if (candidates != null && candidates.length() > 0) {
+                                        val content = candidates.getJSONObject(0).optJSONObject("content")
+                                        val parts = content?.optJSONArray("parts")
+                                        if (parts != null && parts.length() > 0) {
+                                            val generatedText = parts.getJSONObject(0).optString("text").trim()
+                                            if (generatedText.isNotBlank()) {
+                                                replyMessage = "$generatedText (AI: Gemini)"
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    val errorResponse = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                                    Log.e(TAG, "Gemini API failed with code: ${conn.responseCode}, error: $errorResponse")
+                                }
+                                conn.disconnect()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Gemini auto-reply failed", e)
+                            }
+                        }
+                        
+                        if (replyMessage == null && anthropicApiKey.isNotEmpty()) {
                             try {
                                 val url = java.net.URL("https://api.anthropic.com/v1/messages")
                                 val conn = url.openConnection() as java.net.HttpURLConnection
                                 conn.connectTimeout = 10000
                                 conn.readTimeout = 15000
                                 conn.requestMethod = "POST"
-                                conn.setRequestProperty("x-api-key", apiKey)
+                                conn.setRequestProperty("x-api-key", anthropicApiKey)
                                 conn.setRequestProperty("anthropic-version", "2023-06-01")
                                 conn.setRequestProperty("content-type", "application/json")
                                 conn.doOutput = true
@@ -818,7 +880,7 @@ class UdpReceiverService : Service() {
                                     if (contentArray != null && contentArray.length() > 0) {
                                         val generatedText = contentArray.getJSONObject(0).optString("text")
                                         if (generatedText.isNotBlank()) {
-                                            replyMessage = "$generatedText (ตอบกลับอัตโนมัติจาก AI)"
+                                            replyMessage = "$generatedText (AI: Claude)"
                                         }
                                     }
                                 } else {

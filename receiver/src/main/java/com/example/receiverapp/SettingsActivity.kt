@@ -43,6 +43,7 @@ class SettingsActivity : AppCompatActivity() {
         val switchLocationAnnounce = findViewById<CompoundButton>(R.id.switchLocationAnnounce)
         val switchLocationAnnounceVoice = findViewById<CompoundButton>(R.id.switchLocationAnnounceVoice)
         val switchShowCallPopup = findViewById<CompoundButton>(R.id.switchShowCallPopup)
+        val editGeminiKey = findViewById<android.widget.EditText>(R.id.editGeminiKey)
 
         // Load saved or defaults
         switchQuickReply?.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
@@ -63,6 +64,7 @@ class SettingsActivity : AppCompatActivity() {
         switchLocationAnnounce?.isChecked = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
         switchLocationAnnounceVoice?.isChecked = prefs.getBoolean("PREF_LOCATION_VOICE", false)
         switchShowCallPopup?.isChecked = prefs.getBoolean("PREF_SHOW_CALL_POPUP", true)
+        editGeminiKey?.setText(prefs.getString("PREF_GEMINI_API_KEY", ""))
 
         // Save on change
         val listener = { key: String, isChecked: Boolean ->
@@ -87,6 +89,14 @@ class SettingsActivity : AppCompatActivity() {
         switchLocationAnnounce?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_ANNOUNCE", c) }
         switchLocationAnnounceVoice?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_VOICE", c) }
         switchShowCallPopup?.setOnCheckedChangeListener { _, c -> listener("PREF_SHOW_CALL_POPUP", c) }
+
+        editGeminiKey?.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                prefs.edit().putString("PREF_GEMINI_API_KEY", s.toString().trim()).apply()
+            }
+        })
 
         val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
         if (spinnerTheme != null) {
