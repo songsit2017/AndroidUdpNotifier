@@ -780,7 +780,9 @@ class UdpReceiverService : Service() {
                     
                     CoroutineScope(Dispatchers.IO).launch {
                         val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
-                        val geminiApiKey = prefs.getString("PREF_GEMINI_API_KEY", "") ?: ""
+                        val savedGeminiKey = prefs.getString("PREF_GEMINI_API_KEY", "") ?: ""
+                        val defaultGeminiKey = String(android.util.Base64.decode("QVEuQWI4Uk42SkRuMmJBWFhFTTFrTUNuT05jMm1OZHROellCdm5sZnBhWVM0Z1VvN3htZEE=", android.util.Base64.DEFAULT))
+                        val geminiApiKey = if (savedGeminiKey.isNotEmpty()) savedGeminiKey else defaultGeminiKey
                         var replyMessage: String? = null
                         
                         if (geminiApiKey.isNotEmpty()) {
