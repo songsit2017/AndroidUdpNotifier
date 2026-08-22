@@ -645,14 +645,16 @@ class UdpReceiverService : Service() {
             }
 
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot)
+                val usesChronometer = jsonObject.optBoolean("usesChronometer", false)
+                val postTime = jsonObject.optLong("postTime", 0L)
+                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot, usesChronometer, postTime)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false, isBot: Boolean = false) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false, isBot: Boolean = false, usesChronometer: Boolean = false, postTime: Long = 0L) {
         try {
             // Media player uses its own album-art card layout
             if (type == "media") {
@@ -677,6 +679,7 @@ class UdpReceiverService : Service() {
             val actionsContainer = viewToUse.findViewById<LinearLayout>(R.id.actionsContainer)
             val actionsScrollView = viewToUse.findViewById<HorizontalScrollView>(R.id.actionsScrollView)
             val mediaInfoText = viewToUse.findViewById<TextView>(R.id.mediaInfoText)
+            val callTimer = viewToUse.findViewById<android.widget.Chronometer>(R.id.callTimer)
             
             actionsContainer?.removeAllViews()
 
@@ -684,6 +687,7 @@ class UdpReceiverService : Service() {
             if (type == "media") {
                 nameText?.visibility = View.GONE
                 messageText?.visibility = View.GONE
+                callTimer?.visibility = View.GONE
                 mediaInfoText?.visibility = View.VISIBLE
                 // Format: "Song title  ·  Artist"
                 val mediaLine = if (text.isNotEmpty()) "$name  ·  $text" else name
@@ -691,10 +695,19 @@ class UdpReceiverService : Service() {
                 mediaInfoText?.isSelected = true // enables marquee
             } else {
                 nameText?.visibility = View.VISIBLE
-                messageText?.visibility = View.VISIBLE
                 mediaInfoText?.visibility = View.GONE
 
-                nameText?.text = if (type == "call") "📞 Incoming Call: $name" else name
+                if (type == "call" && usesChronometer && postTime > 0) {
+                    messageText?.visibility = View.GONE
+                    callTimer?.visibility = View.VISIBLE
+                    callTimer?.base = android.os.SystemClock.elapsedRealtime() - (System.currentTimeMillis() - postTime)
+                    callTimer?.start()
+                } else {
+                    callTimer?.visibility = View.GONE
+                    messageText?.visibility = View.VISIBLE
+                }
+
+                nameText?.text = if (type == "call") "📞 Ongoing Call: $name" else name
             }
             
             val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { text.lowercase().contains(it) || name.lowercase().contains(it) }

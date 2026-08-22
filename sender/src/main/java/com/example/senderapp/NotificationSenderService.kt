@@ -457,6 +457,9 @@ class NotificationSenderService : NotificationListenerService() {
         val actionsArrayRef = actionsArray
         val titleRef = title
         val textRef = text
+        val usesChronometerRef = extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER, false) || extras.getBoolean(android.app.Notification.EXTRA_USES_CHRONOMETER, false)
+        val postTimeRef = notification.`when`
+
         CoroutineScope(Dispatchers.IO).launch {
             // Extract and compress Image
             val imageBase64 = if (includeImages) extractAndCompressImage(notificationRef, this@NotificationSenderService) else null
@@ -483,6 +486,8 @@ class NotificationSenderService : NotificationListenerService() {
                 put("isGroup", isGroup)
                 put("isBot", isBot)
                 put("actions", actionsArrayRef)
+                put("usesChronometer", usesChronometerRef)
+                put("postTime", postTimeRef)
                 if (replyActionIdRef != null) {
                     put("replyActionId", replyActionIdRef)
                 }
