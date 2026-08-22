@@ -235,35 +235,66 @@ class UdpReceiverService : Service() {
                                 lastLocationAnnounceLocation = location
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
-                                        val geocoder = android.location.Geocoder(this@UdpReceiverService, java.util.Locale("th", "TH"))
-                                        val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                                        if (!addresses.isNullOrEmpty()) {
-                                            val addr = addresses[0]
-                                            val subDistrict = addr.subLocality ?: ""
-                                            val district = addr.subAdminArea ?: addr.locality ?: ""
-                                            val province = addr.adminArea ?: ""
-                                            
-                                            if (district.isNotEmpty() && province.isNotEmpty()) {
-                                                if (lastKnownDistrict != district || lastKnownProvince != province || lastKnownSubDistrict != subDistrict) {
-                                                    // Location changed
-                                                    lastKnownSubDistrict = subDistrict
-                                                    lastKnownDistrict = district
-                                                    lastKnownProvince = province
+                                        var subDistrict = ""
+                                        var district = ""
+                                        var province = ""
+                                        var success = false
+
+                                        // Try Android Geocoder first
+                                        try {
+                                            val geocoder = android.location.Geocoder(this@UdpReceiverService, java.util.Locale("th", "TH"))
+                                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                            if (!addresses.isNullOrEmpty()) {
+                                                val addr = addresses[0]
+                                                subDistrict = addr.subLocality ?: ""
+                                                district = addr.subAdminArea ?: addr.locality ?: ""
+                                                province = addr.adminArea ?: ""
+                                                success = province.isNotEmpty()
+                                            }
+                                        } catch (e: Exception) {
+                                            AppLogger.log("Android Geocoder failed: ${e.message}")
+                                        }
+
+                                        // Fallback to BigDataCloud Reverse Geocoding API if Geocoder fails (e.g. no GMS)
+                                        if (!success) {
+                                            val url = java.net.URL("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=th")
+                                            val conn = url.openConnection() as java.net.HttpURLConnection
+                                            conn.connectTimeout = 5000
+                                            conn.readTimeout = 5000
+                                            if (conn.responseCode == 200) {
+                                                val response = conn.inputStream.bufferedReader().use { it.readText() }
+                                                val json = org.json.JSONObject(response)
+                                                province = json.optString("principalSubdivision", "")
+                                                district = json.optString("city", "")
+                                                subDistrict = json.optString("locality", "")
+                                                if (district == province) district = "" // Prevent duplicate in BKK
+                                                success = province.isNotEmpty()
+                                            }
+                                            conn.disconnect()
+                                        }
+                                        
+                                        if (success) {
+                                            if (lastKnownDistrict != district || lastKnownProvince != province || lastKnownSubDistrict != subDistrict) {
+                                                // Location changed
+                                                lastKnownSubDistrict = subDistrict
+                                                lastKnownDistrict = district
+                                                lastKnownProvince = province
+                                                
+                                                val dStr = if (district.isNotEmpty()) " อำเภอ$district" else ""
+                                                val sdStr = if (subDistrict.isNotEmpty()) " ตำบล$subDistrict" else ""
+                                                val msg = "เข้าสู่พื้นที่:$sdStr$dStr จังหวัด$province"
+                                                
+                                                CoroutineScope(Dispatchers.Main).launch {
+                                                    showFloatingWindow("แจ้งเตือนพิกัด", msg, null, null, "system", null, null, "127.0.0.1", false)
                                                     
-                                                    val msg = "เข้าสู่พื้นที่: ตำบล$subDistrict อำเภอ$district จังหวัด$province"
-                                                    
-                                                    CoroutineScope(Dispatchers.Main).launch {
-                                                        showFloatingWindow("แจ้งเตือนพิกัด", msg, null, null, "system", null, null, "127.0.0.1", false)
-                                                        
-                                                        if (prefs.getBoolean("PREF_LOCATION_VOICE", false)) {
-                                                            tts?.speak(msg, TextToSpeech.QUEUE_ADD, null, null)
-                                                        }
+                                                    if (prefs.getBoolean("PREF_LOCATION_VOICE", false)) {
+                                                        tts?.speak(msg, TextToSpeech.QUEUE_ADD, null, null)
                                                     }
                                                 }
                                             }
                                         }
                                     } catch (e: Exception) {
-                                        AppLogger.log("Geocoder failed: ${e.message}")
+                                        AppLogger.log("Location resolve failed: ${e.message}")
                                     }
                                 }
                             }
