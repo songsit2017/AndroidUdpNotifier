@@ -61,8 +61,8 @@ class SettingsActivity : AppCompatActivity() {
         switchETA?.isChecked = prefs.getBoolean("PREF_SHARE_ETA", true)
         switchFatigue?.isChecked = prefs.getBoolean("PREF_FATIGUE_ALERT", true)
         switchSpeed?.isChecked = prefs.getBoolean("PREF_SPEED_WARNING", true)
-        switchLocationAnnounce?.isChecked = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
-        switchLocationAnnounceVoice?.isChecked = prefs.getBoolean("PREF_LOCATION_VOICE", false)
+        switchLocationAnnounce?.isChecked = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", true)
+        switchLocationAnnounceVoice?.isChecked = prefs.getBoolean("PREF_LOCATION_VOICE", true)
         switchShowCallPopup?.isChecked = prefs.getBoolean("PREF_SHOW_CALL_POPUP", true)
         editGeminiKey?.setText(prefs.getString("PREF_GEMINI_API_KEY", ""))
 

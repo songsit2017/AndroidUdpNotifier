@@ -228,7 +228,7 @@ class UdpReceiverService : Service() {
                         }
                         
                         // Location Announcement
-                        val isLocationAnnounceEnabled = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", false)
+                        val isLocationAnnounceEnabled = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", true)
                         if (isLocationAnnounceEnabled) {
                             val announceDist = if (lastLocationAnnounceLocation != null) location.distanceTo(lastLocationAnnounceLocation!!) else Float.MAX_VALUE
                             if (announceDist > 1000f) { // Check every 1 km
