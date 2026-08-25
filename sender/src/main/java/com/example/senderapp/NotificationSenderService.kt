@@ -315,6 +315,8 @@ class NotificationSenderService : NotificationListenerService() {
         val expiry = System.currentTimeMillis() - actionTtlMs
         pendingIntents.entries.removeIf { it.value.createdAt < expiry }
         val packageName = sbn.packageName
+        val notificationKey = sbn.key
+        val appName = getApplicationLabel(packageName)
         AppLogger.log("📩 Detected notification from: $packageName")
 
         val notification = sbn.notification
@@ -457,7 +459,7 @@ class NotificationSenderService : NotificationListenerService() {
         val actionsArrayRef = actionsArray
         val titleRef = title
         val textRef = text
-        val usesChronometerRef = extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER, false) || extras.getBoolean(android.app.Notification.EXTRA_USES_CHRONOMETER, false)
+        val usesChronometerRef = extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER, false)
         val postTimeRef = notification.`when`
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -479,6 +481,8 @@ class NotificationSenderService : NotificationListenerService() {
             val jsonPayload = JSONObject().apply {
                 put("type", typeRef)
                 put("package", packageNameRef)
+                put("appName", appName)
+                put("notificationKey", notificationKey)
                 put("name", titleRef)
                 put("text", textRef)
                 put("imageBase64", imageBase64 ?: JSONObject.NULL)
@@ -511,8 +515,18 @@ class NotificationSenderService : NotificationListenerService() {
             val jsonPayload = JSONObject().apply {
                 put("type", "remove")
                 put("package", packageName)
+                put("notificationKey", sbn.key)
             }.toString()
             sendUdpBroadcast(jsonPayload)
+        }
+    }
+
+    private fun getApplicationLabel(packageName: String): String {
+        return try {
+            val info = packageManager.getApplicationInfo(packageName, 0)
+            packageManager.getApplicationLabel(info).toString().ifBlank { packageName }
+        } catch (_: Exception) {
+            packageName
         }
     }
 
@@ -649,7 +663,7 @@ class NotificationSenderService : NotificationListenerService() {
      */
     private fun loadIconSafely(icon: Icon, context: Context): Bitmap? {
         // For URI-type icons, read directly through ContentResolver
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             try {
                 val type = icon.type
                 // Icon.TYPE_URI = 4, Icon.TYPE_URI_ADAPTIVE_BITMAP = 5

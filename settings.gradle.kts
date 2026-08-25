@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "AndroidUdpNotifier"
 include(":sender")
 include(":receiver")
+include(":dudu-compat")

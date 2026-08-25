@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.BroadcastReceiver
@@ -11,9 +12,11 @@ import android.content.IntentFilter
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.util.Base64
 import android.util.Log
 import android.view.Gravity
@@ -39,25 +42,32 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioManager
 import android.media.RingtoneManager
+import android.app.usage.UsageStatsManager
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 class UdpReceiverService : Service() {
 
     companion object {
         const val ACTION_DIAGNOSTIC_TEST = "com.example.receiverapp.DIAGNOSTIC_TEST"
+        private const val DUDU_PACKAGE = "com.dudu.autoui"
     }
 
     private val TAG = "UdpReceiver"
-    private val CHANNEL_ID = "UdpReceiverChannel"
+    private val CHANNEL_ID = "DuduBridgeService"
     private val PORT = 8888
 
     private var listenJob: Job? = null
     private var socket: DatagramSocket? = null
+    private lateinit var duduNotificationPublisher: DuduNotificationPublisher
 
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
+    private var locationStatusView: TextView? = null
+    private var locationStatusJob: Job? = null
     private var autoDismissJob: Job? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -96,6 +106,7 @@ class UdpReceiverService : Service() {
         // promote itself immediately. Car head units can initialize TTS/GPS
         // slowly, so doing that work first may cause the OS to kill the app.
         startForegroundNotification()
+        duduNotificationPublisher = DuduNotificationPublisher(this)
 
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         if (PairedDevices.getDevices(this).isNotEmpty()) {
@@ -103,6 +114,7 @@ class UdpReceiverService : Service() {
         }
         
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        startLocationStatusMonitor()
         
         mediaSession = MediaSession(this, "UdpReceiverSession")
         mediaSession?.setCallback(object : MediaSession.Callback() {
@@ -246,9 +258,20 @@ class UdpReceiverService : Service() {
                                             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                                             if (!addresses.isNullOrEmpty()) {
                                                 val addr = addresses[0]
-                                                subDistrict = addr.subLocality ?: ""
-                                                district = addr.subAdminArea ?: addr.locality ?: ""
+                                                district = firstLocationValue(
+                                                    addr.subAdminArea,
+                                                    extractThaiArea(addr.getAddressLine(0), "อำเภอ", "เขต"),
+                                                    addr.locality
+                                                )
                                                 province = addr.adminArea ?: ""
+                                                subDistrict = firstLocationValue(
+                                                    addr.subLocality,
+                                                    extractThaiArea(addr.getAddressLine(0), "ตำบล", "แขวง"),
+                                                    // Some offline Geocoder implementations put the tambon in
+                                                    // locality instead of subLocality.  Do not reuse it if it is
+                                                    // actually the same name as the district.
+                                                    addr.locality?.takeUnless { sameLocationName(it, district) }
+                                                )
                                                 success = province.isNotEmpty()
                                             }
                                         } catch (e: Exception) {
@@ -267,6 +290,13 @@ class UdpReceiverService : Service() {
                                                 province = json.optString("principalSubdivision", "")
                                                 district = json.optString("city", "")
                                                 subDistrict = json.optString("locality", "")
+                                                if (subDistrict.isBlank() || sameLocationName(subDistrict, district)) {
+                                                    subDistrict = extractSubDistrictFromAdministrativeInfo(
+                                                        json,
+                                                        district,
+                                                        province
+                                                    )
+                                                }
                                                 if (district == province) district = "" // Prevent duplicate in BKK
                                                 success = province.isNotEmpty()
                                             }
@@ -280,17 +310,24 @@ class UdpReceiverService : Service() {
                                                 lastKnownDistrict = district
                                                 lastKnownProvince = province
                                                 
-                                                val dStr = if (district.isNotEmpty()) " อำเภอ$district" else ""
-                                                val sdStr = if (subDistrict.isNotEmpty()) " ตำบล$subDistrict" else ""
-                                                val msg = "เข้าสู่พื้นที่:$sdStr$dStr จังหวัด$province"
+                                                val cleanSubDistrict = subDistrict
+                                                    .removePrefix("ตำบล").removePrefix("แขวง").trim()
+                                                val cleanDistrict = district
+                                                    .removePrefix("อำเภอ").removePrefix("เขต").trim()
+                                                val cleanProvince = province.removePrefix("จังหวัด").trim()
+                                                val msg = listOfNotNull(
+                                                    cleanSubDistrict.takeIf { it.isNotEmpty() }?.let { "ตำบล$it" },
+                                                    cleanDistrict.takeIf { it.isNotEmpty() }?.let { "อำเภอ$it" },
+                                                    cleanProvince.takeIf { it.isNotEmpty() }?.let { "จังหวัด$it" }
+                                                ).joinToString(" ")
+
+                                                prefs.edit()
+                                                    .putString("LAST_LOCATION_STATUS", msg)
+                                                    .putString("LAST_SUB_DISTRICT", subDistrict)
+                                                    .putString("LAST_DISTRICT", district)
+                                                    .putString("LAST_PROVINCE", province)
+                                                    .apply()
                                                 
-                                                CoroutineScope(Dispatchers.Main).launch {
-                                                    showFloatingWindow("แจ้งเตือนพิกัด", msg, null, null, "system", null, null, "127.0.0.1", false)
-                                                    
-                                                    if (prefs.getBoolean("PREF_LOCATION_VOICE", false)) {
-                                                        tts?.speak(msg, TextToSpeech.QUEUE_ADD, null, null)
-                                                    }
-                                                }
                                             }
                                         }
                                     } catch (e: Exception) {
@@ -339,6 +376,167 @@ class UdpReceiverService : Service() {
         get() = if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS_MALE", false)) "ครับ" else "ค่ะ"
     private val pNa: String
         get() = if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS_MALE", false)) "นะครับ" else "นะคะ"
+
+    /**
+     * This deliberately is not a permanent, all-app overlay.  DUDU owns the
+     * actual status bar, so an ordinary app cannot write into it.  Instead we
+     * mirror a small, non-interactive status strip only while the DUDU home
+     * activity is foreground, then remove it as soon as another app opens.
+     */
+    private fun startLocationStatusMonitor() {
+        locationStatusJob?.cancel()
+        locationStatusJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                updateLocationStatusOverlay()
+                delay(1200L)
+            }
+        }
+    }
+
+    private fun updateLocationStatusOverlay() {
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val enabled = prefs.getBoolean("PREF_LOCATION_STATUS_OVERLAY", true)
+        if (!enabled || !Settings.canDrawOverlays(this) || !hasUsageAccess() || !isDuduLauncherForeground()) {
+            removeLocationStatusOverlay()
+            return
+        }
+
+        val status = prefs.getString("LAST_LOCATION_STATUS", "")?.trim()
+        val text = if (status.isNullOrEmpty()) "กำลังระบุตำแหน่ง…" else status
+        val view = locationStatusView ?: TextView(this).also { strip ->
+            val density = resources.displayMetrics.density
+            strip.setTextColor(Color.rgb(232, 239, 248))
+            strip.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
+            strip.setPadding((14 * density).toInt(), (5 * density).toInt(), (14 * density).toInt(), (5 * density).toInt())
+            strip.maxLines = 1
+            strip.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
+            strip.isSingleLine = true
+            strip.isSelected = true
+            strip.background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 14 * density
+                setColor(Color.argb(190, 20, 27, 37))
+                setStroke((1 * density).toInt(), Color.argb(120, 130, 161, 194))
+            }
+            locationStatusView = strip
+            val overlayType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+            }
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                overlayType,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                y = (8 * density).toInt()
+            }
+            try {
+                windowManager?.addView(strip, params)
+            } catch (e: Exception) {
+                locationStatusView = null
+                AppLogger.log("Location strip unavailable: ${e.message}")
+            }
+            strip
+        }
+        view.text = "📍 $text"
+    }
+
+    private fun removeLocationStatusOverlay() {
+        val view = locationStatusView ?: return
+        try {
+            windowManager?.removeView(view)
+        } catch (_: Exception) {
+            // The window may already have been detached during shutdown.
+        } finally {
+            locationStatusView = null
+        }
+    }
+
+    private fun hasUsageAccess(): Boolean {
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        return appOps.checkOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            android.os.Process.myUid(),
+            packageName
+        ) == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun isDuduLauncherForeground(): Boolean {
+        val usage = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val now = System.currentTimeMillis()
+        // DUDU can keep LauncherActivity resumed behind its multi-window
+        // panels.  Usage events then contain both DUDU and the app the driver
+        // is actually using.  lastTimeUsed picks the active panel instead of
+        // leaving our strip over Maps/YouTube.
+        val activePackage = usage.queryUsageStats(
+            UsageStatsManager.INTERVAL_BEST,
+            now - 60_000L,
+            now
+        )
+            .asSequence()
+            .filter { it.packageName != packageName && it.lastTimeUsed > 0L }
+            .maxByOrNull { it.lastTimeUsed }
+            ?.packageName
+        return activePackage == DUDU_PACKAGE
+    }
+
+    private fun firstLocationValue(vararg values: String?): String =
+        values.firstOrNull { !it.isNullOrBlank() }?.trim().orEmpty()
+
+    private fun extractThaiArea(addressLine: String?, vararg prefixes: String): String {
+        if (addressLine.isNullOrBlank()) return ""
+        for (prefix in prefixes) {
+            // Android geocoders commonly return one complete Thai address,
+            // e.g. "ตำบลบางพระ อำเภอศรีราชา จังหวัดชลบุรี".
+            val match = Regex("(?:^|[\\s,])$prefix\\s*([^,\\n]+?)(?=\\s*(?:ตำบล|แขวง|อำเภอ|เขต|จังหวัด|$)|,|\\n)")
+                .find(addressLine)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.trim()
+            if (!match.isNullOrBlank()) return match
+        }
+        return ""
+    }
+
+    private fun extractSubDistrictFromAdministrativeInfo(
+        json: JSONObject,
+        district: String,
+        province: String
+    ): String {
+        val entries = json.optJSONObject("localityInfo")
+            ?.optJSONArray("administrative")
+            ?: return ""
+        val candidates = buildList {
+            for (index in 0 until entries.length()) {
+                val entry = entries.optJSONObject(index) ?: continue
+                val name = entry.optString("name", "").trim()
+                if (name.isBlank() || sameLocationName(name, district) || sameLocationName(name, province)) continue
+                val description = entry.optString("description", "").lowercase(Locale.ROOT)
+                val level = entry.optInt("adminLevel", -1)
+                add(Triple(name, description, level))
+            }
+        }
+        // BigDataCloud documents localityInfo.administrative as the detailed
+        // boundary list. Prefer entries explicitly called a subdistrict/tambon;
+        // otherwise use its deepest remaining administrative boundary.
+        return candidates.firstOrNull { (_, description) ->
+            description.contains("subdistrict") || description.contains("tambon") ||
+                description.contains("ตำบล") || description.contains("แขวง")
+        }?.first
+            ?: candidates.maxByOrNull { it.third }?.first
+            ?: ""
+    }
+
+    private fun sameLocationName(first: String?, second: String?): Boolean {
+        if (first.isNullOrBlank() || second.isNullOrBlank()) return false
+        fun normalized(value: String) = value.lowercase(Locale.ROOT)
+            .replace(Regex("^(ตำบล|แขวง|อำเภอ|เขต|จังหวัด)"), "")
+            .replace(Regex("\\s+"), "")
+        return normalized(first) == normalized(second)
+    }
 
     private fun checkWeather(location: Location?, isStartup: Boolean) {
         if (isFetchingWeather) return
@@ -434,13 +632,31 @@ class UdpReceiverService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_DIAGNOSTIC_TEST) {
-            AppLogger.log("Running local popup diagnostic")
+            AppLogger.log("Running local notification diagnostic")
             CoroutineScope(Dispatchers.Main).launch {
-                showFloatingWindow(
-                    "System Test",
-                    "Popup, Overlay และ Receiver Service ทำงานปกติ",
-                    null, null, "message", null, null, "127.0.0.1"
+                val renderedByDudu = duduNotificationPublisher.publish(
+                    DuduNotificationPublisher.RemoteNotification(
+                        sourcePackage = packageName,
+                        sourceAppName = "DUDU Notification Bridge",
+                        remoteKey = "dudu-diagnostic-test",
+                        title = "DUDU System Test",
+                        text = "Native notification และ Receiver Service ทำงานปกติ",
+                        imageBase64 = null,
+                        appIconBase64 = diagnosticAppIconBase64(),
+                        actions = null,
+                        replyActionId = null,
+                        senderIp = "127.0.0.1",
+                        postTime = System.currentTimeMillis()
+                    )
                 )
+                if (!renderedByDudu) {
+                    showFloatingWindow(
+                        "System Test",
+                        "Popup, Overlay และ Receiver Service ทำงานปกติ",
+                        null, diagnosticAppIconBase64(), "message", null, null, "127.0.0.1",
+                        sourceAppName = "DUDU Notification Bridge"
+                    )
+                }
                 if (getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getBoolean("PREF_TTS", true)) {
                     tts?.speak("ทดสอบระบบ Receiver ทำงานปกติ", TextToSpeech.QUEUE_FLUSH, null, "DIAGNOSTIC_TEST")
                 }
@@ -449,19 +665,42 @@ class UdpReceiverService : Service() {
         return START_STICKY
     }
 
+    private fun diagnosticAppIconBase64(): String? = runCatching {
+        val bitmap = applicationInfo.loadIcon(packageManager).toBitmap(96, 96)
+        ByteArrayOutputStream().use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+            Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
+        }
+    }.getOrNull()
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "ADH Notifier Client", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "DUDU Notification Service",
+                NotificationManager.IMPORTANCE_MIN
+            ).apply {
+                description = "Keeps the secure phone connection available while driving"
+                setSound(null, null)
+                enableVibration(false)
+                setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_SECRET
+            }
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("ADH Notifier Client")
-            .setContentText("Listening for incoming calls and messages...")
-            .setSmallIcon(android.R.drawable.ic_dialog_info) 
+            .setContentTitle("DUDU Notification Bridge")
+            .setContentText("เชื่อมต่อการแจ้งเตือนจากโทรศัพท์")
+            .setSmallIcon(R.drawable.ic_dudu_notification)
             .setOngoing(true)
+            .setSilent(true)
+            .setShowWhen(false)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -531,6 +770,17 @@ class UdpReceiverService : Service() {
                 return
             }
 
+            val nativeMode = DuduNotificationPublisher.isNativeModeEnabled(this)
+            val sourcePackage = jsonObject.optString("package", "phone.notification")
+            val sourceAppName = jsonObject.optString("appName", sourcePackage)
+            val notificationKey = jsonObject.optString("notificationKey")
+
+            if (type == "remove") {
+                duduNotificationPublisher.cancel(notificationKey, sourcePackage)
+                CoroutineScope(Dispatchers.Main).launch { removeFloatingWindow() }
+                return
+            }
+
             val name = jsonObject.optString("name", "Unknown Caller")
             val text = jsonObject.optString("text", "")
             val isGroup = jsonObject.optBoolean("isGroup", false)
@@ -594,7 +844,26 @@ class UdpReceiverService : Service() {
                 if (isBatteryEnabled) {
                     val level = jsonObject.optInt("level", 20)
                     CoroutineScope(Dispatchers.Main).launch {
-                        showFloatingWindow("⚠️ Battery Alert", "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ", null, null, type, null, null, senderIp)
+                        val batteryTitle = "แบตเตอรี่โทรศัพท์ต่ำ"
+                        val batteryText = "แบตเตอรี่มือถือเหลือ $level% โปรดเสียบชาร์จ"
+                        val renderedByDudu = duduNotificationPublisher.publish(
+                            DuduNotificationPublisher.RemoteNotification(
+                                sourcePackage = sourcePackage,
+                                sourceAppName = sourceAppName,
+                                remoteKey = notificationKey.ifBlank { "phone-battery-$level" },
+                                title = batteryTitle,
+                                text = batteryText,
+                                imageBase64 = null,
+                                appIconBase64 = null,
+                                actions = null,
+                                replyActionId = null,
+                                senderIp = senderIp,
+                                postTime = System.currentTimeMillis()
+                            )
+                        )
+                        if (!renderedByDudu) {
+                            showFloatingWindow("⚠️ Battery Alert", batteryText, null, null, type, null, null, senderIp)
+                        }
                         val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
                         if (isTtsEnabled) {
                             tts?.speak("แจ้งเตือน แบตเตอรี่มือถือเหลือ $level เปอร์เซ็นต์ โปรดเสียบชาร์จด้วย$p", TextToSpeech.QUEUE_ADD, null, "BATTERY")
@@ -605,12 +874,20 @@ class UdpReceiverService : Service() {
             }
 
             if (type == "media") {
+                if (nativeMode) return
                 val isMediaEnabled = prefs.getBoolean("PREF_MEDIA", true)
                 if (!isMediaEnabled) return
             }
 
             // Allow hiding our call popup so DuDu OS (or any car head unit OS) can handle it natively
             if (type == "call") {
+                if (nativeMode) {
+                    val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
+                    if (isTtsEnabled && ttsReady) {
+                        tts?.speak("มีสายโทรเข้าจาก $name", TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                    return
+                }
                 val showCallPopup = prefs.getBoolean("PREF_SHOW_CALL_POPUP", true)
                 if (!showCallPopup) {
                     // Still speak the name aloud even if popup is suppressed
@@ -627,13 +904,6 @@ class UdpReceiverService : Service() {
             val actionsArray = jsonObject.optJSONArray("actions")
             val replyActionId = if (jsonObject.isNull("replyActionId")) null else jsonObject.getString("replyActionId")
 
-            if (type == "remove") {
-                CoroutineScope(Dispatchers.Main).launch {
-                    removeFloatingWindow()
-                }
-                return
-            }
-
             val isTtsEnabled = prefs.getBoolean("PREF_TTS", true)
             val isPrivacyMode = prefs.getBoolean("PREF_PRIVACY_MODE", false)
             if (isTtsEnabled && type == "message" && text.isNotEmpty()) {
@@ -647,14 +917,36 @@ class UdpReceiverService : Service() {
             CoroutineScope(Dispatchers.Main).launch {
                 val usesChronometer = jsonObject.optBoolean("usesChronometer", false)
                 val postTime = jsonObject.optLong("postTime", 0L)
-                showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot, usesChronometer, postTime)
+                if (type == "message") {
+                    val displayText = if (isPrivacyMode && !isVip) "แตะเพื่ออ่านข้อความ" else text
+                    val renderedByDudu = duduNotificationPublisher.publish(
+                        DuduNotificationPublisher.RemoteNotification(
+                            sourcePackage = sourcePackage,
+                            sourceAppName = sourceAppName,
+                            remoteKey = notificationKey,
+                            title = if (isVip) "[VIP] $name" else name,
+                            text = displayText,
+                            imageBase64 = base64Image,
+                            appIconBase64 = appIconBase64,
+                            actions = actionsArray,
+                            replyActionId = replyActionId,
+                            senderIp = senderIp,
+                            postTime = postTime
+                        )
+                    )
+                    if (!renderedByDudu) {
+                        showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot, usesChronometer, postTime, sourceAppName)
+                    }
+                } else {
+                    showFloatingWindow(name, text, base64Image, appIconBase64, type, actionsArray, replyActionId, senderIp, isGroup, isBot, usesChronometer, postTime)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse JSON", e)
         }
     }
 
-    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false, isBot: Boolean = false, usesChronometer: Boolean = false, postTime: Long = 0L) {
+    private fun showFloatingWindow(name: String, text: String, base64Image: String?, appIconBase64: String?, type: String, actionsArray: org.json.JSONArray?, replyActionId: String?, senderIp: String, isGroup: Boolean = false, isBot: Boolean = false, usesChronometer: Boolean = false, postTime: Long = 0L, sourceAppName: String? = null) {
         try {
             // Media player uses its own album-art card layout
             if (type == "media") {
@@ -707,7 +999,12 @@ class UdpReceiverService : Service() {
                     messageText?.visibility = View.VISIBLE
                 }
 
-                nameText?.text = if (type == "call") "📞 Ongoing Call: $name" else name
+                val sourceLabel = sourceAppName.orEmpty().trim()
+                val displayName = when {
+                    sourceLabel.isBlank() || name.equals(sourceLabel, ignoreCase = true) -> name
+                    else -> "$sourceLabel • $name"
+                }
+                nameText?.text = if (type == "call") "📞 Ongoing Call: $displayName" else displayName
             }
             
             val isVip = listOf("ด่วน", "ฉุกเฉิน", "สำคัญ", "vip").any { text.lowercase().contains(it) || name.lowercase().contains(it) }
@@ -823,122 +1120,43 @@ class UdpReceiverService : Service() {
                     autoReplyTimestamps[name] = now
                     
                     CoroutineScope(Dispatchers.IO).launch {
-                        val anthropicApiKey = BuildConfig.ANTHROPIC_API_KEY
-                        val savedGeminiKey = prefs.getString("PREF_GEMINI_API_KEY", "") ?: ""
-                        val defaultGeminiKey = String(android.util.Base64.decode("QVEuQWI4Uk42SkRuMmJBWFhFTTFrTUNuT05jMm1OZHROellCdm5sZnBhWVM0Z1VvN3htZEE=", android.util.Base64.DEFAULT))
-                        val geminiApiKey = if (savedGeminiKey.isNotEmpty()) savedGeminiKey else defaultGeminiKey
                         var replyMessage: String? = null
-                        
-                        if (geminiApiKey.isNotEmpty()) {
+
+                        if (BuildConfig.AI_PROXY_URL.isNotEmpty()) {
                             try {
-                                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$geminiApiKey")
+                                val url = java.net.URL(BuildConfig.AI_PROXY_URL)
                                 val conn = url.openConnection() as java.net.HttpURLConnection
                                 conn.connectTimeout = 10000
                                 conn.readTimeout = 15000
                                 conn.requestMethod = "POST"
                                 conn.setRequestProperty("content-type", "application/json")
+                                conn.setRequestProperty("x-proxy-secret", BuildConfig.AI_PROXY_SECRET)
                                 conn.doOutput = true
-                                
-                                val escapedText = org.json.JSONObject.quote(text)
-                                val jsonBody = """
-                                    {
-                                      "systemInstruction": {
-                                        "parts": [
-                                          {
-                                            "text": "คุณคือระบบตอบแชทอัตโนมัติของคนที่กำลังขับรถอยู่ ให้ตอบกลับข้อความสั้นๆ สุภาพ เป็นภาษาไทย ว่ากำลังขับรถอยู่และตอบตามบริบท (ถ้าข้อความสั้นหรือไม่มีบริบท ให้ตอบแค่ว่ากำลังขับรถอยู่เดี๋ยวติดต่อกลับ)"
-                                          }
-                                        ]
-                                      },
-                                      "contents": [
-                                        {
-                                          "parts": [
-                                            {
-                                              "text": $escapedText
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                """.trimIndent()
-                                
+
+                                val jsonBody = org.json.JSONObject().apply { put("text", text) }.toString()
                                 conn.outputStream.use { os ->
                                     val input = jsonBody.toByteArray(Charsets.UTF_8)
                                     os.write(input, 0, input.size)
                                 }
-                                
+
                                 if (conn.responseCode == 200) {
                                     val response = conn.inputStream.bufferedReader().use { it.readText() }
                                     val jsonObject = org.json.JSONObject(response)
-                                    val candidates = jsonObject.optJSONArray("candidates")
-                                    if (candidates != null && candidates.length() > 0) {
-                                        val content = candidates.getJSONObject(0).optJSONObject("content")
-                                        val parts = content?.optJSONArray("parts")
-                                        if (parts != null && parts.length() > 0) {
-                                            val generatedText = parts.getJSONObject(0).optString("text").trim()
-                                            if (generatedText.isNotBlank()) {
-                                                replyMessage = "$generatedText (AI: Gemini)"
-                                            }
-                                        }
+                                    val generatedText = jsonObject.optString("reply").trim()
+                                    val source = jsonObject.optString("source", "ai")
+                                    if (generatedText.isNotBlank()) {
+                                        replyMessage = "$generatedText (AI: ${source.replaceFirstChar { it.uppercase() }})"
                                     }
                                 } else {
                                     val errorResponse = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                                    Log.e(TAG, "Gemini API failed with code: ${conn.responseCode}, error: $errorResponse")
+                                    Log.e(TAG, "AI proxy failed with code: ${conn.responseCode}, error: $errorResponse")
                                 }
                                 conn.disconnect()
                             } catch (e: Exception) {
-                                Log.e(TAG, "Gemini auto-reply failed", e)
+                                Log.e(TAG, "AI proxy auto-reply failed", e)
                             }
                         }
-                        
-                        if (replyMessage == null && anthropicApiKey.isNotEmpty()) {
-                            try {
-                                val url = java.net.URL("https://api.anthropic.com/v1/messages")
-                                val conn = url.openConnection() as java.net.HttpURLConnection
-                                conn.connectTimeout = 10000
-                                conn.readTimeout = 15000
-                                conn.requestMethod = "POST"
-                                conn.setRequestProperty("x-api-key", anthropicApiKey)
-                                conn.setRequestProperty("anthropic-version", "2023-06-01")
-                                conn.setRequestProperty("content-type", "application/json")
-                                conn.doOutput = true
-                                
-                                val escapedText = org.json.JSONObject.quote(text)
-                                val jsonBody = """
-                                    {
-                                      "model": "claude-3-haiku-20240307",
-                                      "max_tokens": 100,
-                                      "system": "คุณคือระบบตอบแชทอัตโนมัติของคนที่กำลังขับรถอยู่ ให้ตอบกลับข้อความสั้นๆ สุภาพ เป็นภาษาไทย ว่ากำลังขับรถอยู่และตอบตามบริบท (ถ้าข้อความสั้นหรือไม่มีบริบท ให้ตอบแค่ว่ากำลังขับรถอยู่เดี๋ยวติดต่อกลับ)",
-                                      "messages": [
-                                        {"role": "user", "content": $escapedText}
-                                      ]
-                                    }
-                                """.trimIndent()
-                                
-                                conn.outputStream.use { os ->
-                                    val input = jsonBody.toByteArray(Charsets.UTF_8)
-                                    os.write(input, 0, input.size)
-                                }
-                                
-                                if (conn.responseCode == 200) {
-                                    val response = conn.inputStream.bufferedReader().use { it.readText() }
-                                    val jsonObject = org.json.JSONObject(response)
-                                    val contentArray = jsonObject.optJSONArray("content")
-                                    if (contentArray != null && contentArray.length() > 0) {
-                                        val generatedText = contentArray.getJSONObject(0).optString("text")
-                                        if (generatedText.isNotBlank()) {
-                                            replyMessage = "$generatedText (AI: Claude)"
-                                        }
-                                    }
-                                } else {
-                                    val errorResponse = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                                    Log.e(TAG, "Anthropic API failed with code: ${conn.responseCode}, error: $errorResponse")
-                                }
-                                conn.disconnect()
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Anthropic auto-reply failed", e)
-                            }
-                        }
-                        
+
                         if (replyMessage == null) {
                             val lowerText = text.lowercase()
                             replyMessage = when {
@@ -1170,14 +1388,20 @@ class UdpReceiverService : Service() {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT
             )
+            // DUDU renders its native card at roughly one quarter of this
+            // ultrawide display. Use pixels here because this head unit applies
+            // an app-compat density scale that makes a dp-only card too wide.
+            params.width = (resources.displayMetrics.widthPixels * 0.28f).toInt()
     
             val pos = prefs.getString("PREF_POPUP_GRAVITY", "Top")
             params.gravity = when (pos) {
                 "Center" -> Gravity.CENTER
                 "Bottom" -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                else -> Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                else -> Gravity.TOP or Gravity.END
             }
-            params.y = if (pos == "Center") 0 else 40
+            val edgeInset = (14 * resources.displayMetrics.density).toInt()
+            params.x = if (pos == "Top") edgeInset else 0
+            params.y = if (pos == "Center") 0 else edgeInset
     
             try {
                 windowManager?.addView(viewToUse, params)
@@ -1434,6 +1658,8 @@ class UdpReceiverService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         listenJob?.cancel()
+        locationStatusJob?.cancel()
+        removeLocationStatusOverlay()
         socket?.close()
         // Unregister GPS listener to stop hardware and prevent memory leak
         if (locationListener != null) {

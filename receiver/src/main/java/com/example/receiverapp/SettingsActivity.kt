@@ -43,7 +43,7 @@ class SettingsActivity : AppCompatActivity() {
         val switchLocationAnnounce = findViewById<CompoundButton>(R.id.switchLocationAnnounce)
         val switchLocationAnnounceVoice = findViewById<CompoundButton>(R.id.switchLocationAnnounceVoice)
         val switchShowCallPopup = findViewById<CompoundButton>(R.id.switchShowCallPopup)
-        val editGeminiKey = findViewById<android.widget.EditText>(R.id.editGeminiKey)
+        val switchDuduNativeMode = findViewById<CompoundButton>(R.id.switchDuduNativeMode)
 
         // Load saved or defaults
         switchQuickReply?.isChecked = prefs.getBoolean("PREF_QUICK_REPLY", true)
@@ -64,8 +64,10 @@ class SettingsActivity : AppCompatActivity() {
         switchLocationAnnounce?.isChecked = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", true)
         switchLocationAnnounceVoice?.isChecked = prefs.getBoolean("PREF_LOCATION_VOICE", true)
         switchShowCallPopup?.isChecked = prefs.getBoolean("PREF_SHOW_CALL_POPUP", true)
-        editGeminiKey?.setText(prefs.getString("PREF_GEMINI_API_KEY", ""))
-
+        switchDuduNativeMode?.isChecked = prefs.getBoolean(
+            DuduNotificationPublisher.PREF_DUDU_NATIVE_MODE,
+            true
+        )
         // Save on change
         val listener = { key: String, isChecked: Boolean ->
             prefs.edit().putBoolean(key, isChecked).apply()
@@ -89,14 +91,18 @@ class SettingsActivity : AppCompatActivity() {
         switchLocationAnnounce?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_ANNOUNCE", c) }
         switchLocationAnnounceVoice?.setOnCheckedChangeListener { _, c -> listener("PREF_LOCATION_VOICE", c) }
         switchShowCallPopup?.setOnCheckedChangeListener { _, c -> listener("PREF_SHOW_CALL_POPUP", c) }
-
-        editGeminiKey?.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) {
-                prefs.edit().putString("PREF_GEMINI_API_KEY", s.toString().trim()).apply()
-            }
-        })
+        fun updateDuduManagedControls(enabled: Boolean) {
+            val active = enabled && DuduNotificationPublisher.isDuduBridgeAvailable(this)
+            switchMedia?.isEnabled = !active
+            switchShowCallPopup?.isEnabled = !active
+            switchMedia?.alpha = if (active) 0.45f else 1f
+            switchShowCallPopup?.alpha = if (active) 0.45f else 1f
+        }
+        updateDuduManagedControls(switchDuduNativeMode?.isChecked == true)
+        switchDuduNativeMode?.setOnCheckedChangeListener { _, checked ->
+            listener(DuduNotificationPublisher.PREF_DUDU_NATIVE_MODE, checked)
+            updateDuduManagedControls(checked)
+        }
 
         val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
         if (spinnerTheme != null) {
@@ -151,6 +157,29 @@ class SettingsActivity : AppCompatActivity() {
                     apply()
                 }
                 android.widget.Toast.makeText(this@SettingsActivity, "บันทึกพิกัดเตือนความจำสำเร็จ!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateDuduStatus()
+    }
+
+    private fun updateDuduStatus() {
+        val status = findViewById<android.widget.TextView>(R.id.tvDuduNativeStatus) ?: return
+        when {
+            !DuduNotificationPublisher.isDuduOsInstalled(this) -> {
+                status.text = "ไม่พบ DUDU Launcher • ใช้ Android notification และ popup สำรอง"
+                status.setTextColor(android.graphics.Color.parseColor("#FFB74D"))
+            }
+            DuduNotificationPublisher.isDuduBridgeAvailable(this) -> {
+                status.text = "✓ Connector พร้อม • การแจ้งเตือนจะใช้การ์ดของ DUDU"
+                status.setTextColor(android.graphics.Color.parseColor("#34C759"))
+            }
+            else -> {
+                status.text = "ยังไม่พบ DUDU Notification Connector ที่เซ็นตรงกัน • ตอนนี้ใช้ popup สำรองเพื่อไม่ให้พลาดข้อความ"
+                status.setTextColor(android.graphics.Color.parseColor("#FFB74D"))
             }
         }
     }

@@ -238,7 +238,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkOverlayPermissionAndStart() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+        if (DuduNotificationPublisher.isNativeModeEnabled(this)) {
+            startUdpService()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
@@ -326,8 +328,14 @@ class MainActivity : AppCompatActivity() {
             button.strokeColor = android.content.res.ColorStateList.valueOf(color)
         }
 
-        val overlayGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
-        style(R.id.btnRequestOverlay, overlayGranted, "อนุญาต Overlay แล้ว", "1. อนุญาต Overlay")
+        val nativeMode = DuduNotificationPublisher.isNativeModeEnabled(this)
+        val overlayGranted = nativeMode || Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+        style(
+            R.id.btnRequestOverlay,
+            overlayGranted,
+            if (nativeMode) "DUDU Mode ไม่ต้องใช้ Overlay" else "อนุญาต Overlay แล้ว",
+            "1. อนุญาต Overlay"
+        )
 
         val batteryGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
             (getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
@@ -349,21 +357,6 @@ class MainActivity : AppCompatActivity() {
         AppLogger.listener = null
     }
     private fun startWatchdog() {
-        val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
-        val intent = android.content.Intent(this, WatchdogReceiver::class.java)
-        
-        val pendingIntent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            android.app.PendingIntent.getBroadcast(this, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE)
-        } else {
-            android.app.PendingIntent.getBroadcast(this, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT)
-        }
-        
-        val interval = 5L * 60L * 1000L
-        alarmManager.setRepeating(
-            android.app.AlarmManager.RTC_WAKEUP,
-            System.currentTimeMillis() + interval,
-            interval,
-            pendingIntent
-        )
+        WatchdogReceiver.schedule(this)
     }
 }

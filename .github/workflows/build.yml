@@ -39,7 +39,8 @@ jobs:
     - name: Build debug APKs for pull requests
       if: github.event_name == 'pull_request'
       env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        AI_PROXY_URL: ${{ secrets.AI_PROXY_URL }}
+        AI_PROXY_SECRET: ${{ secrets.AI_PROXY_SECRET }}
       run: gradle assembleDebug
 
     - name: Build signed release APKs
@@ -48,7 +49,8 @@ jobs:
         ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
         ANDROID_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
         ANDROID_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        AI_PROXY_URL: ${{ secrets.AI_PROXY_URL }}
+        AI_PROXY_SECRET: ${{ secrets.AI_PROXY_SECRET }}
       run: |
         ACTUAL_ALIAS=$(keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" | sed -n 's/^Alias name: //p' | head -n 1)
         test -n "$ACTUAL_ALIAS"
@@ -74,9 +76,14 @@ jobs:
           
           📌 **Build Number:** #${{ github.run_number }}
           🤖 อัปโหลดไฟล์ APK ล่าสุดให้ดาวน์โหลดด้านล่างนี้เลยครับ
+
+          **DUDUOS:** ติดตั้ง `ADH-Notifier-Client.apk` ก่อน แล้วจึงติดตั้ง
+          `DUDU-Notification-Compat.apk` และเปิด Connector หนึ่งครั้งเพื่ออนุญาต Notification
+          (Compatibility APK ใช้ package ที่ DUDU whitelist จึงติดตั้งร่วมกับ WeChat บนจอไม่ได้)
         files: |
           sender/build/outputs/apk/release/ADH-Notifier-Server.apk
           receiver/build/outputs/apk/release/ADH-Notifier-Client.apk
+          dudu-compat/build/outputs/apk/release/DUDU-Notification-Compat.apk
           sender/build/outputs/apk/release/sender-release.apk
           receiver/build/outputs/apk/release/receiver-release.apk
       env:

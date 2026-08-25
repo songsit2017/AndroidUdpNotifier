@@ -4,24 +4,18 @@ plugins {
 }
 
 android {
-    namespace = "com.example.receiverapp"
+    namespace = "com.example.duducompat"
     compileSdk = 34
 
-    buildFeatures {
-        buildConfig = true
-    }
-
     defaultConfig {
-        applicationId = "com.example.receiverapp"
+        // DUDU AppNoticeService 3.7 only renders local notifications from its
+        // hard-coded WeChat/QQ allow-list. Keep this identity isolated in the
+        // tiny connector APK so the main receiver keeps its real package/data.
+        applicationId = "com.tencent.mm"
         minSdk = 24
         targetSdk = 34
         versionCode = project.findProperty("versionCode")?.toString()?.toInt() ?: 1
         versionName = project.findProperty("versionName")?.toString() ?: "1.0.0"
-        
-        val aiProxyUrl = System.getenv("AI_PROXY_URL") ?: project.findProperty("AI_PROXY_URL")?.toString() ?: ""
-        val aiProxySecret = System.getenv("AI_PROXY_SECRET") ?: project.findProperty("AI_PROXY_SECRET")?.toString() ?: ""
-        buildConfigField("String", "AI_PROXY_URL", "\"$aiProxyUrl\"")
-        buildConfigField("String", "AI_PROXY_SECRET", "\"$aiProxySecret\"")
     }
 
     signingConfigs {
@@ -35,11 +29,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            // Install alongside the signed production receiver for safe on-device testing.
-            applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -48,12 +37,12 @@ android {
     }
 
     applicationVariants.all {
-        val variant = this
-        variant.outputs.all {
+        outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "ADH-Notifier-Client.apk"
+            output.outputFileName = "DUDU-Notification-Compat.apk"
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -65,9 +54,4 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.google.zxing:core:3.5.3")
 }

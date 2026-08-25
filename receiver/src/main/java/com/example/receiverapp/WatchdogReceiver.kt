@@ -22,4 +22,24 @@ class WatchdogReceiver : BroadcastReceiver() {
             Log.e("WatchdogReceiver", "Failed to start UdpReceiverService", e)
         }
     }
+
+    companion object {
+        fun schedule(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            val intent = Intent(context, WatchdogReceiver::class.java)
+            val pendingIntent = android.app.PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+            val interval = 5L * 60L * 1000L
+            alarmManager.setInexactRepeating(
+                android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                android.os.SystemClock.elapsedRealtime() + interval,
+                interval,
+                pendingIntent
+            )
+        }
+    }
 }

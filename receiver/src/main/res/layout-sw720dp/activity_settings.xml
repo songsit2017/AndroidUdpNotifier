@@ -74,6 +74,23 @@
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DUDU OS Native Mode" android:textSize="18sp" android:textColor="@color/app_text_primary" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Show phone alerts through DUDU AppNoticeService" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchDuduNativeMode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+</LinearLayout>
+<TextView
+    android:id="@+id/tvDuduNativeStatus"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="กำลังตรวจ DUDU Notification Connector…"
+    android:textColor="#FFB74D"
+    android:textSize="14sp" />
+</LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="16dp">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quick Replies" android:textSize="18sp" android:textColor="@color/app_text_primary" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="แสดงปุ่มตอบกลับด่วนบนจอรถ" android:textSize="14sp" android:textColor="@color/app_text_secondary" />
     </LinearLayout>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#111318">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DUDU Notification Connector"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="#24272E"
+            android:padding="20dp"
+            android:textColor="#E7E9EE"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btnGrantNotification"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="20dp"
+            android:text="อนุญาตการแจ้งเตือน" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="ข้อสำคัญ: Connector นี้ใช้ package compatibility ที่ DUDU อนุญาตไว้สำหรับ WeChat จึงติดตั้งพร้อม WeChat จริงบนจอไม่ได้ ตัวแอปไม่มีสิทธิ์อินเทอร์เน็ตและรับคำสั่งได้เฉพาะจาก DUDU Notification Bridge ที่เซ็นด้วยกุญแจเดียวกัน"
+            android:textColor="#FFCC80"
+            android:textSize="16sp" />
+    </LinearLayout>
+</ScrollView>

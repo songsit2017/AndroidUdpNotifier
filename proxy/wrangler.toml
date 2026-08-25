@@ -1,0 +1,8 @@
+name = "dudu-ai-reply-proxy"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Created by `wrangler kv namespace create RATE_LIMIT_KV` — paste the returned id below.
+kv_namespaces = [
+  { binding = "RATE_LIMIT_KV", id = "bc7f4133bbce486da9c9781272bce5b8" }
+]
