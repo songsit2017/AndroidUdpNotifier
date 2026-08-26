@@ -2,6 +2,8 @@ package com.example.receiverapp
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.Build
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 
 /**
@@ -13,6 +15,12 @@ import android.view.accessibility.AccessibilityEvent
 class ForegroundWindowAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        // DUDU keeps Maps and YouTube alive on virtual displays (6/7) while
+        // LauncherActivity remains on the physical display (0). Those window
+        // events must not hide the strip on the launcher.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            event.displayId != Display.DEFAULT_DISPLAY
+        ) return
         val packageName = event.packageName?.toString() ?: return
         val launcherVisible = packageName == DUDU_PACKAGE
         getSharedPreferences("AppPrefs", MODE_PRIVATE)
