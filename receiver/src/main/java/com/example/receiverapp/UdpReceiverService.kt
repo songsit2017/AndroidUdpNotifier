@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.BroadcastReceiver
@@ -42,7 +41,6 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioManager
 import android.media.RingtoneManager
-import android.app.usage.UsageStatsManager
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -53,7 +51,6 @@ class UdpReceiverService : Service() {
 
     companion object {
         const val ACTION_DIAGNOSTIC_TEST = "com.example.receiverapp.DIAGNOSTIC_TEST"
-        private const val DUDU_PACKAGE = "com.dudu.autoui"
     }
 
     private val TAG = "UdpReceiver"
@@ -68,6 +65,7 @@ class UdpReceiverService : Service() {
     private var floatingView: View? = null
     private var locationStatusView: TextView? = null
     private var locationStatusJob: Job? = null
+    private var foregroundWindowReceiver: BroadcastReceiver? = null
     private var autoDismissJob: Job? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -114,6 +112,22 @@ class UdpReceiverService : Service() {
         }
         
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        foregroundWindowReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == ForegroundWindowAccessibilityService.ACTION_FOREGROUND_WINDOW_CHANGED) {
+                    updateLocationStatusOverlay()
+                }
+            }
+        }
+        val foregroundWindowFilter = IntentFilter(
+            ForegroundWindowAccessibilityService.ACTION_FOREGROUND_WINDOW_CHANGED
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(foregroundWindowReceiver, foregroundWindowFilter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(foregroundWindowReceiver, foregroundWindowFilter)
+        }
         startLocationStatusMonitor()
         
         mediaSession = MediaSession(this, "UdpReceiverSession")
@@ -419,7 +433,11 @@ class UdpReceiverService : Service() {
     private fun updateLocationStatusOverlay() {
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val enabled = prefs.getBoolean("PREF_LOCATION_STATUS_OVERLAY", true)
-        if (!enabled || !Settings.canDrawOverlays(this) || !hasUsageAccess() || !isDuduLauncherForeground()) {
+        val launcherForeground = prefs.getBoolean(
+            ForegroundWindowAccessibilityService.PREF_DUDU_LAUNCHER_FOREGROUND,
+            false
+        )
+        if (!enabled || !Settings.canDrawOverlays(this) || !launcherForeground) {
             removeLocationStatusOverlay()
             return
         }
@@ -482,34 +500,6 @@ class UdpReceiverService : Service() {
         } finally {
             locationStatusView = null
         }
-    }
-
-    private fun hasUsageAccess(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        return appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            packageName
-        ) == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun isDuduLauncherForeground(): Boolean {
-        val usage = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val now = System.currentTimeMillis()
-        // DUDU can keep LauncherActivity resumed behind its multi-window
-        // panels.  Usage events then contain both DUDU and the app the driver
-        // is actually using.  lastTimeUsed picks the active panel instead of
-        // leaving our strip over Maps/YouTube.
-        val activePackage = usage.queryUsageStats(
-            UsageStatsManager.INTERVAL_BEST,
-            now - 60_000L,
-            now
-        )
-            .asSequence()
-            .filter { it.packageName != packageName && it.lastTimeUsed > 0L }
-            .maxByOrNull { it.lastTimeUsed }
-            ?.packageName
-        return activePackage == DUDU_PACKAGE
     }
 
     private fun firstLocationValue(vararg values: String?): String =
@@ -1744,6 +1734,14 @@ class UdpReceiverService : Service() {
         listenJob?.cancel()
         locationStatusJob?.cancel()
         removeLocationStatusOverlay()
+        foregroundWindowReceiver?.let {
+            try {
+                unregisterReceiver(it)
+            } catch (_: IllegalArgumentException) {
+                // Receiver was not registered because service creation stopped early.
+            }
+        }
+        foregroundWindowReceiver = null
         socket?.close()
         // Unregister GPS listener to stop hardware and prevent memory leak
         if (locationListener != null) {

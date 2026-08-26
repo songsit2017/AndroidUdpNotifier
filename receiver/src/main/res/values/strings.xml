@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">DUDU Notification Bridge</string>
+    <string name="foreground_window_accessibility_description">ตรวจเฉพาะว่าอยู่หน้า DUDU Launcher หรือแอปอื่น เพื่อซ่อนแถบตำแหน่ง ไม่อ่านเนื้อหาบนหน้าจอ</string>
 </resources>
