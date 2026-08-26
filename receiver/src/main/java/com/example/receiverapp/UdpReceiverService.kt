@@ -225,6 +225,10 @@ class UdpReceiverService : Service() {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 locationListener = object : LocationListener {
                     override fun onLocationChanged(location: Location) {
+                        AppLogger.log(
+                            "GPS fix ${String.format(Locale.US, "%.6f,%.6f", location.latitude, location.longitude)} " +
+                                "accuracy=${String.format(Locale.US, "%.1fm", location.accuracy)}"
+                        )
                         val speedKmh = location.speed * 3.6f
                         currentSpeedKmh = speedKmh
                         if (isSpeedWarningEnabled && speedKmh > 120 && !isSpeedWarningActive) {
@@ -273,9 +277,28 @@ class UdpReceiverService : Service() {
                                                     addr.locality?.takeUnless { sameLocationName(it, district) }
                                                 )
                                                 success = province.isNotEmpty()
+                                                AppLogger.log(
+                                                    "Android geocoder: tambon=$subDistrict district=$district province=$province"
+                                                )
                                             }
                                         } catch (e: Exception) {
                                             AppLogger.log("Android Geocoder failed: ${e.message}")
+                                        }
+
+                                        // On Thai district borders, the stock Android geocoder can return the
+                                        // adjacent administrative polygon.  Cross-check the detailed OSM boundary
+                                        // response and prefer it only when it supplies a real subdistrict name.
+                                        val osm = resolveOpenStreetMapArea(location.latitude, location.longitude)
+                                        if (osm != null) {
+                                            AppLogger.log(
+                                                "OSM boundary: tambon=${osm.subDistrict} district=${osm.district} province=${osm.province}"
+                                            )
+                                            if (osm.subDistrict.isNotBlank()) {
+                                                subDistrict = osm.subDistrict
+                                                district = firstLocationValue(osm.district, district)
+                                                province = firstLocationValue(osm.province, province)
+                                                success = province.isNotEmpty()
+                                            }
                                         }
 
                                         // Fallback to BigDataCloud Reverse Geocoding API if Geocoder fails (e.g. no GMS)
@@ -431,7 +454,13 @@ class UdpReceiverService : Service() {
                 PixelFormat.TRANSLUCENT
             ).apply {
                 gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                y = (8 * density).toInt()
+                // DUDU places its own battery/weather/navigation items on the
+                // right.  Reserve that region and use the empty span after the
+                // vehicle icon instead of covering native status indicators.
+                gravity = Gravity.TOP or Gravity.START
+                x = 116
+                y = (7 * density).toInt()
+                width = (resources.displayMetrics.widthPixels * 0.30f).toInt()
             }
             try {
                 windowManager?.addView(strip, params)
@@ -536,6 +565,61 @@ class UdpReceiverService : Service() {
             .replace(Regex("^(ตำบล|แขวง|อำเภอ|เขต|จังหวัด)"), "")
             .replace(Regex("\\s+"), "")
         return normalized(first) == normalized(second)
+    }
+
+    private data class AreaResolution(
+        val subDistrict: String,
+        val district: String,
+        val province: String
+    )
+
+    private fun resolveOpenStreetMapArea(latitude: Double, longitude: Double): AreaResolution? {
+        return try {
+            // Nominatim is queried only at the existing 1 km location cadence;
+            // this stays well below its public-service rate limit and provides
+            // the boundary data that the on-device Geocoder misses at borders.
+            val url = java.net.URL(
+                "https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18" +
+                    "&accept-language=th&lat=$latitude&lon=$longitude"
+            )
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 6_000
+            connection.readTimeout = 6_000
+            connection.setRequestProperty("User-Agent", "DUDU-Notification-Bridge/1.0 (local head-unit)")
+            if (connection.responseCode != 200) {
+                connection.disconnect()
+                return null
+            }
+            val response = connection.inputStream.bufferedReader().use { it.readText() }
+            connection.disconnect()
+            val address = JSONObject(response).optJSONObject("address") ?: return null
+            AreaResolution(
+                subDistrict = firstLocationValue(
+                    // Thailand's OSM addressing maps the tambon to `city`
+                    // or `city_district`, and the amphoe to `county` (e.g.
+                    // Bo Win / Si Racha).  Nominatim can return either key
+                    // when the GPS point snaps to a neighbouring road way.
+                    address.optString("city", ""),
+                    address.optString("city_district", ""),
+                    address.optString("suburb", ""),
+                    address.optString("town", ""),
+                    address.optString("village", ""),
+                    address.optString("neighbourhood", "")
+                ),
+                district = firstLocationValue(
+                    address.optString("county", ""),
+                    address.optString("district", ""),
+                    address.optString("city_district", "")
+                ),
+                province = firstLocationValue(
+                    address.optString("state", ""),
+                    address.optString("province", "")
+                )
+            )
+        } catch (e: Exception) {
+            AppLogger.log("OSM boundary lookup failed: ${e.message}")
+            null
+        }
     }
 
     private fun checkWeather(location: Location?, isStartup: Boolean) {
