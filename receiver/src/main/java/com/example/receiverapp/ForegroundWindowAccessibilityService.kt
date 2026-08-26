@@ -2,7 +2,6 @@ package com.example.receiverapp
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
-import android.util.Log
 import android.os.Build
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
@@ -23,8 +22,10 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
             event.displayId > Display.DEFAULT_DISPLAY
         ) return
         val packageName = event.packageName?.toString() ?: return
+        // Adding/removing our TYPE_APPLICATION_OVERLAY also creates a window
+        // event. It must not be interpreted as leaving DUDU Launcher.
+        if (packageName == applicationContext.packageName) return
         val launcherVisible = packageName == DUDU_PACKAGE
-        Log.i(TAG, "primary window package=$packageName display=${event.displayId} launcher=$launcherVisible")
         getSharedPreferences("AppPrefs", MODE_PRIVATE)
             .edit()
             .putBoolean(PREF_DUDU_LAUNCHER_FOREGROUND, launcherVisible)
@@ -38,7 +39,6 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     companion object {
-        private const val TAG = "DuduWindowA11y"
         const val DUDU_PACKAGE = "com.dudu.autoui"
         const val PREF_DUDU_LAUNCHER_FOREGROUND = "PREF_DUDU_LAUNCHER_FOREGROUND"
         const val ACTION_FOREGROUND_WINDOW_CHANGED = "com.example.receiverapp.FOREGROUND_WINDOW_CHANGED"
