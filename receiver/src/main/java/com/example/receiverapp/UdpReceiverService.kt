@@ -452,6 +452,13 @@ class UdpReceiverService : Service() {
             strip.maxLines = 1
             strip.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
             strip.isSingleLine = true
+            // TYPE_APPLICATION_OVERLAY windows do not receive normal focus on
+            // DUDU.  Explicitly mark the text selected/focusable and repeat
+            // indefinitely so a long Thai location reaches its final word.
+            strip.setHorizontallyScrolling(true)
+            strip.marqueeRepeatLimit = -1
+            strip.isFocusable = true
+            strip.isFocusableInTouchMode = true
             strip.isSelected = true
             strip.background = android.graphics.drawable.GradientDrawable().apply {
                 cornerRadius = 14 * density
@@ -489,6 +496,12 @@ class UdpReceiverService : Service() {
             strip
         }
         view.text = "📍 $text"
+        // Setting text can clear the selected state on some Android 13 builds.
+        // Restore it after layout so the marquee restarts from the beginning.
+        view.post {
+            view.isSelected = true
+            view.requestFocus()
+        }
     }
 
     private fun removeLocationStatusOverlay() {
