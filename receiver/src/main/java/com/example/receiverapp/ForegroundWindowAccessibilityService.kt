@@ -19,7 +19,7 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
         // LauncherActivity remains on the physical display (0). Those window
         // events must not hide the strip on the launcher.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            event.displayId != Display.DEFAULT_DISPLAY
+            event.displayId > Display.DEFAULT_DISPLAY
         ) return
         val packageName = event.packageName?.toString() ?: return
         val launcherVisible = packageName == DUDU_PACKAGE
