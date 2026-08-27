@@ -18,7 +18,7 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
         // DUDU keeps Maps and YouTube alive on virtual displays (6/7) while
         // LauncherActivity remains on the physical display (0). Those window
         // events must not hide the strip on the launcher.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             event.displayId > Display.DEFAULT_DISPLAY
         ) return
         val packageName = event.packageName?.toString() ?: return

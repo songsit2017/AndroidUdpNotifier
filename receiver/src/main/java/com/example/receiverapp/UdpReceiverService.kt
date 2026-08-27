@@ -104,6 +104,9 @@ class UdpReceiverService : Service() {
         // promote itself immediately. Car head units can initialize TTS/GPS
         // slowly, so doing that work first may cause the OS to kill the app.
         startForegroundNotification()
+        // Do not rely on the settings screen having been opened.  The service
+        // renews the idle-safe watchdog every time Android or DUDU restarts it.
+        WatchdogReceiver.schedule(applicationContext)
         duduNotificationPublisher = DuduNotificationPublisher(this)
 
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
@@ -761,6 +764,13 @@ class UdpReceiverService : Service() {
     }.getOrNull()
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // The service is configured with stopWithTask=false; renewing the
+        // watchdog here also covers vendor task cleanup during long sleep.
+        WatchdogReceiver.schedule(applicationContext)
+        super.onTaskRemoved(rootIntent)
+    }
 
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1743,6 +1753,9 @@ class UdpReceiverService : Service() {
     }
 
     override fun onDestroy() {
+        // This is best-effort only (Android does not guarantee onDestroy when
+        // killing a process), but it keeps a recovery alarm when it is called.
+        WatchdogReceiver.schedule(applicationContext)
         super.onDestroy()
         listenJob?.cancel()
         locationStatusJob?.cancel()
