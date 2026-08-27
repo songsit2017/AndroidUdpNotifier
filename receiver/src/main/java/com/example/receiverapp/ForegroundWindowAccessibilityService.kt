@@ -21,6 +21,12 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
         // as an external app, no later Launcher event is guaranteed when the
         // transient panel closes, which leaves the location strip hidden.
         if (isTransientSystemOverlay(event)) return
+        // Some UIS7870 builds draw the volume panel from a vendor package
+        // rather than com.android.systemui.  Its accessibility event has no
+        // Activity class, unlike a real app switch.  Treating only Activity
+        // windows as navigation keeps the strip stable for every temporary
+        // panel without keeping it over an app the driver actually opens.
+        if (!isActivityWindow(event)) return
         // DUDU keeps Maps and YouTube alive on virtual displays (6/7) while
         // LauncherActivity remains on the physical display (0). Those window
         // events must not hide the strip on the launcher.
@@ -51,6 +57,11 @@ class ForegroundWindowAccessibilityService : AccessibilityService() {
             className.contains("VolumePanel", ignoreCase = true) ||
             className.contains("StatusBar", ignoreCase = true) ||
             className.contains("GlobalActions", ignoreCase = true)
+    }
+
+    private fun isActivityWindow(event: AccessibilityEvent): Boolean {
+        val className = event.className?.toString().orEmpty()
+        return className.endsWith("Activity")
     }
 
     override fun onInterrupt() = Unit
