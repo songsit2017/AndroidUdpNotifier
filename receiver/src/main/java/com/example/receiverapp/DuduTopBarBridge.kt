@@ -27,7 +27,9 @@ object DuduTopBarBridge {
     private const val ADB_PORT = 5555
 
     private const val SCRIPT_PATH = "/data/local/tmp/set_topbar.sh"
-    private const val SCRIPT_BASE64 = "IyEvc3lzdGVtL2Jpbi9zaApMT0M9IiQxIgpQUkVGPSIvZGF0YS9kYXRhL2NvbS5kdWR1LmF1dG91aS9zaGFyZWRfcHJlZnMvc2V0dGluZ3MueG1sIgoKaWYgWyAhIC1mICIkUFJFRiIgXTsgdGhlbgogICAgZWNobyAic2V0dGluZ3MueG1sIG5vdCBmb3VuZCIKICAgIGV4aXQgMQpmaQoKaWYgWyAteiAiJExPQyIgXTsgdGhlbgogICAgTkVXX0VOVFJZPSc8c3RyaW5nIG5hbWU9IlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVCI+PC9zdHJpbmc+JwplbHNlCiAgICBORVdfRU5UUlk9IjxzdHJpbmcgbmFtZT1cIlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVFwiPickTE9DJzwvc3RyaW5nPiIKZmkKCmF3ayAtdiByZXA9IiRORVdfRU5UUlkiICcKLzxzdHJpbmcgbmFtZT0iU0RBVEFfQ0VOVEVSX0RBVEVfRlJPTUFUIi8geyBwcmludCAiICAgICIgcmVwOyBuZXh0IH0KeyBwcmludCB9CicgIiRQUkVGIiA+IC9kYXRhL2xvY2FsL3RtcC9zZXR0aW5nc190bXAueG1sCgppZiBbIC1zIC9kYXRhL2xvY2FsL3RtcC9zZXR0aW5nc190bXAueG1sIF07IHRoZW4KICAgIGNwIC9kYXRhL2xvY2FsL3RtcC9zZXR0aW5nc190bXAueG1sICIkUFJFRiIKICAgIGNob3duIHN5c3RlbTpzeXN0ZW0gIiRQUkVGIgogICAgY2htb2QgNjYwICIkUFJFRiIKICAgIGFtIGZvcmNlLXN0b3AgY29tLmR1ZHUuYXV0b3VpCiAgICBhbSBzdGFydCAtbiBjb20uZHVkdS5hdXRvdWkvLnVpLmFjdGl2aXR5LmxhdW5jaGVyLkxhdW5jaGVyQWN0aXZpdHkKICAgIGVjaG8gIlVQREFURURfQU5EX1JFTE9BREVEIgplbHNlCiAgICBlY2hvICJFUlJPUjogZ2VuZXJhdGVkIGZpbGUgZW1wdHkiCiAgICBleGl0IDEKZmkK"
+    private const val SCRIPT_VERSION = "v2"
+    private const val VERSION_FILE = "/data/local/tmp/set_topbar.ver"
+    private const val SCRIPT_BASE64 = "IyEvc3lzdGVtL2Jpbi9zaApMT0M9IiQxIgpQUkVGPSIvZGF0YS9kYXRhL2NvbS5kdWR1LmF1dG91aS9zaGFyZWRfcHJlZnMvc2V0dGluZ3MueG1sIgoKaWYgWyAhIC1mICIkUFJFRiIgXTsgdGhlbgogICAgZWNobyAic2V0dGluZ3MueG1sIG5vdCBmb3VuZCIKICAgIGV4aXQgMQpmaQoKaWYgWyAteiAiJExPQyIgXTsgdGhlbgogICAgTkVXX0VOVFJZPSc8c3RyaW5nIG5hbWU9IlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVCI+PC9zdHJpbmc+JwplbHNlCiAgICBORVdfRU5UUlk9IjxzdHJpbmcgbmFtZT1cIlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVFwiPickTE9DJzwvc3RyaW5nPiIKZmkKCmF3ayAtdiByZXA9IiRORVdfRU5UUlkiICcKQkVHSU4geyBoYXNfbG9jPTA7IGhhc19wcm9tcHQ9MCB9Ci88c3RyaW5nIG5hbWU9IlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVCIvIHsgaGFzX2xvYz0xOyBwcmludCAiICAgICIgcmVwOyBuZXh0IH0KLzxpbnQgbmFtZT0iU0RBVEFfUFJPTVBUX1VTRV9UWVBFIi8geyBoYXNfcHJvbXB0PTE7IHByaW50ICIgICAgPGludCBuYW1lPVwiU0RBVEFfUFJPTVBUX1VTRV9UWVBFXCIgdmFsdWU9XCIxXCIgLz4iOyBuZXh0IH0KLzxcL21hcD4vIHsKICAgIGlmICghaGFzX2xvYykgcHJpbnQgIiAgICAiIHJlcDsKICAgIGlmICghaGFzX3Byb21wdCkgcHJpbnQgIiAgICA8aW50IG5hbWU9XCJTREFUQV9QUk9NUFRfVVNFX1RZUEVcIiB2YWx1ZT1cIjFcIiAvPiI7CiAgICBwcmludDsKICAgIG5leHQKfQp7IHByaW50IH0KJyAiJFBSRUYiID4gL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwKCmlmIFsgLXMgL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwgXTsgdGhlbgogICAgY3AgL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwgIiRQUkVGIgogICAgY2hvd24gc3lzdGVtOnN5c3RlbSAiJFBSRUYiCiAgICBjaG1vZCA2NjAgIiRQUkVGIgogICAgYW0gZm9yY2Utc3RvcCBjb20uZHVkdS5hdXRvdWkKICAgIGFtIHN0YXJ0IC1uIGNvbS5kdWR1LmF1dG91aS8udWkuYWN0aXZpdHkubGF1bmNoZXIuTGF1bmNoZXJBY3Rpdml0eQogICAgZWNobyAiVVBEQVRFRF9BTkRfUkVMT0FERUQiCmVsc2UKICAgIGVjaG8gIkVSUk9SOiBnZW5lcmF0ZWQgZmlsZSBlbXB0eSIKICAgIGV4aXQgMQpmaQo="
 
     @Volatile
     private var lastUpdatedLocation: String? = null
@@ -164,10 +166,10 @@ object DuduTopBarBridge {
 
     fun ensureScriptInstalled() {
         try {
-            val check = executeCommandAsRoot("[ -s $SCRIPT_PATH ] && echo EXISTS || echo NO")
-            if (check != "EXISTS") {
-                AppLogger.log("Installing $SCRIPT_PATH via ADB root")
-                executeCommandAsRoot("echo '$SCRIPT_BASE64' | base64 -d > $SCRIPT_PATH && chmod 755 $SCRIPT_PATH")
+            val check = executeCommandAsRoot("[ -s $SCRIPT_PATH ] && [ -f $VERSION_FILE ] && cat $VERSION_FILE || echo NO")
+            if (check.trim() != SCRIPT_VERSION) {
+                AppLogger.log("Installing $SCRIPT_PATH ($SCRIPT_VERSION) via ADB root")
+                executeCommandAsRoot("echo '$SCRIPT_BASE64' | base64 -d > $SCRIPT_PATH && chmod 755 $SCRIPT_PATH && echo '$SCRIPT_VERSION' > $VERSION_FILE")
             }
         } catch (e: Exception) {
             AppLogger.log("ensureScriptInstalled error: ${e.message}")
