@@ -104,6 +104,49 @@ class SettingsActivity : AppCompatActivity() {
             updateDuduManagedControls(checked)
         }
 
+        val switchDuduTopBarLocation = findViewById<CompoundButton>(R.id.switchDuduTopBarLocation)
+        val switchDuduObdLink = findViewById<CompoundButton>(R.id.switchDuduObdLink)
+
+        switchDuduTopBarLocation?.isChecked = prefs.getBoolean(
+            DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED,
+            true
+        )
+        switchDuduObdLink?.isChecked = prefs.getBoolean(
+            "PREF_DUDU_OBD_LINK_ENABLED",
+            true
+        )
+
+        switchDuduTopBarLocation?.setOnCheckedChangeListener { _, checked ->
+            listener(DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED, checked)
+            if (!checked) {
+                DuduTopBarBridge.updateTopBarLocation(this, "", force = true)
+            } else {
+                val sub = prefs.getString("LAST_SUB_DISTRICT", "") ?: ""
+                val cleanSub = sub.removePrefix("ตำบล").removePrefix("แขวง").trim()
+                if (cleanSub.isNotEmpty()) {
+                    DuduTopBarBridge.updateTopBarLocation(this, "ตำบล $cleanSub", force = true)
+                }
+            }
+        }
+
+        switchDuduObdLink?.setOnCheckedChangeListener { _, checked ->
+            listener("PREF_DUDU_OBD_LINK_ENABLED", checked)
+            if (checked) {
+                try {
+                    val btAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+                    val vlink = btAdapter?.bondedDevices?.firstOrNull {
+                        it.name?.contains("vlink", ignoreCase = true) == true ||
+                                it.name?.contains("obd", ignoreCase = true) == true
+                    }
+                    val targetMac = vlink?.address ?: "41:42:86:99:6F:E5"
+                    DuduTopBarBridge.configureObdAddress(targetMac)
+                    android.widget.Toast.makeText(this, "ส่งค่า MAC OBD vLinker: $targetMac ให้ DUDU", android.widget.Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    DuduTopBarBridge.configureObdAddress("41:42:86:99:6F:E5")
+                }
+            }
+        }
+
         val spinnerTheme = findViewById<Spinner>(R.id.spinnerTheme)
         if (spinnerTheme != null) {
             val themes = arrayOf("Classic", "Honda Type-R", "BMW M", "Tesla")

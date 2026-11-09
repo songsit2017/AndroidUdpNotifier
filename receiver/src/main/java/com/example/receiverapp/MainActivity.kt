@@ -129,6 +129,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val switchMainDuduTopBar = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchMainDuduTopBar)
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        switchMainDuduTopBar?.isChecked = prefs.getBoolean(DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED, true)
+        switchMainDuduTopBar?.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED, isChecked).apply()
+            if (!isChecked) {
+                DuduTopBarBridge.updateTopBarLocation(this, "", force = true)
+            } else {
+                val sub = prefs.getString("LAST_SUB_DISTRICT", "") ?: ""
+                val cleanSub = sub.removePrefix("ตำบล").removePrefix("แขวง").trim()
+                if (cleanSub.isNotEmpty()) {
+                    DuduTopBarBridge.updateTopBarLocation(this, "ตำบล $cleanSub", force = true)
+                }
+            }
+        }
+
         findViewById<Button>(R.id.btnSettings)?.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -315,6 +331,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionButtons()
+        val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchMainDuduTopBar)?.isChecked =
+            prefs.getBoolean(DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED, true)
     }
 
     private fun updatePermissionButtons() {

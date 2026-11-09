@@ -131,6 +131,17 @@ class UdpReceiverService : Service() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(foregroundWindowReceiver, foregroundWindowFilter)
         }
+        val topBarEnabledOnInit = prefs.getBoolean(
+            DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED,
+            true
+        )
+        if (topBarEnabledOnInit) {
+            val savedSub = prefs.getString("LAST_SUB_DISTRICT", "")
+                ?.removePrefix("ตำบล")?.removePrefix("แขวง")?.trim() ?: ""
+            if (savedSub.isNotEmpty()) {
+                DuduTopBarBridge.updateTopBarLocation(this, "ตำบล $savedSub")
+            }
+        }
         startLocationStatusMonitor()
         
         mediaSession = MediaSession(this, "UdpReceiverSession")
@@ -367,6 +378,18 @@ class UdpReceiverService : Service() {
                                                     .putString("LAST_DISTRICT", district)
                                                     .putString("LAST_PROVINCE", province)
                                                     .apply()
+
+                                                val topBarEnabled = prefs.getBoolean(
+                                                    DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED,
+                                                    true
+                                                )
+                                                if (topBarEnabled) {
+                                                    val cleanSub = cleanSubDistrict.ifEmpty { cleanDistrict }
+                                                    if (cleanSub.isNotEmpty()) {
+                                                        val label = if (cleanSubDistrict.isNotEmpty()) "ตำบล $cleanSub" else "อำเภอ $cleanSub"
+                                                        DuduTopBarBridge.updateTopBarLocation(this@UdpReceiverService, label)
+                                                    }
+                                                }
                                                 
                                             }
                                         }
@@ -435,6 +458,14 @@ class UdpReceiverService : Service() {
 
     private fun updateLocationStatusOverlay() {
         val prefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val topBarEnabled = prefs.getBoolean(
+            DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED,
+            true
+        )
+        if (topBarEnabled) {
+            removeLocationStatusOverlay()
+            return
+        }
         val enabled = prefs.getBoolean("PREF_LOCATION_STATUS_OVERLAY", true)
         val launcherForeground = prefs.getBoolean(
             ForegroundWindowAccessibilityService.PREF_DUDU_LAUNCHER_FOREGROUND,

@@ -86,6 +86,69 @@
     android:text="กำลังตรวจ DUDU Notification Connector…"
     android:textColor="#FFB74D"
     android:textSize="14sp" />
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_marginTop="12dp">
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingEnd="16dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="แสดงตำแหน่งบน DUDU TopBar (Native)"
+            android:textSize="16sp"
+            android:textColor="@color/app_text_primary" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="แสดงชื่อตำบลตรงกลาง TopBar อัตโนมัติ (แทน Floating Overlay)"
+            android:textSize="12sp"
+            android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switchDuduTopBarLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true" />
+</LinearLayout>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_marginTop="12dp">
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingEnd="16dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DUDU OBD2 vLinker MC+ Link"
+            android:textSize="16sp"
+            android:textColor="@color/app_text_primary" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ส่ง MAC Address ของ vLinker MC+ ให้ DUDU แสดงค่าน้ำ/แบตเตอรี่"
+            android:textSize="12sp"
+            android:textColor="@color/app_text_secondary" />
+    </LinearLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switchDuduObdLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true" />
+</LinearLayout>
 </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="8dp">

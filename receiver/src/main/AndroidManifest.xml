@@ -7,10 +7,10 @@
     </queries>
 
     <permission
-        android:name="com.example.receiverapp.permission.DUDU_BRIDGE"
+        android:name="${applicationId}.permission.DUDU_BRIDGE"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.example.receiverapp.permission.DUDU_BRIDGE" />
+    <uses-permission android:name="${applicationId}.permission.DUDU_BRIDGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -75,7 +75,7 @@
         <receiver
             android:name=".NotificationActionReceiver"
             android:exported="true"
-            android:permission="com.example.receiverapp.permission.DUDU_BRIDGE">
+            android:permission="${applicationId}.permission.DUDU_BRIDGE">
             <intent-filter>
                 <action android:name="com.example.receiverapp.REMOTE_NOTIFICATION_ACTION" />
             </intent-filter>
