@@ -139,9 +139,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 val sub = prefs.getString("LAST_SUB_DISTRICT", "") ?: ""
                 val cleanSub = sub.removePrefix("ตำบล").removePrefix("แขวง").trim()
-                if (cleanSub.isNotEmpty()) {
-                    DuduTopBarBridge.updateTopBarLocation(this, "ตำบล $cleanSub", force = true)
-                }
+                val label = DuduTopBarBridge.locationLabel(prefs.getString("LAST_ROAD", "").orEmpty(), cleanSub)
+                if (label.isNotEmpty()) DuduTopBarBridge.updateTopBarLocation(this, label, force = true)
             }
         }
 

@@ -90,6 +90,7 @@ class UdpReceiverService : Service() {
     private var lastKnownSubDistrict: String? = null
     private var lastKnownDistrict: String? = null
     private var lastKnownProvince: String? = null
+    private var lastKnownRoad: String? = null
     
     // Auto-reply timestamps with max 200 entries to prevent unbounded growth
     private val autoReplyTimestamps = object : LinkedHashMap<String, Long>(16, 0.75f, true) {
@@ -138,9 +139,8 @@ class UdpReceiverService : Service() {
         if (topBarEnabledOnInit) {
             val savedSub = prefs.getString("LAST_SUB_DISTRICT", "")
                 ?.removePrefix("ตำบล")?.removePrefix("แขวง")?.trim() ?: ""
-            if (savedSub.isNotEmpty()) {
-                DuduTopBarBridge.updateTopBarLocation(this, "ตำบล $savedSub")
-            }
+            val label = DuduTopBarBridge.locationLabel(prefs.getString("LAST_ROAD", "").orEmpty(), savedSub)
+            if (label.isNotEmpty()) DuduTopBarBridge.updateTopBarLocation(this, label)
         }
         startLocationStatusMonitor()
         
@@ -273,12 +273,15 @@ class UdpReceiverService : Service() {
                         
                         // Location Announcement
                         val isLocationAnnounceEnabled = prefs.getBoolean("PREF_LOCATION_ANNOUNCE", true)
-                        if (isLocationAnnounceEnabled) {
+                        if (isLocationAnnounceEnabled ||
+                            prefs.getBoolean(DuduTopBarBridge.PREF_DUDU_TOPBAR_LOCATION_ENABLED, true)
+                        ) {
                             val announceDist = if (lastLocationAnnounceLocation != null) location.distanceTo(lastLocationAnnounceLocation!!) else Float.MAX_VALUE
                             if (announceDist > 1000f) { // Check every 1 km
                                 lastLocationAnnounceLocation = location
                                 CoroutineScope(Dispatchers.IO).launch {
                                     try {
+                                        var road = ""
                                         var subDistrict = ""
                                         var district = ""
                                         var province = ""
@@ -290,6 +293,7 @@ class UdpReceiverService : Service() {
                                             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                                             if (!addresses.isNullOrEmpty()) {
                                                 val addr = addresses[0]
+                                                road = addr.thoroughfare.orEmpty()
                                                 district = firstLocationValue(
                                                     addr.subAdminArea,
                                                     extractThaiArea(addr.getAddressLine(0), "อำเภอ", "เขต"),
@@ -318,6 +322,7 @@ class UdpReceiverService : Service() {
                                         // response and prefer it only when it supplies a real subdistrict name.
                                         val osm = resolveOpenStreetMapArea(location.latitude, location.longitude)
                                         if (osm != null) {
+                                            road = firstLocationValue(osm.road, road)
                                             AppLogger.log(
                                                 "OSM boundary: tambon=${osm.subDistrict} district=${osm.district} province=${osm.province}"
                                             )
@@ -355,7 +360,8 @@ class UdpReceiverService : Service() {
                                         }
                                         
                                         if (success) {
-                                            if (lastKnownDistrict != district || lastKnownProvince != province || lastKnownSubDistrict != subDistrict) {
+                                            if (lastKnownRoad != road || lastKnownDistrict != district || lastKnownProvince != province || lastKnownSubDistrict != subDistrict) {
+                                                lastKnownRoad = road
                                                 // Location changed
                                                 lastKnownSubDistrict = subDistrict
                                                 lastKnownDistrict = district
@@ -375,6 +381,7 @@ class UdpReceiverService : Service() {
                                                 prefs.edit()
                                                     .putString("LAST_LOCATION_STATUS", msg)
                                                     .putString("LAST_SUB_DISTRICT", subDistrict)
+                                                    .putString("LAST_ROAD", road)
                                                     .putString("LAST_DISTRICT", district)
                                                     .putString("LAST_PROVINCE", province)
                                                     .apply()
@@ -384,9 +391,8 @@ class UdpReceiverService : Service() {
                                                     true
                                                 )
                                                 if (topBarEnabled) {
-                                                    val cleanSub = cleanSubDistrict.ifEmpty { cleanDistrict }
-                                                    if (cleanSub.isNotEmpty()) {
-                                                        val label = if (cleanSubDistrict.isNotEmpty()) "ตำบล $cleanSub" else "อำเภอ $cleanSub"
+                                                    val label = DuduTopBarBridge.locationLabel(road, cleanSubDistrict)
+                                                    if (label.isNotEmpty()) {
                                                         DuduTopBarBridge.updateTopBarLocation(this@UdpReceiverService, label)
                                                     }
                                                 }
@@ -605,6 +611,7 @@ class UdpReceiverService : Service() {
     }
 
     private data class AreaResolution(
+        val road: String,
         val subDistrict: String,
         val district: String,
         val province: String
@@ -631,6 +638,7 @@ class UdpReceiverService : Service() {
             connection.disconnect()
             val address = JSONObject(response).optJSONObject("address") ?: return null
             AreaResolution(
+                road = address.optString("road", ""),
                 subDistrict = firstLocationValue(
                     // Thailand's OSM addressing maps the tambon to `city`
                     // or `city_district`, and the amphoe to `county` (e.g.

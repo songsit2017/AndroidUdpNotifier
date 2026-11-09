@@ -27,9 +27,7 @@ object DuduTopBarBridge {
     private const val ADB_PORT = 5555
 
     private const val SCRIPT_PATH = "/data/local/tmp/set_topbar.sh"
-    private const val SCRIPT_VERSION = "v3"
-    private const val VERSION_FILE = "/data/local/tmp/set_topbar.ver"
-    private const val SCRIPT_BASE64 = "IyEvc3lzdGVtL2Jpbi9zaApMT0M9IiQxIgpQUkVGPSIvZGF0YS9kYXRhL2NvbS5kdWR1LmF1dG91aS9zaGFyZWRfcHJlZnMvc2V0dGluZ3MueG1sIgoKaWYgWyAhIC1mICIkUFJFRiIgXTsgdGhlbgogICAgZWNobyAic2V0dGluZ3MueG1sIG5vdCBmb3VuZCIKICAgIGV4aXQgMQpmaQoKaWYgWyAteiAiJExPQyIgXTsgdGhlbgogICAgTkVXX0VOVFJZPSc8c3RyaW5nIG5hbWU9IlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVCI+PC9zdHJpbmc+JwplbHNlCiAgICBORVdfRU5UUlk9IjxzdHJpbmcgbmFtZT1cIlNEQVRBX0NFTlRFUl9EQVRFX0ZST01BVFwiPickTE9DJzwvc3RyaW5nPiIKZmkKCmF3ayAtdiByZXA9IiRORVdfRU5UUlkiICcKQkVHSU4geyBoYXNfbG9jPTAgfQovPHN0cmluZyBuYW1lPSJTREFUQV9DRU5URVJfREFURV9GUk9NQVQiLyB7IGhhc19sb2M9MTsgcHJpbnQgIiAgICAiIHJlcDsgbmV4dCB9Ci88XC9tYXA+LyB7CiAgICBpZiAoIWhhc19sb2MpIHByaW50ICIgICAgIiByZXA7CiAgICBwcmludDsKICAgIG5leHQKfQp7IHByaW50IH0KJyAiJFBSRUYiID4gL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwKCmlmIFsgLXMgL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwgXTsgdGhlbgogICAgY3AgL2RhdGEvbG9jYWwvdG1wL3NldHRpbmdzX3RtcC54bWwgIiRQUkVGIgogICAgY2hvd24gc3lzdGVtOnN5c3RlbSAiJFBSRUYiCiAgICBjaG1vZCA2NjAgIiRQUkVGIgogICAgYW0gZm9yY2Utc3RvcCBjb20uZHVkdS5hdXRvdWkKICAgIGFtIHN0YXJ0IC1uIGNvbS5kdWR1LmF1dG91aS8udWkuYWN0aXZpdHkubGF1bmNoZXIuTGF1bmNoZXJBY3Rpdml0eQogICAgZWNobyAiVVBEQVRFRF9BTkRfUkVMT0FERUQiCmVsc2UKICAgIGVjaG8gIkVSUk9SOiBnZW5lcmF0ZWQgZmlsZSBlbXB0eSIKICAgIGV4aXQgMQpmaQo="
+
 
     @Volatile
     private var lastUpdatedLocation: String? = null
@@ -164,17 +162,8 @@ object DuduTopBarBridge {
         return result.toString().trim()
     }
 
-    fun ensureScriptInstalled() {
-        try {
-            val check = executeCommandAsRoot("[ -s $SCRIPT_PATH ] && [ -f $VERSION_FILE ] && cat $VERSION_FILE || echo NO")
-            if (check.trim() != SCRIPT_VERSION) {
-                AppLogger.log("Installing $SCRIPT_PATH ($SCRIPT_VERSION) via ADB root")
-                executeCommandAsRoot("echo '$SCRIPT_BASE64' | base64 -d > $SCRIPT_PATH && chmod 755 $SCRIPT_PATH && echo '$SCRIPT_VERSION' > $VERSION_FILE")
-            }
-        } catch (e: Exception) {
-            AppLogger.log("ensureScriptInstalled error: ${e.message}")
-        }
-    }
+    fun locationLabel(road: String, subDistrict: String): String =
+        road.trim().ifEmpty { subDistrict.trim().takeIf { it.isNotEmpty() }?.let { "ตำบล $it" }.orEmpty() }
 
     fun updateTopBarLocation(context: Context, locationText: String, force: Boolean = false) {
         val trimmed = locationText.trim()
@@ -184,11 +173,18 @@ object DuduTopBarBridge {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                ensureScriptInstalled()
-                val cleanText = trimmed.replace("'", "").replace("\"", "")
-                AppLogger.log("DuduTopBarBridge: setting location -> '$cleanText'")
-
-                val res = executeCommandAsRoot("$SCRIPT_PATH '$cleanText'")
+                val metrics = context.resources.displayMetrics
+                val paint = android.text.TextPaint().apply { textSize = metrics.widthPixels / 60f }
+                val cleaned = trimmed.filterNot { it.isISOControl() || it in "'\"\\" }
+                val label = android.text.TextUtils.ellipsize(
+                    cleaned, paint, metrics.widthPixels * .14f, android.text.TextUtils.TruncateAt.END
+                ).toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                val script = context.assets.open("set_dudu_topbar_location.sh").use {
+                    android.util.Base64.encodeToString(it.readBytes(), android.util.Base64.NO_WRAP)
+                }
+                val res = executeCommandAsRoot(
+                    "echo '$script' | base64 -d > $SCRIPT_PATH && sh $SCRIPT_PATH '$label'"
+                )
                 AppLogger.log("DuduTopBarBridge result: $res")
 
                 if (res.contains("UPDATED_AND_RELOADED")) {
