@@ -26,7 +26,8 @@ object DuduTopBarBridge {
     private const val ADB_HOST = "127.0.0.1"
     private const val ADB_PORT = 5555
 
-    private const val SCRIPT_PATH = "/data/local/tmp/set_topbar.sh"
+    private const val SCRIPT_PATH = "/data/local/tmp/update_dudu_topbar_location.js"
+    private val locationLock = Any()
 
 
     @Volatile
@@ -172,30 +173,43 @@ object DuduTopBarBridge {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val metrics = context.resources.displayMetrics
-                val paint = android.text.TextPaint().apply { textSize = metrics.widthPixels / 60f }
-                val cleaned = trimmed.filterNot { it.isISOControl() || it in "'\"\\" }
-                val label = android.text.TextUtils.ellipsize(
-                    cleaned, paint, metrics.widthPixels * .14f, android.text.TextUtils.TruncateAt.END
-                ).toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                val script = context.assets.open("set_dudu_topbar_location.sh").use {
-                    android.util.Base64.encodeToString(it.readBytes(), android.util.Base64.NO_WRAP)
+            synchronized(locationLock) {
+                try {
+                    val prefs = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                    if (!force && (!prefs.getBoolean(PREF_DUDU_TOPBAR_LOCATION_ENABLED, true) ||
+                            trimmed == lastUpdatedLocation)) return@synchronized
+                    val metrics = context.resources.displayMetrics
+                    val paint = android.text.TextPaint().apply { textSize = metrics.widthPixels / 60f }
+                    val cleaned = trimmed.filterNot { it.isISOControl() || it == '\'' }
+                    val label = android.text.TextUtils.ellipsize(
+                        cleaned, paint, metrics.widthPixels * .14f, android.text.TextUtils.TruncateAt.END
+                    ).toString()
+                    val legacy = executeCommandAsRoot(
+                        "cat /data/local/tmp/dudu-topbar-original-date 2>/dev/null"
+                    ).takeIf { it.startsWith("<string name=\"SDATA_DATE_FROMAT\">") }.orEmpty()
+                    val script = context.assets.open("update_dudu_topbar_location.js").bufferedReader().use {
+                        it.readText()
+                            .replace("ORIGINAL_DATE_XML", org.json.JSONObject.quote(legacy))
+                            .replace("LOCATION_LABEL", org.json.JSONObject.quote(label))
+                    }
+                    val encoded = android.util.Base64.encodeToString(
+                        script.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP
+                    )
+                    val result = executeCommandAsRoot(
+                        "test -x /data/local/tmp/dudu-frida-inject && " +
+                            "echo '$encoded' | base64 -d > $SCRIPT_PATH && " +
+                            "timeout 3 /data/local/tmp/dudu-frida-inject -p " +
+                            "\"$(pidof -s com.dudu.autoui)\" -s $SCRIPT_PATH; rm -f $SCRIPT_PATH"
+                    )
+                    if (result.lineSequence().any { it == "DUDU_TOPBAR_UPDATED" }) {
+                        lastUpdatedLocation = trimmed
+                        prefs.edit().putString(PREF_DUDU_TOPBAR_LAST_TEXT, trimmed).apply()
+                    } else {
+                        AppLogger.log("DUDU TopBar live update unavailable")
+                    }
+                } catch (e: Exception) {
+                    AppLogger.log("updateTopBarLocation failed: ${e.message}")
                 }
-                val res = executeCommandAsRoot(
-                    "echo '$script' | base64 -d > $SCRIPT_PATH && sh $SCRIPT_PATH '$label'"
-                )
-                AppLogger.log("DuduTopBarBridge result: $res")
-
-                if (res.contains("UPDATED_AND_RELOADED")) {
-                    lastUpdatedLocation = trimmed
-                    context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-                        .edit()
-                        .putString(PREF_DUDU_TOPBAR_LAST_TEXT, trimmed)
-                        .apply()
-                }
-            } catch (e: Exception) {
-                AppLogger.log("updateTopBarLocation failed: ${e.message}")
             }
         }
     }
